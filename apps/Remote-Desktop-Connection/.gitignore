@@ -1,0 +1,8 @@
+temp.jpg
+out
+.*.swp
+.*.swo
+*~
+log
+image_implement.txt
+OpenCV/*

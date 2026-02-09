@@ -1,0 +1,36 @@
+<?php
+
+include 'php_action/db_connect.php';
+
+header('Content-Type: application/json');
+//header('Access-Control-Allow-Origin: *');
+
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, GET, DELETE, PUT, PATCH, OPTIONS');
+header('Access-Control-Allow-Headers: token, Content-Type');
+
+$input_data = json_decode(trim(file_get_contents('php://input')));
+
+$ret="INSERT INTO company(`company_name`)VALUES('".$input_data->company_name."')";
+$connect->query($ret);
+$company_id = mysqli_insert_id($connect);
+
+$rett="INSERT INTO users (`company_id`, `username`, `password`) VALUES ('".$company_id."','".$input_data->first_name."','".md5($input_data->password)."')";
+$connect->query($rett);
+$lastInsertId = mysqli_insert_id($connect);
+
+if(isset($lastInsertId)){
+	$data = [
+		'status' => True,
+		'message' => 'Company Added Successfully',
+		'url' => 'https://www.mewemarket.com/apps/Inventory-System/'.$input_data->company_name,
+	];
+	echo json_encode($data);
+}else {
+	$data = [
+		'status' => False,
+		'message' => 'Something Wrong',
+	];
+	echo json_encode($data);
+}
+

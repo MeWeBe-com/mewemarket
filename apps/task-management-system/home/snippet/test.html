@@ -1,0 +1,19 @@
+$("#task-category-register-form").validate({
+      rules:
+   {
+   task_category: {
+      required: true,
+   minlength: 5
+   },
+   task_dept: {
+   required: true,
+   minlength: 5
+   },
+    },
+       messages:
+    {
+            task_category: "please enter task category",
+            task_dept:"please enter task department"
+       },
+    submitHandler: submitForm 
+       });

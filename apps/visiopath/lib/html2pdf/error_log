@@ -1,0 +1,4 @@
+[30-Jan-2020 15:41:33 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function base_url() in /home/legacyartco/public_html/visiopath/lib/html2pdf/reportdetails.php:37
+Stack trace:
+#0 {main}
+  thrown in /home/legacyartco/public_html/visiopath/lib/html2pdf/reportdetails.php on line 37

@@ -1,0 +1,21 @@
+AddDefaultCharset UTF-8
+<IfModule mod_rewrite.c>
+RewriteEngine on
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+RewriteRule ^([^/]+)/p(.*)$ index.php?company_name=$1&page_no=$2 [L]
+
+RewriteRule ^([^/]+)/category/(.*)/(.*)$ category.php?company_name=$1&cat_name=$2&page_no=$3 [L]
+RewriteRule ^([^/]+)/categorys/([^/]+)/([^/]+)/(.*)$ category.php?company_name=$1&cat_name=$2&sub_cat_name=$3&page_no=$4 [L]
+RewriteRule ^(.*)/article/(.*)/(.*)/(.*)$ inner.php?company_name=$1&cat_name=$2&sub_cat_name=$3&article=$4 [L]
+RewriteRule ^([^/]+)/article/(.*)/(.*)$ inner.php?company_name=$1&cat_name=$2&article=$3 [L]
+RewriteRule ^([^/]+)/search/(.*)$ search.php?company_name=$1&search=$2 [L]
+
+# php -- BEGIN cPanel-generated handler, do not edit
+# Set the “ea-php73” package as the default “PHP” programming language.
+<IfModule mime_module>
+  AddHandler application/x-httpd-ea-php73 .php .php7 .phtml
+</IfModule>
+# php -- END cPanel-generated handler, do not edit

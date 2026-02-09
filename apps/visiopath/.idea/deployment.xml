@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" serverName="62.171.133.180">
+    <serverData>
+      <paths name="62.171.133.180">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/public_html/subdomains/saas-visio" local="$PROJECT_DIR$" web="http://saas-visio.yaze.live" />
+            <mapping local="" />
+          </mappings>
+          <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$" />
+          </excludedPaths>
+        </serverdata>
+      </paths>
+    </serverData>
+  </component>
+</project>

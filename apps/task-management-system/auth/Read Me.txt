@@ -1,0 +1,6 @@
+1. All The Table code is in sql.sql
+2. Edit Config.php and replace all the variables with your own configuration
+3. That's It You are ready to go.......
+
+
+THANKYOU............!

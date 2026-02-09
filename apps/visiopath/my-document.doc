@@ -1,0 +1,588 @@
+        <html xmlns:v="urn:schemas-microsoft-com:vml" 
+        xmlns:o="urn:schemas-microsoft-com:office:office" 
+        xmlns:w="urn:schemas-microsoft-com:office:word" 
+        xmlns="http://www.w3.org/TR/REC-html40"> 
+         
+        <head> 
+        <meta http-equiv=Content-Type content="text/html; charset=utf-8"> 
+        <meta name=ProgId content=Word.Document> 
+        <meta name=Generator content="Microsoft Word 9"> 
+        <meta name=Originator content="Microsoft Word 9"> 
+        <!--[if !mso]> 
+        <style> 
+        v\:* {behavior:url(#default#VML);} 
+        o\:* {behavior:url(#default#VML);} 
+        w\:* {behavior:url(#default#VML);} 
+        .shape {behavior:url(#default#VML);} 
+        </style> 
+        <![endif]--> 
+        <title></title> 
+        <!--[if gte mso 9]><xml> 
+         <w:WordDocument> 
+          <w:View>Print</w:View> 
+          <w:DoNotHyphenateCaps/> 
+          <w:PunctuationKerning/> 
+          <w:DrawingGridHorizontalSpacing>9.35 pt</w:DrawingGridHorizontalSpacing> 
+          <w:DrawingGridVerticalSpacing>9.35 pt</w:DrawingGridVerticalSpacing> 
+         </w:WordDocument> 
+        </xml><![endif]--> 
+        <style> 
+        <!-- 
+         /* Font Definitions */ 
+        @font-face 
+            {font-family:Verdana; 
+            panose-1:2 11 6 4 3 5 4 4 2 4; 
+            mso-font-charset:0; 
+            mso-generic-font-family:swiss; 
+            mso-font-pitch:variable; 
+            mso-font-signature:536871559 0 0 0 415 0;} 
+         /* Style Definitions */ 
+        p.MsoNormal, li.MsoNormal, div.MsoNormal 
+            {mso-style-parent:""; 
+            margin:0in; 
+            margin-bottom:.0001pt; 
+            mso-pagination:widow-orphan; 
+            font-size:7.5pt; 
+                mso-bidi-font-size:8.0pt; 
+            font-family:"Verdana"; 
+            mso-fareast-font-family:"Verdana";} 
+        p.small 
+            {mso-style-parent:""; 
+            margin:0in; 
+            margin-bottom:.0001pt; 
+            mso-pagination:widow-orphan; 
+            font-size:1.0pt; 
+                mso-bidi-font-size:1.0pt; 
+            font-family:"Verdana"; 
+            mso-fareast-font-family:"Verdana";} 
+        @page Section1 
+            {size:8.5in 11.0in; 
+            margin:1.0in 1.25in 1.0in 1.25in; 
+            mso-header-margin:.5in; 
+            mso-footer-margin:.5in; 
+            mso-paper-source:0;} 
+        div.Section1 
+            {page:Section1;} 
+        --> 
+        </style> 
+        <!--[if gte mso 9]><xml> 
+         <o:shapedefaults v:ext="edit" spidmax="1032"> 
+          <o:colormenu v:ext="edit" strokecolor="none"/> 
+         </o:shapedefaults></xml><![endif]--><!--[if gte mso 9]><xml> 
+         <o:shapelayout v:ext="edit"> 
+          <o:idmap v:ext="edit" data="1"/> 
+         </o:shapelayout></xml><![endif]--> 
+          
+        </head> 
+        <body> <page backtop="0mm" backbottom="5mm" backleft="1mm" backright="1mm">
+<style>
+td{
+padding-top:3px;
+}
+
+.supply .tbody tr{border-bottom: 1px solid #000}
+
+.supply tr th {
+    background: #000;
+	color:    #fff;
+    border-right: 1px solid #000;padding: 10px;
+}
+
+.supply .tbody tr td {
+    border-right: 1px solid #000;padding: 10px;
+    border-bottom: 1px solid #000;
+    border-left:1px solid #000;
+}
+
+.supply .tbody tr td:first-child {
+    border-right: 1px solid #000;
+
+}
+
+
+</style>
+		
+		<!--<img class="dashboard-logo" src="https://www.reviewschef.com/lims_system/assets/img/logo.png" style="width:150px"><br>-->
+
+		<table style="width: 100%;">
+				
+			<tr>
+				<td style="width:60%">
+					<img class="dashboard-logo" src="https://lims.visiopath.com/assets/img/logo.png" style="width:250px" />
+				</td>
+
+				<td style="width: 40%">
+					<span style="font-weight:bold;font-size: 10px;">Visiopath Ltd</span><br/>
+
+					<span style="font-weight:bold;font-size: 10px;">Email: info@visiopath.com</span><br/>
+					<span style="font-weight:bold;font-size: 10px;">Phone: +44-7766-000-766</span><br/>
+					
+				</td>
+			</tr>
+
+		</table>
+
+
+				<table style="width: 100%;" >
+          <tr>
+            <td  style="width: 33%;">
+              <table style="width: 100%;border: solid 1px #5544DD; border-collapse: collapse; border:1px solid #ccc" >
+                      <tr>
+                        <td bgcolor="#000000"  style="width:100%; padding:5px; font-weight:bold; font-size:15px;"> <font color="#FFFFFF">Patient Details</font></td>
+                      </tr>
+                      <tr>
+                          <tr>
+                             <td  style="width: 100%;padding-top: 15px"><strong>Name: </strong> 
+                              <span style="font-size: 22px;color: #ae1411;font-weight: bold;">patient, john</span>
+                            </td>
+                          </tr>
+                          <tr>
+                              <td style="width: 100%;"><strong>Age: </strong>29 | dob: 04-12-1990 </td>
+                        </tr>
+                        <tr>
+                          <td style="width: 100%;"><strong>NHS Number: </strong>485 777 3457</td>
+                        </tr>
+                        <tr>   
+                          <td  style="width: 100%;"><strong>Hospital number: </strong>12345BZ</td>
+                        </tr>
+
+                                               </tr>
+                    </table>
+                </td>
+                <td  style="width: 33%;">
+                  <table style="width: 100%;border: solid 1px #5544DD; border-collapse: collapse; border:1px solid #ccc" >
+                      <tr colspan="3">
+                        <td bgcolor="#000000" style="width:100%; padding:5px; font-weight:bold; font-size:15px;"> <font color="#FFFFFF">Case References And Dates</font></td>
+                      </tr>
+                        
+                        <tr>
+                           <td style="width: 50%;padding-top: 15px"><strong>Date reported: </strong>28-12-2019</td>
+                          
+                        </tr>
+
+                        <tr>
+                          <td style="width: 50%;"><strong>Date created: </strong>01-12-2019</td>
+                          <td style="width: 50%;"><strong>Referral clinic: </strong>East Surrey Hospital</td>
+                        </tr>
+
+                        <tr>
+                             <td style="width: 50%;"><strong>Case reference number: </strong><br>
+                               <barcode value="1326/12" style="width: 50mm;"></barcode><br>
+                               </td>
+                                            <td  style="width: 50%;"><strong>Visiopath number: </strong><br>
+                              <barcode value="1326/12" style="width: 50mm;"></barcode><br>
+                              </td>
+                        </tr>
+                    </table>
+              </td>
+              <td  style="width: 33%;">
+                <table style="width: 100%;border: solid 1px #5544DD; border-collapse: collapse; border:1px solid #ccc" >
+                      <tr>
+                        <td bgcolor="#000000" style="width:100%; padding:5px; font-weight:bold; font-size:15px;"> <font color="#FFFFFF">Referred By - doctor details</font></td>
+                      </tr>
+
+                      <tr>
+                          <tr>
+                              <td style="width: 100%;padding-top: 15px"><strong>Doctor name: </strong>Test Doctor 1</td>
+                          </tr>
+                          <tr>
+                              <td style="width: 100%"><strong>GMC number: </strong>0122255455</td>
+                          </tr>
+                           
+                          
+                                                          <tr>
+                                <td style="width: 100%;"><strong>Doctor number:  </strong>03216549</td>
+                              </tr>
+                                                                                      <tr>
+                                <td  style="width: 100%;"><strong>Doctor Email:  </strong>visiopath.lims@gmail.com</td>
+                              </tr>
+                                                      
+                      </tr>
+                </table>
+              </td>
+          </tr>
+        </table>
+		  <br>
+
+		         <table style="width: 100%;border: solid 1px #5544DD; border-collapse: collapse; border:1px solid #ccc" >
+                      <tr>
+                        <td bgcolor="#000000" style="width:100%; padding:5px; font-weight:bold; font-size:15px;"> <font color="#FFFFFF">Specimen</font></td>
+                      </tr>
+                      <tr>
+                        
+                          <tr>
+                            <td colspan="3" style="width: 100%;padding-top: 15px"></td>
+                          </tr>
+                        
+                      </tr>
+                    </table>
+                    <br />
+
+                    <table style="width: 100%;border: solid 1px #5544DD; border-collapse: collapse; border:1px solid #ccc" >
+                      <tr>
+                        <td bgcolor="#000000" colspan="3" style=" padding:5px; font-weight:bold; font-size:15px;"> <font color="#FFFFFF">Clinical Details</font></td>
+                      </tr>
+                      <tr>
+                          <tr>
+                             
+                            <td colspan="3" style="width: 100%;padding-top: 15px"></td>
+                           
+                          </tr>
+                        
+                      </tr>
+                    </table>
+                    <br />
+
+                     <table style="width: 100%;border: solid 1px #5544DD; border-collapse: collapse; border:1px solid #ccc" >
+                      <tr>
+                        <td bgcolor="#000000" colspan="3" style=" padding:5px; font-weight:bold; font-size:15px;"> <font color="#FFFFFF">Macroscopic Details</font></td>
+                      </tr>
+                      <tr>
+                        
+                          <tr>
+                             
+                            <td colspan="3" style="width: 100%;padding-top: 15px"></td>
+                           
+                          </tr>
+                   
+                      </tr>
+                    </table>
+                    <br />
+
+			<table style="width: 100%;border: solid 1px #5544DD; border-collapse: collapse; border:1px solid #ccc" >
+                      <tr>
+                        <td bgcolor="#000000" colspan="3" style=" padding:5px; font-weight:bold; font-size:15px;"> 
+                            <font color="#FFFFFF">Liver tumour                            </font>
+                        </td>
+                      </tr>
+                      <tr>
+                        
+                          <tr>
+                             <td style="width: 100%;">
+							 
+	                                    
+									   <span > <br><strong style="font-size:15px;">   Liver </strong>:  <br />  </span>
+									   
+									   									    <label></label><br>
+										
+										 
+									   <span > Specimen Submitted: </span>
+									   
+									   									    <label>Liver (NOS),Liver, right lobe,</label><br>
+										
+										 
+									   <span > Surgical Procedure: </span>
+									   
+									   									    <label>Wedge resection</label><br>
+										
+										 
+									   <span > Tumor Focality: </span>
+									   
+									   									    <label>Unifocal</label><br>
+										
+										 
+									   <span > Tumor Size: </span>
+									   
+									   									    <label>12</label><br>
+										
+										 
+									   <span > Tumor-Related Changes: </span>
+									   
+									   									    <label>Severe cholangiolar dysplasia,Intrahepatic micrometastasis ,</label><br>
+										
+										 
+									   <span > Histologic Type: </span>
+									   
+									   									    <label>Hepatocellular carcinoma</label><br>
+										
+										 
+									   <span > Histologic Grade: </span>
+									   
+									   									    <label>Well differentiated</label><br>
+										
+										 
+									   <span > Angiolymphatic Invasion: </span>
+									   
+									   									    <label>Present (positive)</label><br>
+										
+										 
+									   <span > Tumor Extent: </span>
+									   
+									   									    <label>Tumor invades gallbladder,Tumor invades diaphram,</label><br>
+										
+										 
+									   <span > Hepatic Vein Margin: </span>
+									   
+									   									    <label>Cannot be evaluated</label><br>
+										
+										 
+									   <span > Common Bile Duct Margin: </span>
+									   
+									   									    <label>Involved by invasive tumor (r.i., positive)</label><br>
+										
+										 
+									   <span > Parenchymal Margin: </span>
+									   
+									   									    <label>Involved by in-situ carcinoma only</label><br>
+										
+										 
+									   <span > Primary Tumor (pT): </span>
+									   
+									   									    <label>pTx</label><br>
+										
+										 
+									   <span > Regional Lymph Nodes (pN): </span>
+									   
+									   									    <label>pNx</label><br>
+										
+										 
+									   <span > Number Involved: </span>
+									   
+									   									    <label>10</label><br>
+										
+										 
+									   <span > Number Examined: </span>
+									   
+									   									    <label>12</label><br>
+										
+										 
+									   <span > Metastasis (pM): </span>
+									   
+									   									    <label>pMX</label><br>
+										
+										 
+									   <span > Specify Sites: </span>
+									   
+									   									    <label>2</label><br>
+										
+										 
+									   <span > Additional Findings: </span>
+									   
+									   									    <label>Iron Overload,Hepatitis,</label><br>
+										
+																			   
+							 
+							 </td>
+                            
+                          </tr>
+                      </tr>
+                    </table>
+					<br>
+
+	<table style="width: 100%;border: solid 1px #5544DD; border-collapse: collapse; border:1px solid #ccc" >
+                      <tr>
+                        <td bgcolor="#000000" colspan="3" style=" padding:5px; font-weight:bold; font-size:15px;"> 
+                            <font color="#FFFFFF">Kidney Tumor                            </font>
+                        </td>
+                      </tr>
+                      <tr>
+                        
+                          <tr>
+                             <td style="width: 100%;">
+							 
+	                                    
+									   <span > <br><strong style="font-size:15px;">   MACROSCOPIC </strong>:  <br />  </span>
+									   
+									   									    <label></label><br>
+										
+										 
+									   <span > Specimen Submitted: </span>
+									   
+									   									    <label>Left kidney,Right kidney,Left kidney and adrenal gland,</label><br>
+										
+										 
+									   <span > Surgical Procedure: </span>
+									   
+									   									    <label>Total nephrectomy</label><br>
+										
+										 
+									   <span > Tumor Site: </span>
+									   
+									   									    <label>Upper pole,Middle,</label><br>
+										
+										 
+									   <span > Tumor Focality: </span>
+									   
+									   									    <label>Unifocal</label><br>
+										
+										 
+									   <span > Tumor Size: </span>
+									   
+									   									    <label>12</label><br>
+										
+										 
+									   <span > <br><strong style="font-size:15px;">   MICROSCOPIC </strong>:  <br />  </span>
+									   
+									   									    <label></label><br>
+										
+										 
+									   <span > Histologic Type: </span>
+									   
+									   									    <label>Papillary renal carcinoma</label><br>
+										
+										 
+									   <span > Histologic Grade (Fuhrman Nuclear Grade): </span>
+									   
+									   									    <label>GX: Cannot be assessed</label><br>
+										
+										 
+									   <span > Angiolymphatic Invasion: </span>
+									   
+									   									    <label>Not identified (negative)</label><br>
+										
+										 
+									   <span > Tumor Extent: </span>
+									   
+									   									    <label>Tumor limited to kidney,Tumor extends into major veins,</label><br>
+										
+										 
+									   <span > <br><strong style="font-size:15px;">   Resection Margins </strong>:  <br />  </span>
+									   
+									   									    <label></label><br>
+										
+										 
+									   <span > Distal Margin: </span>
+									   
+									   									    <label>Cannot be evaluated</label><br>
+										
+										 
+									   <span > Radial (capsular) Margin: </span>
+									   
+									   									    <label>Involved by in-situ carcinoma only</label><br>
+										
+										 
+									   <span > Parenchymal Margin: </span>
+									   
+									   									    <label>Involved by invasive tumor (i.e., positive)</label><br>
+										
+										 
+									   <span > <br><strong style="font-size:15px;">   PATHOLOGIC STAGING </strong>:  <br />  </span>
+									   
+									   									    <label></label><br>
+										
+										 
+									   <span > Primary Tumor (pT): </span>
+									   
+									   									    <label>pTx</label><br>
+										
+										 
+									   <span > Regional Lymph Nodes (pN): </span>
+									   
+									   									    <label>pNx</label><br>
+										
+										 
+									   <span > Number Involved: </span>
+									   
+									   									    <label>12</label><br>
+										
+										 
+									   <span > Number Examined: </span>
+									   
+									   									    <label>12</label><br>
+										
+										 
+									   <span > Metastasis (pM): </span>
+									   
+									   									    <label>pMX</label><br>
+										
+										 
+									   <span > <br><strong style="font-size:15px;">   ADDITIONAL FINDINGS </strong>:  <br />  </span>
+									   
+									   									    <label></label><br>
+										
+										 
+									   <span > Additional Findings: </span>
+									   
+									   									    <label>None identified,Inflammation,</label><br>
+										
+																			   
+							 
+							 </td>
+                            
+                          </tr>
+                      </tr>
+                    </table>
+					<br>
+
+
+<table style="width: 100%;border: solid 1px #5544DD; border-collapse: collapse; border:1px solid #ccc" >
+                      <tr>
+                        <td bgcolor="#000000" colspan="3" style=" padding:5px; font-weight:bold; font-size:15px;"> <font color="#FFFFFF">Microscopic Details</font></td>
+                      </tr>
+                      <tr>
+                        
+                          <tr>
+                             	<td style="width: 100%;padding-top: 15px"><strong>Microscopy: </strong>
+ 													<label><span class="MsoNormal">Please download the Tailor-I plug-in from the following URL.You can also find its description on same url, please do refer it before usingthe plug-in.<br></span><span class="MsoNormal">https://github.com/TDS-Tailor-I/Tailori-Plugin-Key.git<br></span><span class="MsoNormal"> <br></span><span class="MsoNormal">Also find the attached Tailor-I API documents with this mailfor Tailor-I API integration.<br></span><span class="MsoNormal"> <br></span><span class="MsoNormal">For testing Kindly use the following login details in theattached document and Tailor-I plug-in while integrating the Tailor-I API.<br></span> </label></td>
+						              </tr>  
+
+                          
+                            <tr>							
+								 
+								          <td style="width: 100%;"><strong>Attached File: </strong>  										 <label>
+                                      <a class="theme-color" href="https://lims.visiopath.com/assets/uploads/Admin Panel.docx">Admin Panel.docx</a>  
+                     <br /> 
+                                      <a class="theme-color" href="https://lims.visiopath.com/assets/uploads/star.jpg">star.jpg</a>  
+                     <br /> 
+                                    </label></td>
+																					
+
+                          </tr>	
+
+                          
+					   
+                      </tr>
+
+
+                      
+
+                    </table>
+		<br>	
+			
+			<table style="width: 100%;border: solid 1px #5544DD; border-collapse: collapse; border:1px solid #ccc" >
+                      <tr>
+                        <td bgcolor="#000000" colspan="3" style=" padding:5px; font-weight:bold; font-size:15px;"> <font color="#FFFFFF">Reported By</font></td>
+                      </tr>
+                      <tr>
+
+						            <tr>
+						   
+          								<td style="width: 100%;padding-top: 15px">
+          								<strong>Snomed: </strong><br />
+           								<label>402153 - 15q partial monosomy syndrome, <br />402154 - 15q partial trisomy syndrome </label></td>
+						            </tr>
+                    </tr>
+                       
+                      
+      </table>
+
+
+		<!--	<br>
+
+			<table style="width: 100%;border: solid 1px #5544DD; border-collapse: collapse; border:1px solid #ccc" >
+                      <tr>
+                        <td bgcolor="#000000" colspan="3" style=" padding:5px; font-weight:bold; font-size:15px;"> <font color="#FFFFFF">Hospital Details</font></td>
+                      </tr>
+                      <tr>
+                        
+                          <tr>
+                             <td style="width: 50%;padding-top: 15px"><strong>Name of Hospital : </strong> East Surrey Hospital</td>
+                            <td  style="width: 50%;padding-top: 15px"><strong>Email : </strong>test@hospital.com</td>
+                           
+                          </tr>
+						  <tr>
+                             <td style="width: 50%;"><strong>Phone number :</strong> 02082222222</td>
+                            <td style="width: 50%;"><strong>Address : </strong>Canada Avenue, Redhill, Surrey, RH1 5RH</td>
+                          </tr>
+					   
+                      </tr>
+            </table>-->
+					
+					
+								
+					
+    
+   
+</page>
+
+</body></html>

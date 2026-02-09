@@ -1,0 +1,209 @@
+Visiopath Ltd
+
+Email: info@visiopath.com
+
+Phone: +44-7766-000-766
+
+
+
+
+*Patient Details*
+
+Name: patient, john
+
+Male, Age: 29 | DOB: 04-12-1990 
+
+NHS number: 485 777 3457
+
+Hospital number: 12345BZ
+
+
+
+
+*Case Numbers/Dates*
+
+Date created: 01-12-2019
+
+Date reported: 30-12-2019
+
+Date assigned: 01-12-2019
+
+Referral clinic: East Surrey Hospital
+
+
+
+
+*Referred By*
+
+Doctor name: Test Doctor 1
+
+GMC number: 0122255455
+Doctor number:  03216549
+Doctor Email:  visiopath.lims@gmail.com
+
+
+
+Case reference number: 
+
+1326/12
+
+Visiopath number: 
+
+1326/12
+
+
+
+Specimen
+
+Blood tests help doctors check for certain diseases and conditions. ... Specifically, blood tests can help doctors: Evaluate how well organs—such as the kidneys, liver, thyroid, and heart—are working. Diagnose diseases and conditions such as cancer, HIV/AIDS, diabetes, anemia (uh-NEE-me-eh), and coronary heart disease.
+
+
+
+Clinical Details
+
+The accuracy of test results is dependent on the integrity of specimens. ... (See Blood Specimens: Chemistry and Hematology − Preparing Serum on clotting .... should be explained in detail, particularly to aged or overanxious patients or their 
+
+
+
+Macroscopic Details
+
+When applied to physical phenomena and bodies, the macroscopic scale describes things as a person can directly perceive them, without the aid of magnifying devices. This is in contrast to observations (microscopy) or theories (microphysics, statistical physics) of objects of geometric lengths smaller than perhaps some hundreds of micrometers.  A macroscopic view of a ball is just that: a ball. A microscopic view could reveal a thick round skin seemingly composed entirely of puckered cracks and fissures (as viewed through a microscope) or, further down in scale, a collection of molecules in a roughly spherical shape. An example of a physical theory that takes a deliberately macroscopic viewpoint is thermodynamics. An example of a topic that extends from macroscopic to microscopic viewpoints is histology. 
+
+
+
+
+*LIVER TUMOUR*
+
+ 
+
+- Liver:  
+
+- Specimen Submitted: Liver (NOS),Liver, right lobe, 
+
+- Surgical Procedure: Wedge resection 
+
+- Tumor Focality: Unifocal 
+
+- Tumor Size: 12 
+
+- Tumor-Related Changes: Severe cholangiolar dysplasia,Intrahepatic micrometastasis , 
+
+- Histologic Type: Hepatocellular carcinoma 
+
+- Histologic Grade: Well differentiated 
+
+- Angiolymphatic Invasion: Present (positive) 
+
+- Tumor Extent: Tumor invades gallbladder,Tumor invades diaphram, 
+
+- Hepatic Vein Margin: Cannot be evaluated 
+
+- Common Bile Duct Margin: Involved by invasive tumor (r.i., positive) 
+
+- Parenchymal Margin: Involved by in-situ carcinoma only 
+
+- Primary Tumor (pT): pTx 
+
+- Regional Lymph Nodes (pN): pNx 
+
+- Number Involved: 10 
+
+- Number Examined: 12 
+
+- Metastasis (pM): pMX 
+
+- Specify Sites: 2 
+
+- Additional Findings: Iron Overload,Hepatitis,
+
+
+
+*KIDNEY TUMOR*
+
+ 
+
+- MACROSCOPIC:  
+
+- Specimen Submitted: Left kidney,Right kidney,Left kidney and adrenal gland, 
+
+- Surgical Procedure: Total nephrectomy 
+
+- Tumor Site: Upper pole,Middle, 
+
+- Tumor Focality: Unifocal 
+
+- Tumor Size: 12 
+
+- MICROSCOPIC:  
+
+- Histologic Type: Papillary renal carcinoma 
+
+- Histologic Grade (Fuhrman Nuclear Grade): GX: Cannot be assessed 
+
+- Angiolymphatic Invasion: Not identified (negative) 
+
+- Tumor Extent: Tumor limited to kidney,Tumor extends into major veins, 
+
+- Resection Margins:  
+
+- Distal Margin: Cannot be evaluated 
+
+- Radial (capsular) Margin: Involved by in-situ carcinoma only 
+
+- Parenchymal Margin: Involved by invasive tumor (i.e., positive) 
+
+- PATHOLOGIC STAGING:  
+
+- Primary Tumor (pT): pTx 
+
+- Regional Lymph Nodes (pN): pNx 
+
+- Number Involved: 12 
+
+- Number Examined: 12 
+
+- Metastasis (pM): pMX 
+
+- ADDITIONAL FINDINGS:  
+
+- Additional Findings: None identified,Inflammation,
+
+
+
+
+*Microscopy:*
+
+Please download the Tailor-I plug-in from the following URL.You can also find its description on same url, please do refer it before usingthe plug-in.
+https://github.com/TDS-Tailor-I/Tailori-Plugin-Key.git
+ 
+Also find the attached Tailor-I API documents with this mailfor Tailor-I API integration.
+ 
+For testing Kindly use the following login details in theattached document and Tailor-I plug-in while integrating the Tailor-I API.
+ 
+
+
+
+
+*Attached File:*
+
+https://lims.visiopath.com/assets/uploads/Admin Panel.docx
+ 
+https://lims.visiopath.com/assets/uploads/star.jpg
+ 
+https://lims.visiopath.com/assets/uploads/showinvoiceoriginal.txt
+ 
+	
+
+
+
+*Snomed:*
+
+402153 - 15q partial monosomy syndrome, 
+402154 - 15q partial trisomy syndrome 
+
+
+
+
+
+
+
