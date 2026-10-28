@@ -8,6 +8,13 @@
       "when": 1793188023725,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793191960320,
+      "tag": "0001_two_factor_lockout",
+      "breakpoints": true
     }
   ]
 }

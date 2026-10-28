@@ -22,7 +22,7 @@ export default async function AccountPage() {
       <Card className="mt-6">
         <SessionList
           currentToken={session.token}
-          sessions={sessions.map((s) => ({ token: s.token, userAgent: s.userAgent ?? "Unknown device", ipAddress: s.ipAddress ?? "", createdAt: s.createdAt.toISOString() }))}
+          sessions={sessions.map((s) => ({ token: s.token, userAgent: s.userAgent ?? "Unknown device", ipAddress: s.ipAddress ?? "", createdAt: new Date(s.createdAt).toISOString() }))}
         />
       </Card>
     </main>

@@ -11,7 +11,7 @@ The source of truth is `MASTERPROMPT_PHASE1.md`. Tick each task when it's done.
 - [x] /api/health (DB, Redis, MinIO)
 - [x] Initial Drizzle schema plus migration (auth, workspaces, billing, AI ledger, catalogue)
 - [x] docs/DEPLOY.md
-- [ ] Verify against a live Postgres/Redis (Docker isn't installed on the dev Mac)
+- [x] Verified against local Postgres 16 + pgvector + Redis (Homebrew)
 - [ ] ESLint config and Vitest harness
 
 ## M1: Auth, workspaces and roles
@@ -22,7 +22,7 @@ The source of truth is `MASTERPROMPT_PHASE1.md`. Tick each task when it's done.
 - [x] New workspace starts a 14-day Business trial plus an AI credit grant (core/startTrial); plans seeded on deploy
 - [x] Settings: workspace (name, currency, timezone, locale), members; account (profile, password, 2FA with QR and backup codes, sessions)
 - [x] Middleware guards app routes
-- [ ] End-to-end test against a live DB (blocked: no local Postgres/Redis)
+- [x] Tested against a live DB: sign-up, verify, create workspace (trial + credits), pages, invite, rate limit
 - [ ] Playwright e2e: sign up → verify → create workspace → invite
 
 ## M2–M13
