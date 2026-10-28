@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# Git post-receive hook: zero-downtime release with health check and auto-rollback.
+set -euo pipefail
+
+APP_ROOT=/srv/mewemarket
+GIT_ROOT=/srv/git/mewemarket.git
+BRANCH=main
+KEEP=5
+HEALTH_URL=http://127.0.0.1:3000/api/health
+
+while read -r _old newrev ref; do
+  [ "$ref" = "refs/heads/$BRANCH" ] || { echo "Ignoring $ref"; continue; }
+
+  RELEASE="$APP_ROOT/releases/$(date +%Y%m%d%H%M%S)"
+  PREVIOUS="$(readlink -f "$APP_ROOT/current" || true)"
+  echo "==> Releasing ${newrev:0:7} to $RELEASE"
+
+  mkdir -p "$RELEASE"
+  git --work-tree="$RELEASE" --git-dir="$GIT_ROOT" checkout -f "$newrev"
+  ln -sfn "$APP_ROOT/shared/.env" "$RELEASE/.env"
+  ln -sfn "$APP_ROOT/shared/.env" "$RELEASE/apps/web/.env"
+  ln -sfn "$APP_ROOT/shared/uploads" "$RELEASE/uploads"
+
+  cd "$RELEASE"
+  set -a; . ./.env; set +a
+
+  docker compose up -d --wait
+  pnpm install --frozen-lockfile --prod=false
+  pnpm db:migrate
+  pnpm build
+
+  ln -sfn "$RELEASE" "$APP_ROOT/current"
+  cd "$APP_ROOT/current"
+  pm2 startOrReload ecosystem.config.cjs --update-env
+  pm2 save
+
+  echo "==> Health check"
+  ok=0
+  for i in $(seq 1 20); do
+    if curl -fsS "$HEALTH_URL" >/dev/null; then ok=1; break; fi
+    sleep 3
+  done
+
+  if [ "$ok" -ne 1 ]; then
+    echo "!! Health check failed"
+    if [ -n "$PREVIOUS" ]; then
+      echo "!! Rolling back to $PREVIOUS"
+      ln -sfn "$PREVIOUS" "$APP_ROOT/current"
+      cd "$APP_ROOT/current" && pm2 startOrReload ecosystem.config.cjs --update-env
+    fi
+    exit 1
+  fi
+
+  echo "==> Pruning old releases"
+  ls -1dt "$APP_ROOT"/releases/* | tail -n +$((KEEP + 1)) | xargs -r rm -rf
+  echo "==> Deployed ${newrev:0:7}"
+done

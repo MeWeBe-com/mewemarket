@@ -1,0 +1,27 @@
+# Copy to /etc/caddy/Caddyfile, then: systemctl reload caddy
+www.mewemarket.com {
+	redir https://mewemarket.com{uri} permanent
+}
+
+mewemarket.com {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(self), microphone=(), geolocation=()"
+		-Server
+	}
+
+	# MCP uses streaming responses; disable buffering.
+	handle /mcp* {
+		reverse_proxy 127.0.0.1:3000 {
+			flush_interval -1
+		}
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:3000
+	}
+}
