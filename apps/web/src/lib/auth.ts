@@ -14,6 +14,8 @@ const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL, { lazyCon
 const social: Parameters<typeof betterAuth>[0]["socialProviders"] = {};
 if (process.env.GOOGLE_CLIENT_ID)
   social.google = { clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET! };
+if (process.env.FACEBOOK_CLIENT_ID)
+  social.facebook = { clientId: process.env.FACEBOOK_CLIENT_ID, clientSecret: process.env.FACEBOOK_CLIENT_SECRET! };
 if (process.env.GITHUB_CLIENT_ID)
   social.github = { clientId: process.env.GITHUB_CLIENT_ID, clientSecret: process.env.GITHUB_CLIENT_SECRET! };
 

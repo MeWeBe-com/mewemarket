@@ -1,5 +1,6 @@
 // Idempotent base data. Run on every deploy (post-receive) after migrations.
 import { db, schema, sql } from "@mewe/db";
+import { seedCatalog } from "./catalog";
 import { PLANS } from "./plans";
 
 for (const p of PLANS) {
@@ -12,4 +13,5 @@ for (const p of PLANS) {
     });
 }
 console.log(`Seeded ${PLANS.length} plans`);
+console.log(`Seeded ${await seedCatalog()} catalogue apps`);
 await sql.end();

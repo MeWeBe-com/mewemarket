@@ -4,11 +4,17 @@ const config: NextConfig = {
   transpilePackages: ["@mewe/db", "@mewe/core"],
   poweredByHeader: false,
   // Legacy CodeIgniter URLs → new structure (keeps old SEO value).
+  // Product ids and old /apps/<dir>/... demo folders are mapped in code (products route, apps/[slug] routes).
   async redirects() {
     return [
-      { source: "/products/:path*", destination: "/apps", permanent: true },
+      { source: "/category/ViewCategory/:id/:slug/:page*", destination: "/apps/category/:slug", permanent: true },
       { source: "/category/:path*", destination: "/apps", permanent: true },
-      { source: "/insights/:slug.html", destination: "/insights/:slug", permanent: true },
+      { source: "/users/register", destination: "/sign-up", permanent: true },
+      { source: "/users/ForgetPassword", destination: "/forgot-password", permanent: true },
+      { source: "/users/Support", destination: "/contact", permanent: true },
+      { source: "/users/:path*", destination: "/sign-in", permanent: true },
+      // Insights are paused until the quality-gated pipeline ships (M10).
+      { source: "/insights/:path*", destination: "/", permanent: false },
     ];
   },
 };

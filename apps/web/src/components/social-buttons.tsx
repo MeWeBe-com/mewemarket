@@ -1,15 +1,18 @@
 "use client";
 import { authClient } from "@/lib/auth-client";
+import type { Provider } from "@/lib/providers";
 import { Button } from "./ui";
 
-export function SocialButtons({ providers }: { providers: ("google" | "github")[] }) {
+const LABEL: Record<Provider, string> = { google: "Google", facebook: "Facebook", github: "GitHub" };
+
+export function SocialButtons({ providers }: { providers: Provider[] }) {
   if (!providers.length) return null;
   return (
     <div className="space-y-2">
       {providers.map((p) => (
         <Button key={p} type="button" variant="secondary" className="w-full"
           onClick={() => authClient.signIn.social({ provider: p, callbackURL: "/dashboard" })}>
-          Continue with {p === "google" ? "Google" : "GitHub"}
+          Continue with {LABEL[p]}
         </Button>
       ))}
       <div className="flex items-center gap-3 py-2 text-xs text-[var(--muted)]">
