@@ -27,6 +27,7 @@ while read -r _old newrev ref; do
   docker compose up -d --wait
   pnpm install --frozen-lockfile --prod=false
   pnpm db:migrate
+  pnpm --filter @mewe/core seed
   pnpm build
 
   ln -sfn "$RELEASE" "$APP_ROOT/current"

@@ -15,10 +15,15 @@ The source of truth is `MASTERPROMPT_PHASE1.md`. Tick each task when it's done.
 - [ ] ESLint config and Vitest harness
 
 ## M1: Auth, workspaces and roles
-- [ ] Better Auth (password, magic link, Google/GitHub, organization, 2FA) wired to Drizzle
-- [ ] Sign up, sign in, verify, reset pages
-- [ ] Workspace create, switch, invite and roles
-- [ ] Settings: profile, workspace, sessions
+- [x] Better Auth (password, magic link, Google/GitHub, organization, 2FA) wired to Drizzle, with Redis-backed rate limits
+- [x] Sign up, sign in (password or magic link), verify email, forgot/reset password, 2FA challenge pages
+- [x] Workspace create (onboarding), switcher, invites with accept/decline, role change, remove, revoke invite
+- [x] Roles owner/admin/member/guest (lib/permissions.ts)
+- [x] New workspace starts a 14-day Business trial plus an AI credit grant (core/startTrial); plans seeded on deploy
+- [x] Settings: workspace (name, currency, timezone, locale), members; account (profile, password, 2FA with QR and backup codes, sessions)
+- [x] Middleware guards app routes
+- [ ] End-to-end test against a live DB (blocked: no local Postgres/Redis)
+- [ ] Playwright e2e: sign up → verify → create workspace → invite
 
 ## M2–M13
 Not started. See MASTERPROMPT_PHASE1.md.

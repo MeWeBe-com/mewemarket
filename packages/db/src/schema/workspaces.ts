@@ -37,6 +37,7 @@ export const invitations = pgTable(
     status: text("status").notNull().default("pending"),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     inviterId: text("inviter_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("invitations_ws_idx").on(t.organizationId)],
 );

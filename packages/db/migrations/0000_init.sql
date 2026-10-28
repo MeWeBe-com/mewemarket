@@ -63,7 +63,8 @@ CREATE TABLE "invitations" (
 	"role" text,
 	"status" text DEFAULT 'pending' NOT NULL,
 	"expires_at" timestamp with time zone NOT NULL,
-	"inviter_id" text NOT NULL
+	"inviter_id" text NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "members" (

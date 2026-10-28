@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const config: NextConfig = {
-  transpilePackages: ["@mewe/db"],
+  transpilePackages: ["@mewe/db", "@mewe/core"],
   poweredByHeader: false,
   // Legacy CodeIgniter URLs → new structure (keeps old SEO value).
   async redirects() {
