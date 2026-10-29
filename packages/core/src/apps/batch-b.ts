@@ -10,8 +10,8 @@ export const BATCH_B = [
     features: ["Employee list with pay rates", "Daily attendance with hours and overtime", "Attendance calendar", "Pay run records with gross, deductions and net", "Hour and pay totals", "CSV export for your accountant"],
     entities: [
       entity("employee", "Employee", "Employees", ["name*", "employee_number", "job_title", "pay_type:select=Hourly|Salaried", "hourly_rate:money", "monthly_salary:money", "start_date:date", "status:select=Active|On leave|Left"]),
-      entity("attendance", "Attendance", "Attendance", ["employee*:ref=employee", "date*:date", "clock_in:time", "clock_out:time", "hours_worked:number", "overtime_hours:number", "status:select=Present|Late|Absent|Holiday|Sick", "notes"], { title: "employee", calendar: "date", totals: ["hours_worked", "overtime_hours"] }),
-      entity("pay_run", "Pay run", "Pay runs", ["employee*:ref=employee", "period_start*:date", "period_end*:date", "gross_pay*:money", "deductions:money", "net_pay:money", "pay_date:date", "status*:select=Draft|Approved|Paid"], { title: "employee", board: "status", calendar: "pay_date", totals: ["gross_pay", "deductions", "net_pay"] }),
+      entity("attendance", "Attendance", "Attendance", ["employee*:ref=employee", "date*:date", "clock_in:time", "clock_out:time", "hours_worked:number", "overtime_hours:number", "status:select=Present|Late|Absent|Holiday|Sick", "notes"], { title: "employee", calendar: "date", totals: ["hours_worked", "overtime_hours"], calc: { hours_worked: "hours(clock_in, clock_out)" } }),
+      entity("pay_run", "Pay run", "Pay runs", ["employee*:ref=employee", "period_start*:date", "period_end*:date", "gross_pay*:money", "deductions:money", "net_pay:money", "pay_date:date", "status*:select=Draft|Approved|Paid"], { title: "employee", board: "status", calendar: "pay_date", totals: ["gross_pay", "deductions", "net_pay"], calc: { net_pay: "gross_pay - deductions?" } }),
     ],
   }),
   app({
@@ -67,7 +67,7 @@ export const BATCH_B = [
     features: ["Staff list with roles and contracted hours", "Shift calendar", "Shift status board", "Swap requests with approval status", "Scheduled hour totals"],
     entities: [
       entity("staff", "Staff member", "Staff", ["name*", "role:select=Manager|Supervisor|Team member|Trainee", "phone:phone", "contracted_hours:number", "hourly_rate:money", "status:select=Active|Inactive"]),
-      entity("shift", "Shift", "Shifts", ["staff*:ref=staff", "date*:date", "start_time*:time", "end_time*:time", "hours:number", "location", "status*:select=Draft|Published|Worked|Missed"], { title: "staff", board: "status", calendar: "date", totals: ["hours"] }),
+      entity("shift", "Shift", "Shifts", ["staff*:ref=staff", "date*:date", "start_time*:time", "end_time*:time", "hours:number", "location", "status*:select=Draft|Published|Worked|Missed"], { title: "staff", board: "status", calendar: "date", totals: ["hours"], calc: { hours: "hours(start_time, end_time)" } }),
       entity("swap", "Swap request", "Swap requests", ["shift*:ref=shift", "requested_by*:ref=staff", "cover_by:ref=staff", "reason", "status*:select=Requested|Approved|Declined"], { title: "shift", board: "status" }),
     ],
   }),
@@ -78,7 +78,7 @@ export const BATCH_B = [
     features: ["Itemised expense claims", "Approval board from submitted to reimbursed", "Expense categories", "Mileage log", "Claim totals by status", "CSV export"],
     entities: [
       entity("claim", "Expense claim", "Expense claims", ["reference*", "employee*", "date*:date", "category:select=Travel|Meals|Accommodation|Supplies|Training|Other", "items:lines", "receipt_link:url", "status*:select=Draft|Submitted|Approved|Rejected|Reimbursed", "notes:long"], { board: "status", calendar: "date", totals: ["items"] }),
-      entity("mileage", "Mileage trip", "Mileage", ["purpose*", "employee*", "date*:date", "from_place", "to_place", "miles:number", "rate_per_mile:money", "amount:money"], { calendar: "date", totals: ["miles", "amount"] }),
+      entity("mileage", "Mileage trip", "Mileage", ["purpose*", "employee*", "date*:date", "from_place", "to_place", "miles:number", "rate_per_mile:money", "amount:money"], { calendar: "date", totals: ["miles", "amount"], calc: { amount: "miles * rate_per_mile" } }),
     ],
   }),
 

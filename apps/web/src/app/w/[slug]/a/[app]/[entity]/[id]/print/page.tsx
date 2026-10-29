@@ -1,4 +1,4 @@
-import { getEntityDef, getRecord, recordTitles } from "@mewe/core";
+import { getEntityDef, getRecord, recordTitles, refTarget } from "@mewe/core";
 import { notFound } from "next/navigation";
 import { cents, formatValue, linesSum, money } from "@/lib/format";
 import { PrintButton } from "@/components/records/print-button";
@@ -22,8 +22,9 @@ export default async function PrintRecord({ params }: { params: Promise<{ slug: 
   const party = entity.fields.find((x) => x.type === "ref" && record.data[x.key]);
   const details = entity.fields.filter((x) => !["lines", "long"].includes(x.type) && x !== taxField && x !== party && record.data[x.key] !== undefined && record.data[x.key] !== "");
   const notes = entity.fields.filter((x) => x.type === "long" && record.data[x.key]);
-  const partyRec = party ? await getRecord(workspace.id, app.slug, party.ref!, String(record.data[party.key])) : null;
-  const partyDef = party ? getEntityDef(app.slug, party.ref!) : null;
+  const to = party ? refTarget(app.slug, party) : null;
+  const partyRec = to ? await getRecord(workspace.id, to.app, to.entity, String(record.data[party!.key])) : null;
+  const partyDef = to ? getEntityDef(to.app, to.entity) : null;
 
   return (
     <div className="mx-auto max-w-3xl bg-white p-10 text-slate-900 print:p-0">

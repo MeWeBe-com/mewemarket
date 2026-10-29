@@ -18,7 +18,7 @@ export default async function NewRecord({ params, searchParams }: { params: Prom
       <h1 className="mb-5 text-lg font-semibold">New {entity.name.toLowerCase()}</h1>
       {saved && <div className="mb-4"><Alert tone="success">Saved. Add another below.</Alert></div>}
       <RecordForm entity={entity} values={defaults} refs={refs} action={saveRecordAction.bind(null, slug, app.slug, entity.key, null)}
-        cancelHref={base} currency={fmt.currency} locale={fmt.locale} isNew readOnly={false} />
+        cancelHref={base} currency={fmt.currency} locale={fmt.locale} isNew readOnly={false} slug={slug} />
     </Card>
   );
 }

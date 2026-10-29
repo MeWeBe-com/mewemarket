@@ -8,7 +8,7 @@ export const CORE_SUITE = [
     description: "Track every customer and deal. Drag deals between stages, log calls and meetings, and see the value of your pipeline at a glance.",
     features: ["Contacts and companies", "Deal pipeline board", "Activity log for calls, meetings and emails", "Follow-up dates on a calendar", "Pipeline value totals", "CSV import and export"],
     entities: [
-      entity("deal", "Deal", "Deals", ["name*", "company:ref=company", "contact:ref=contact", "value:money", "stage*:select=Lead|Qualified|Proposal|Negotiation|Won|Lost", "expected_close:date", "owner", "notes:long"], { board: "stage", calendar: "expected_close", totals: ["value"] }),
+      entity("deal", "Deal", "Deals", ["name*", "company:ref=company", "contact:ref=contact", "value:money", "stage*:select=Lead|Qualified|Proposal|Negotiation|Won|Lost", "expected_close:date", "owner:ref=team-hr.employee", "notes:long"], { board: "stage", calendar: "expected_close", totals: ["value"] }),
       entity("contact", "Contact", "Contacts", ["name*", "email:email", "phone:phone", "company:ref=company", "job_title", "status:select=Lead|Customer|Partner|Inactive", "notes:long"]),
       entity("company", "Company", "Companies", ["name*", "website:url", "industry", "phone:phone", "city", "country", "size:select=1-10|11-50|51-200|201-1000|1000+"]),
       entity("activity", "Activity", "Activities", ["subject*", "type:select=Call|Meeting|Email|Task", "contact:ref=contact", "deal:ref=deal", "due:datetime", "done:bool", "notes:long"], { calendar: "due" }),
@@ -32,8 +32,8 @@ export const CORE_SUITE = [
     description: "Plan projects, assign tasks on a kanban board, set due dates and priorities, and log time against each task.",
     features: ["Projects with status and deadlines", "Kanban task board", "Priorities and due dates", "Task calendar", "Time log with hour totals"],
     entities: [
-      entity("task", "Task", "Tasks", ["title*", "project:ref=project", "status*:select=To do|In progress|Review|Done", "priority:select=Low|Medium|High|Urgent", "assignee", "due:date", "description:long"], { board: "status", calendar: "due" }),
-      entity("project", "Project", "Projects", ["name*", "client", "status*:select=Planned|Active|On hold|Completed", "start:date", "deadline:date", "budget:money", "description:long"], { board: "status", totals: ["budget"] }),
+      entity("task", "Task", "Tasks", ["title*", "project:ref=project", "status*:select=To do|In progress|Review|Done", "priority:select=Low|Medium|High|Urgent", "assignee:ref=team-hr.employee", "due:date", "description:long"], { board: "status", calendar: "due" }),
+      entity("project", "Project", "Projects", ["name*", "client:ref=crm.company", "status*:select=Planned|Active|On hold|Completed", "start:date", "deadline:date", "budget:money", "description:long"], { board: "status", totals: ["budget"] }),
       entity("time_entry", "Time entry", "Time log", ["description*", "task:ref=task", "date*:date", "hours*:number", "billable:bool"], { totals: ["hours"], calendar: "date" }),
     ],
   }),
@@ -56,8 +56,8 @@ export const CORE_SUITE = [
     features: ["Employee directory", "Leave requests with approval status", "Leave calendar", "Timesheets with hour totals", "Public holidays"],
     entities: [
       entity("employee", "Employee", "Employees", ["name*", "email:email", "phone:phone", "job_title", "department:select=Management|Sales|Operations|Finance|Engineering|Support|Other", "start_date:date", "status:select=Active|On leave|Left", "salary:money"]),
-      entity("leave", "Leave request", "Leave requests", ["employee*:ref=employee", "type*:select=Annual|Sick|Unpaid|Parental|Other", "start*:date", "end*:date", "days:number", "status*:select=Requested|Approved|Rejected", "reason:long"], { title: "employee", board: "status", calendar: "start", totals: ["days"] }),
-      entity("timesheet", "Timesheet", "Timesheets", ["employee*:ref=employee", "date*:date", "hours*:number", "project", "notes"], { title: "employee", calendar: "date", totals: ["hours"] }),
+      entity("leave", "Leave request", "Leave requests", ["employee*:ref=employee", "type*:select=Annual|Sick|Unpaid|Parental|Other", "start*:date", "end*:date", "days:number", "status*:select=Requested|Approved|Rejected", "reason:long"], { title: "employee", board: "status", calendar: "start", totals: ["days"], calc: { days: "days(start, end)" } }),
+      entity("timesheet", "Timesheet", "Timesheets", ["employee*:ref=employee", "date*:date", "hours*:number", "project:ref=projects.project", "notes"], { title: "employee", calendar: "date", totals: ["hours"] }),
       entity("holiday", "Holiday", "Holidays", ["name*", "date*:date"], { calendar: "date" }),
     ],
   }),
@@ -67,7 +67,7 @@ export const CORE_SUITE = [
     description: "Manage your services, staff and customer appointments on a shared calendar, and track bookings from request to completion.",
     features: ["Services with prices and durations", "Appointment calendar", "Booking status board", "Customer list", "Staff assignments"],
     entities: [
-      entity("appointment", "Appointment", "Appointments", ["customer*:ref=customer", "service:ref=service", "staff", "when*:datetime", "status*:select=Requested|Confirmed|Completed|Cancelled|No-show", "price:money", "notes:long"], { title: "customer", board: "status", calendar: "when", totals: ["price"] }),
+      entity("appointment", "Appointment", "Appointments", ["customer*:ref=customer", "service:ref=service", "staff:ref=team-hr.employee", "when*:datetime", "status*:select=Requested|Confirmed|Completed|Cancelled|No-show", "price:money", "notes:long"], { title: "customer", board: "status", calendar: "when", totals: ["price"] }),
       entity("service", "Service", "Services", ["name*", "duration_minutes:number", "price:money", "description:long"]),
       entity("customer", "Customer", "Customers", ["name*", "email:email", "phone:phone", "notes:long"]),
     ],

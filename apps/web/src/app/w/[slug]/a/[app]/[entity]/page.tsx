@@ -49,7 +49,7 @@ export default async function EntityList({ params, searchParams }: { params: Pro
               ))}
             </div>
           )}
-          <a href={`${base}/export`} className="inline-flex h-9 items-center rounded-lg border border-[var(--border)] px-3 text-sm hover:bg-black/5 dark:hover:bg-white/5">Export CSV</a>
+          {canEdit && <a href={`${base}/export`} className="inline-flex h-9 items-center rounded-lg border border-[var(--border)] px-3 text-sm hover:bg-black/5 dark:hover:bg-white/5">Export CSV</a>}
           {canEdit && <ImportCsv slug={slug} app={app.slug} entity={entity.key} columns={entity.fields.map((x) => x.label)} />}
           {canEdit && <Link href={`${base}/new`} className="inline-flex h-9 items-center rounded-lg bg-accent px-4 text-sm font-semibold text-white hover:bg-indigo-500">+ New {entity.name.toLowerCase()}</Link>}
         </div>

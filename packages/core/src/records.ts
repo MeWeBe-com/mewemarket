@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { db, schema } from "@mewe/db";
 import { and, asc, count, desc, eq, ilike, inArray, sql } from "drizzle-orm";
-import { getAppDef, getEntityDef, type EntityDef, type FieldDef } from "./apps";
+import { getAppDef, getEntityDef, refKey, refTarget, type EntityDef, type FieldDef } from "./apps";
+import { evalCalc } from "./apps/calc";
 import { currentPlan } from "./billing";
 
 export type Line = { description: string; qty: number; price: number };
@@ -24,10 +25,11 @@ const SIGNED = /(balance|change|adjust|variance|difference|delta|profit|net|temp
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** Turns raw form/CSV strings into typed values. Unknown keys are dropped. */
-export function coerce(entity: EntityDef, raw: Record<string, unknown>) {
+export function coerce(entity: EntityDef, raw: Record<string, unknown>, prev: Values = {}) {
   const data: Values = {};
   const errors: Record<string, string> = {};
   for (const f of entity.fields) {
+    if (f.calc) continue;
     const v = raw[f.key];
     const s = typeof v === "string" ? v.trim() : v;
     const empty = s === undefined || s === null || s === "" || (f.type === "lines" && Array.isArray(s) && !s.length);
@@ -93,7 +95,22 @@ export function coerce(entity: EntityDef, raw: Record<string, unknown>) {
         data[f.key] = String(s).slice(0, f.type === "long" ? 20_000 : 1_000);
     }
   }
+  applyCalcs(entity, data, prev);
   return { data, errors };
+}
+
+/**
+ * Calculated fields run last, over the cleaned values; whatever was submitted for them is ignored.
+ * When inputs are missing the stored value stays, so figures entered before a field became calculated survive.
+ */
+function applyCalcs(entity: EntityDef, data: Values, prev: Values = {}) {
+  for (const f of entity.fields) {
+    if (!f.calc) continue;
+    const n = evalCalc(f.calc, data);
+    if (n !== null) data[f.key] = n;
+    else if (prev[f.key] !== undefined) data[f.key] = prev[f.key];
+    else delete data[f.key];
+  }
 }
 
 /** Rejects impossible dates like 2025-02-31, which Date would roll over. */
@@ -175,16 +192,22 @@ export async function boardCounts(workspaceId: string, app: string, entity: stri
   return Object.fromEntries(rows.map((x) => [x.v ?? "", x.n]));
 }
 
-/** id → display title for every record of the ref'd entities, used to show and pick references. */
+/**
+ * id → display title for every record of the ref'd entities, keyed by refKey, used to show and pick references.
+ * A cross-app ref whose app isn't installed gets no key, so the form can offer to add that app.
+ */
 export async function refOptions(workspaceId: string, app: string, fields: FieldDef[]) {
   const out: Record<string, { id: string; title: string }[]> = {};
   for (const f of fields) {
-    if (f.type !== "ref" || out[f.ref!]) continue;
-    const target = mustEntity(app, f.ref!);
+    const key = f.type === "ref" ? refKey(f) : "";
+    if (!key || out[key]) continue;
+    const to = refTarget(app, f);
+    if (f.refApp && !(await isInstalled(workspaceId, to.app))) continue;
+    const target = mustEntity(to.app, to.entity);
     const rows = await db.select({ id: r.id, data: r.data }).from(r)
-      .where(and(eq(r.workspaceId, workspaceId), eq(r.app, app), eq(r.entity, target.key)))
+      .where(and(eq(r.workspaceId, workspaceId), eq(r.app, to.app), eq(r.entity, target.key)))
       .orderBy(sql`lower(${r.data}->>${target.title})`).limit(1000);
-    out[f.ref!] = rows.map((x) => ({ id: x.id, title: String(x.data[target.title] ?? "Untitled") }));
+    out[key] = rows.map((x) => ({ id: x.id, title: String(x.data[target.title] ?? "Untitled") }));
   }
   return out;
 }
@@ -206,11 +229,26 @@ export function displayTitle(e: EntityDef | null, data: Values, refTitles: Recor
 
 // --- Writes ------------------------------------------------------------------
 
-async function assertRecordQuota(workspaceId: string, adding: number) {
+const UUID = /^[0-9a-f-]{36}$/;
+
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+/**
+ * Serialises limit-checked writes per workspace so concurrent requests can't overshoot a plan limit.
+ * The plan is read before taking the lock: inside, use only `tx`, or waiters can exhaust the pool.
+ */
+async function withWorkspaceLock<T>(workspaceId: string, fn: (tx: Tx, plan: Awaited<ReturnType<typeof currentPlan>>) => Promise<T>) {
   const plan = await currentPlan(workspaceId);
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${workspaceId}))`);
+    return fn(tx, plan);
+  });
+}
+
+async function assertRecordQuota(tx: Tx, plan: Awaited<ReturnType<typeof currentPlan>>, workspaceId: string, adding: number) {
   const max = plan.limits.records;
   if (max < 0) return;
-  const [row] = await db.select({ n: count() }).from(r).where(eq(r.workspaceId, workspaceId));
+  const [row] = await tx.select({ n: count() }).from(r).where(eq(r.workspaceId, workspaceId));
   if ((row?.n ?? 0) + adding > max) throw new LimitError(`Your plan allows ${max.toLocaleString()} records. Upgrade to add more.`);
 }
 
@@ -218,13 +256,17 @@ async function assertInstalled(workspaceId: string, app: string) {
   if (!(await isInstalled(workspaceId, app))) throw new Error(`App ${app} is not installed`);
 }
 
-/** Keeps ref values pointing at records of the right entity in this workspace. */
-async function checkRefs(workspaceId: string, app: string, e: EntityDef, data: Values) {
+/**
+ * Keeps ref values pointing at records of the right entity in this workspace (and, across apps, an installed app).
+ * An unchanged value that isn't a record id is kept: text saved before the field became a link.
+ */
+async function checkRefs(workspaceId: string, app: string, e: EntityDef, data: Values, prev: Values = {}) {
   const errors: Record<string, string> = {};
   for (const f of e.fields) {
     if (f.type !== "ref" || !data[f.key]) continue;
-    const ok = await getRecord(workspaceId, app, f.ref!, String(data[f.key]));
-    if (ok) continue;
+    const to = refTarget(app, f);
+    const ok = (!f.refApp || (await isInstalled(workspaceId, to.app))) && (await getRecord(workspaceId, to.app, to.entity, String(data[f.key])));
+    if (ok || (data[f.key] === prev[f.key] && !UUID.test(String(data[f.key])))) continue;
     // A pointer to a deleted record is cleared rather than blocking every later save.
     delete data[f.key];
     if (f.required) errors[f.key] = `${f.label} not found`;
@@ -238,17 +280,20 @@ export async function createRecord(workspaceId: string, app: string, entity: str
   const { data, errors } = coerce(e, raw);
   Object.assign(errors, await checkRefs(workspaceId, app, e, data));
   if (Object.keys(errors).length) return { errors };
-  await assertRecordQuota(workspaceId, 1);
   const id = randomUUID();
-  await db.insert(r).values({ id, workspaceId, app, entity, data, search: searchText(data), createdBy: userId, updatedBy: userId });
+  await withWorkspaceLock(workspaceId, async (tx, plan) => {
+    await assertRecordQuota(tx, plan, workspaceId, 1);
+    await tx.insert(r).values({ id, workspaceId, app, entity, data, search: searchText(data), createdBy: userId, updatedBy: userId });
+  });
   return { id };
 }
 
 export async function updateRecord(workspaceId: string, app: string, entity: string, id: string, raw: Values, userId: string) {
   const e = mustEntity(app, entity);
   await assertInstalled(workspaceId, app);
-  const { data, errors } = coerce(e, raw);
-  Object.assign(errors, await checkRefs(workspaceId, app, e, data));
+  const prev = (await getRecord(workspaceId, app, entity, id))?.data ?? {};
+  const { data, errors } = coerce(e, raw, prev);
+  Object.assign(errors, await checkRefs(workspaceId, app, e, data, prev));
   if (Object.keys(errors).length) return { errors };
   const res = await db.update(r).set({ data, search: searchText(data), updatedBy: userId, updatedAt: new Date() })
     .where(and(eq(r.id, id), eq(r.workspaceId, workspaceId), eq(r.app, app), eq(r.entity, entity))).returning({ id: r.id });
@@ -285,7 +330,7 @@ export async function importRecords(workspaceId: string, app: string, entity: st
       const f = byLabel.get(h.trim().toLowerCase());
       if (!f) continue;
       if (f.type === "ref" && v) {
-        const hit = refs[f.ref!]?.find((o) => o.id === v || o.title.toLowerCase() === v.trim().toLowerCase());
+        const hit = refs[refKey(f)]?.find((o) => o.id === v || o.title.toLowerCase() === v.trim().toLowerCase());
         mapped[f.key] = hit?.id ?? "";
       } else mapped[f.key] = v;
     }
@@ -293,8 +338,10 @@ export async function importRecords(workspaceId: string, app: string, entity: st
     if (Object.keys(errors).length) failed.push({ row: i + 2, error: Object.values(errors)[0] ?? "Invalid row" });
     else values.push({ id: randomUUID(), workspaceId, app, entity, data, search: searchText(data), createdBy: userId, updatedBy: userId });
   });
-  await assertRecordQuota(workspaceId, values.length);
-  for (let i = 0; i < values.length; i += 500) await db.insert(r).values(values.slice(i, i + 500));
+  await withWorkspaceLock(workspaceId, async (tx, plan) => {
+    await assertRecordQuota(tx, plan, workspaceId, values.length);
+    for (let i = 0; i < values.length; i += 500) await tx.insert(r).values(values.slice(i, i + 500));
+  });
   return { imported: values.length, failed };
 }
 
@@ -315,17 +362,20 @@ export async function isInstalled(workspaceId: string, app: string) {
 export async function installApp(workspaceId: string, app: string, userId: string, withSamples = false) {
   const def = getAppDef(app);
   if (!def) throw new Error(`Unknown app ${app}`);
-  if (await isInstalled(workspaceId, app)) return;
-  const plan = await currentPlan(workspaceId);
-  const max = plan.limits.apps;
-  if (max >= 0) {
-    const [row] = await db.select({ n: count() }).from(schema.installedApps).where(eq(schema.installedApps.workspaceId, workspaceId));
-    if ((row?.n ?? 0) >= max) throw new LimitError(`Your ${plan.name} plan includes ${max} apps. Upgrade to add more.`);
-  }
-  await db.transaction(async (tx) => {
+  const added = await withWorkspaceLock(workspaceId, async (tx, plan) => {
+    const max = plan.limits.apps;
+    const [dup] = await tx.select({ id: schema.installedApps.id }).from(schema.installedApps)
+      .where(and(eq(schema.installedApps.workspaceId, workspaceId), eq(schema.installedApps.catalogAppId, app))).limit(1);
+    if (dup) return false;
+    if (max >= 0) {
+      const [row] = await tx.select({ n: count() }).from(schema.installedApps).where(eq(schema.installedApps.workspaceId, workspaceId));
+      if ((row?.n ?? 0) >= max) throw new LimitError(`Your ${plan.name} plan includes ${max} apps. Upgrade to add more.`);
+    }
     await tx.insert(schema.installedApps).values({ id: randomUUID(), workspaceId, catalogAppId: app, installedBy: userId });
     await tx.update(schema.catalogApps).set({ installCount: sql`${schema.catalogApps.installCount} + 1` }).where(eq(schema.catalogApps.id, app));
+    return true;
   });
+  if (!added) return;
   if (withSamples) await addSampleData(workspaceId, app, userId);
 }
 
@@ -349,7 +399,9 @@ function sample(f: FieldDef, i: number, title: boolean, entity: EntityDef): unkn
   const name = PEOPLE[(i + spread(entity.key)) % PEOPLE.length]!, word = PLACES[(i + spread(f.key)) % PLACES.length]!;
   const day = (d: number) => new Date(Date.now() + d * 86_400_000).toISOString().slice(0, 10);
   // End-type dates land after start-type dates.
-  const later = /(end|until|to|due|expiry|expires|checkout|check_out|return|deadline|renewal|valid)/.test(f.key) ? 14 + (spread(f.key) % 30) : 0;
+  const ends = /(end|until|to|due|expiry|expires|checkout|check_out|return|deadline|renewal|valid|_out$)/.test(f.key);
+  // Short spans for leave and stays, longer ones for contracts and projects.
+  const later = !ends ? 0 : /(leave|absence|reservation|stay|booking|rental)/.test(entity.key) ? 1 + (i % 3) : 14 + (spread(f.key) % 30);
   const h = spread(f.key);
   switch (f.type) {
     case "number":
@@ -357,12 +409,14 @@ function sample(f: FieldDef, i: number, title: boolean, entity: EntityDef): unkn
       if (/(hours|duration)/.test(f.key)) return [1.5, 3, 7.5][i % 3];
       if (/(minutes)/.test(f.key)) return [30, 45, 60][i % 3];
       return (i + 1) * (5 + (h % 20));
-    case "money": return Math.round(((i + 1) * (20 + (h % 50)) * (1 + (h % 7))) * 100) / 100;
+    case "money":
+      if (/(rate|per_)/.test(f.key)) return [0.45, 0.5, 0.65][i % 3];
+      return Math.round(((i + 1) * (20 + (h % 50)) * (1 + (h % 7))) * 100) / 100;
     case "percent": return [5, 10, 20][i % 3];
     case "rating": return 3 + (i % 3);
     case "date": return /(birth|dob)/.test(f.key) ? `${1975 + i * 9}-0${3 + i}-1${i}` : day(i * 5 - 6 + later);
     case "datetime": return `${day(i * 2 - 1 + later)}T${String(9 + i * 2).padStart(2, "0")}:00`;
-    case "time": return `${String(9 + i * 2).padStart(2, "0")}:30`;
+    case "time": return `${String((ends ? 15 : 8) + i).padStart(2, "0")}:${ends ? "00" : "30"}`;
     case "bool": return i % 2 === 0;
     case "email": return `${name.split(" ")[0]!.toLowerCase()}@example.com`;
     case "phone": return `+1 555 010${i}`;
@@ -387,18 +441,22 @@ export async function addSampleData(workspaceId: string, app: string, userId: st
   const ids: Record<string, string[]> = {};
   // Entities without refs first, so refs can point at them.
   const ordered = [...def.entities].sort((a, b) => a.fields.filter((f) => f.type === "ref").length - b.fields.filter((f) => f.type === "ref").length);
-  await assertRecordQuota(workspaceId, ordered.length * 3);
-  for (const e of ordered) {
-    const list: string[] = (ids[e.key] = []);
-    for (let i = 0; i < 3; i++) {
-      const data: Values = {};
-      for (const f of e.fields) {
-        const v = f.type === "ref" ? ids[f.ref!]?.[i % (ids[f.ref!]?.length || 1)] : sample(f, i, f.key === e.title, e);
-        if (v !== undefined) data[f.key] = v;
+  await withWorkspaceLock(workspaceId, async (tx, plan) => {
+    await assertRecordQuota(tx, plan, workspaceId, ordered.length * 3);
+    for (const e of ordered) {
+      const list: string[] = (ids[e.key] = []);
+      for (let i = 0; i < 3; i++) {
+        const data: Values = {};
+        for (const f of e.fields) {
+          // Cross-app refs stay empty in samples: the other app may not be installed.
+          const v = f.type === "ref" ? (f.refApp ? undefined : ids[f.ref!]?.[i % (ids[f.ref!]?.length || 1)]) : sample(f, i, f.key === e.title, e);
+          if (v !== undefined && !f.calc) data[f.key] = v;
+        }
+        applyCalcs(e, data);
+        const id = randomUUID();
+        await tx.insert(r).values({ id, workspaceId, app, entity: e.key, data, search: searchText(data), createdBy: userId, updatedBy: userId });
+        list.push(id);
       }
-      const id = randomUUID();
-      await db.insert(r).values({ id, workspaceId, app, entity: e.key, data, search: searchText(data), createdBy: userId, updatedBy: userId });
-      list.push(id);
     }
-  }
+  });
 }

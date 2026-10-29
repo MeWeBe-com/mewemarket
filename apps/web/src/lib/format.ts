@@ -23,7 +23,7 @@ export function formatValue(field: FieldDef, v: unknown, f: Fmt): string {
     case "rating": return "★".repeat(Number(v)) + "☆".repeat(5 - Number(v));
     case "date": return new Date(`${v}T00:00:00`).toLocaleDateString(f.locale, { day: "numeric", month: "short", year: "numeric" });
     case "datetime": return new Date(String(v)).toLocaleString(f.locale, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
-    case "ref": return f.refs?.[String(v)] ?? "";
+    case "ref": return f.refs?.[String(v)] ?? (/^[0-9a-f-]{36}$/.test(String(v)) ? "" : String(v));
     default: return String(v);
   }
 }

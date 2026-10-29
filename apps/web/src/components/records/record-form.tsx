@@ -17,13 +17,14 @@ type Props = {
   locale: string;
   isNew: boolean;
   readOnly: boolean;
+  slug: string;
 };
 
 const SIGNED = /(balance|change|adjust|variance|difference|delta|profit|net|temperature|offset)/;
 
 const box = "w-full rounded-lg border border-[var(--border)] bg-transparent px-3 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:opacity-70";
 
-export function RecordForm({ entity, values, refs, action, cancelHref, currency, locale, isNew, readOnly }: Props) {
+export function RecordForm({ entity, values, refs, action, cancelHref, currency, locale, isNew, readOnly, slug }: Props) {
   const [state, formAction, pending] = useActionState(action, null);
   return (
     <form action={formAction} className="space-y-5">
@@ -34,7 +35,7 @@ export function RecordForm({ entity, values, refs, action, cancelHref, currency,
             <label htmlFor={`f-${f.key}`} className="mb-1.5 block text-sm font-medium">
               {f.label}{f.required && <span className="text-red-500"> *</span>}
             </label>
-            <Control field={f} value={values[f.key]} refs={refs[f.ref ?? ""] ?? []} currency={currency} locale={locale} />
+            <Control field={f} value={values[f.key]} refs={refs[f.refApp ? `${f.refApp}.${f.ref}` : f.ref ?? ""]} currency={currency} locale={locale} slug={slug} />
             {state?.errors?.[f.key] && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{state.errors[f.key]}</p>}
           </div>
         ))}
@@ -50,10 +51,13 @@ export function RecordForm({ entity, values, refs, action, cancelHref, currency,
   );
 }
 
-function Control({ field: f, value, refs, currency, locale }: { field: FieldDef; value: unknown; refs: { id: string; title: string }[]; currency: string; locale: string }) {
+type Option = { id: string; title: string };
+
+function Control({ field: f, value, refs, currency, locale, slug }: { field: FieldDef; value: unknown; refs?: Option[]; currency: string; locale: string; slug: string }) {
   const id = `f-${f.key}`;
   const v = value === undefined || value === null ? "" : String(value);
   const common = { id, name: f.key, required: f.required, defaultValue: v };
+  if (f.calc) return <Input id={id} value={v} readOnly placeholder="Worked out when you save" className="bg-black/5 dark:bg-white/5" />;
   switch (f.type) {
     case "long": return <textarea {...common} rows={4} className={`${box} py-2`} />;
     case "number": return <Input {...common} type="number" step="any" min={SIGNED.test(f.key) ? undefined : 0} />;
@@ -82,12 +86,24 @@ function Control({ field: f, value, refs, currency, locale }: { field: FieldDef;
         {f.options!.map((o) => <option key={o}>{o}</option>)}
       </select>
     );
-    case "ref": return (
-      <select {...common} className={`${box} h-10`}>
-        <option value="">{refs.length ? "— Choose —" : "Nothing to choose yet"}</option>
-        {refs.map((o) => <option key={o.id} value={o.id}>{o.title}</option>)}
-      </select>
-    );
+    case "ref": {
+      // A link into another app that this workspace hasn't added yet.
+      if (!refs) return (
+        <p className="flex h-10 items-center text-sm text-[var(--muted)]">
+          <input type="hidden" name={f.key} value={v} />
+          <Link href={`/w/${slug}/apps?app=${f.refApp}#${f.refApp}`} className="text-accent hover:underline">Add the app</Link>&nbsp;to link a {f.ref!.replace(/_/g, " ")}.
+        </p>
+      );
+      // Text saved before this field became a link; kept visible until a record is picked.
+      const orphan = v && !refs.some((o) => o.id === v) ? v : "";
+      return (
+        <select {...common} className={`${box} h-10`}>
+          <option value="">{refs.length ? "— Choose —" : "Nothing to choose yet"}</option>
+          {orphan && <option value={orphan}>{orphan} (not linked)</option>}
+          {refs.map((o) => <option key={o.id} value={o.id}>{o.title}</option>)}
+        </select>
+      );
+    }
     case "lines": return <LinesEditor name={f.key} initial={Array.isArray(value) ? (value as Line[]) : []} currency={currency} locale={locale} />;
     default: return <Input {...common} type="text" />;
   }

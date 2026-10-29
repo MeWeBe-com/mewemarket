@@ -1,4 +1,4 @@
-import { displayTitle, getRecord, listRecords, recordTitles, refOptions } from "@mewe/core";
+import { APPS, displayTitle, getRecord, listInstalledApps, listRecords, recordTitles, refOptions } from "@mewe/core";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DeleteRecord } from "@/components/records/delete-record";
@@ -17,10 +17,12 @@ export default async function RecordPage({ params }: { params: Promise<{ slug: s
   const titles = await recordTitles(workspace.id, entity.fields.filter((f) => f.type === "ref").map((f) => String(record.data[f.key] ?? "")).filter(Boolean));
   const title = displayTitle(entity, record.data, titles);
   const hasLines = entity.fields.some((f) => f.type === "lines");
-  // Records in this app that point at this one, e.g. a company's deals.
+  // Records that point at this one, e.g. a company's deals, or its projects in another installed app.
+  const installed = new Set((await listInstalledApps(workspace.id)).map((a) => a.slug));
   const backlinks = await Promise.all(
-    app.entities.flatMap((e) => e.fields.filter((f) => f.type === "ref" && f.ref === entity.key).map((f) => ({ e, f })))
-      .map(async ({ e, f }) => ({ e, f, ...(await listRecords(workspace.id, app.slug, e.key, { filter: { [f.key]: id }, limit: 10 })) })),
+    APPS.filter((a) => installed.has(a.slug)).flatMap((a) => a.entities.flatMap((e) => e.fields
+      .filter((f) => f.type === "ref" && f.ref === entity.key && (f.refApp ?? a.slug) === app.slug).map((f) => ({ a, e, f }))))
+      .map(async ({ a, e, f }) => ({ a, e, f, ...(await listRecords(workspace.id, a.slug, e.key, { filter: { [f.key]: id }, limit: 10 })) })),
   );
 
   return (
@@ -38,14 +40,14 @@ export default async function RecordPage({ params }: { params: Promise<{ slug: s
           </div>
         </div>
         <RecordForm entity={entity} values={record.data} refs={refs} action={saveRecordAction.bind(null, slug, app.slug, entity.key, id)}
-          cancelHref={base} currency={fmt.currency} locale={fmt.locale} isNew={false} readOnly={!canEdit} />
+          cancelHref={base} currency={fmt.currency} locale={fmt.locale} isNew={false} readOnly={!canEdit} slug={slug} />
       </Card>
-      {backlinks.filter((b) => b.total > 0).map(({ e, f, rows, total }) => (
-        <Card key={`${e.key}.${f.key}`} className="mt-4">
-          <h2 className="text-sm font-semibold">{e.plural} <span className="font-normal text-[var(--muted)]">({total}{f.label.toLowerCase() !== entity.name.toLowerCase() ? `, as ${f.label.toLowerCase()}` : ""})</span></h2>
+      {backlinks.filter((b) => b.total > 0).map(({ a, e, f, rows, total }) => (
+        <Card key={`${a.slug}.${e.key}.${f.key}`} className="mt-4">
+          <h2 className="text-sm font-semibold">{e.plural}{a.slug !== app.slug && <span className="font-normal text-[var(--muted)]"> in {a.name}</span>} <span className="font-normal text-[var(--muted)]">({total}{f.label.toLowerCase() !== entity.name.toLowerCase() ? `, as ${f.label.toLowerCase()}` : ""})</span></h2>
           <ul className="mt-2 divide-y divide-[var(--border)] text-sm">
             {rows.map((r) => (
-              <li key={r.id} className="py-1.5"><Link href={`/w/${slug}/a/${app.slug}/${e.key}/${r.id}`} className="text-accent hover:underline">{displayTitle(e, r.data, { [id]: title })}</Link></li>
+              <li key={r.id} className="py-1.5"><Link href={`/w/${slug}/a/${a.slug}/${e.key}/${r.id}`} className="text-accent hover:underline">{displayTitle(e, r.data, { [id]: title })}</Link></li>
             ))}
           </ul>
         </Card>

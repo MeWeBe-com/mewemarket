@@ -130,6 +130,34 @@ test("invoice line items total and print view", async ({ page }) => {
   await page.waitForURL(/\/invoice$/);
 });
 
+test("links between apps: a project's client is a CRM company", async ({ page }) => {
+  await page.goto("/sign-in");
+  await page.getByLabel("Email").fill(EMAIL);
+  await page.locator("input[name=password]").fill(PASSWORD);
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await page.waitForURL(/\/w\//);
+  // acme has CRM and Projects but not Team & HR.
+  await page.goto("/w/acme/a/projects/task/new");
+  await expect(page.getByRole("link", { name: "Add the app" })).toHaveAttribute("href", /app=team-hr/);
+  await page.goto("/w/acme/a/projects/project/new");
+  await page.getByLabel("Name").fill("E2E linked project");
+  const client = page.getByLabel("Client");
+  await client.selectOption({ index: 1 });
+  const company = (await client.locator("option:checked").textContent())!.trim();
+  await page.getByRole("button", { name: /^Create/ }).click();
+  await page.waitForURL(/\/project$/);
+  await expect(page.getByRole("row", { name: /E2E linked project/ })).toContainText(company);
+  // The company page lists the project from the other app.
+  await page.goto("/w/acme/a/crm/company");
+  await page.getByRole("link", { name: company, exact: true }).first().click();
+  await expect(page.getByText(/Projects in Projects & Tasks/)).toBeVisible();
+  await page.getByRole("link", { name: "E2E linked project" }).click();
+  await page.waitForURL(/\/a\/projects\/project\/[0-9a-f-]{36}$/);
+  page.on("dialog", (d) => d.accept());
+  await page.getByRole("button", { name: "Delete" }).click();
+  await page.waitForURL(/\/project$/);
+});
+
 test("public pages and free tools load without errors", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(`${page.url()}: ${e.message}`));
