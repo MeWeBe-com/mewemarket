@@ -1,5 +1,5 @@
 import { db, schema } from "@mewe/db";
-import { startTrial } from "@mewe/core";
+import { currentPlan, startTrial } from "@mewe/core";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
@@ -93,6 +93,11 @@ export const auth = betterAuth({
       ac,
       roles,
       creatorRole: "owner",
+      // Plan seat limit; -1 means unlimited.
+      membershipLimit: async (_user, ws) => {
+        const n = (await currentPlan(ws.id)).limits.users;
+        return n < 0 ? 100_000 : n;
+      },
       sendInvitationEmail: async ({ id, email, inviter, organization: ws }) =>
         sendMail({
           to: email, subject: `${inviter.user.name} invited you to ${ws.name}`, heading: `Join ${ws.name} on MeweMarket`,

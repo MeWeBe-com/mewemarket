@@ -9,6 +9,7 @@ const config: NextConfig = {
     return [
       { source: "/category/ViewCategory/:id/:slug/:page*", destination: "/apps/category/:slug", permanent: true },
       { source: "/category/:path*", destination: "/apps", permanent: true },
+      { source: "/ai", destination: "/", permanent: true },
       { source: "/users/register", destination: "/sign-up", permanent: true },
       { source: "/users/ForgetPassword", destination: "/forgot-password", permanent: true },
       { source: "/users/Support", destination: "/contact", permanent: true },

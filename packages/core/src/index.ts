@@ -3,3 +3,7 @@ export * from "./workspaces";
 export * from "./catalog";
 export { CATEGORIES, type CatalogCategory, type Tier } from "./catalog-data";
 export * from "./contact";
+export * from "./tools";
+export * from "./apps";
+export * from "./records";
+export * from "./billing";

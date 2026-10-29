@@ -2,7 +2,7 @@ import { CATEGORIES } from "@mewe/core";
 import Link from "next/link";
 
 const COLS = [
-  { title: "Product", links: [["/apps", "All apps"], ["/ai", "AI & MCP"], ["/pricing", "Pricing"]] },
+  { title: "Product", links: [["/apps", "All apps"], ["/tools", "Free tools"], ["/pricing", "Pricing"]] },
   { title: "Company", links: [["/about", "About"], ["/contact", "Contact & support"], ["https://mewebe.com", "MeWeBe Studio Network"], ["/pricing#supporter", "Become a supporter"]] },
   { title: "Legal", links: [["/terms", "Terms of service"], ["/privacy", "Privacy policy"], ["/cookies", "Cookie policy"]] },
 ] as const;
@@ -14,7 +14,7 @@ export function SiteFooter() {
         <div className="lg:col-span-2">
           <p className="font-bold">MeweMarket</p>
           <p className="mt-2 max-w-xs text-sm text-[var(--muted)]">
-            Every business app your company runs on, in one workspace your team and your AI assistant can use.
+            Every business app your company runs on, in one workspace, on one subscription.
           </p>
           <p className="mt-6 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">Categories</p>
           <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm">

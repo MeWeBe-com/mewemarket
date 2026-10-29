@@ -7,9 +7,9 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "sw
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL ?? "https://mewemarket.com"),
-  title: { default: "MeweMarket: every business app, ready for your AI assistant", template: "%s · MeweMarket" },
+  title: { default: "MeweMarket: 100+ business apps in one workspace", template: "%s · MeweMarket" },
   description:
-    "CRM, invoicing, projects, inventory, HR, bookings and dozens more apps in one workspace. Use it in your browser, or ask Claude, ChatGPT or Gemini to do the work for you.",
+    "CRM, invoicing, projects, inventory, HR, bookings and dozens more apps in one workspace. Over 100 business apps and free tools on one subscription.",
   openGraph: { siteName: "MeweMarket", type: "website" },
 };
 

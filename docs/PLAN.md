@@ -40,5 +40,19 @@ The source of truth is `MASTERPROMPT_PHASE1.md`. Tick each task when it's done.
 - [ ] Make public pages cacheable (move the header session check client-side)
 - [ ] Sign-up should honour ?plan= and ?app= (needs M2 checkout and M5b install)
 
-## M2–M13
-Not started. See MASTERPROMPT_PHASE1.md. M2 is blocked on Stripe test keys.
+## Records engine and App Store (replaces M4, M5, M5b; AI/MCP dropped by owner decision 2026-10-29)
+- [x] App definitions DSL (packages/core/src/apps/define.ts) with validation; 106 apps across 15 categories
+- [x] records table (jsonb data + trigram search), migration 0003
+- [x] Core: typed validation/coercion, refs checked, search, select filters, sort, totals (incl. line items), board moves, CSV import/export, sample data
+- [x] Workspace App Store: add/remove apps (owner/admin), plan app limit
+- [x] App UI: overview, table (sort, paginate, totals), board (drag and drop + select), calendar, record form (all field types, line items), related records, print/PDF view
+- [x] Guests are read-only
+- [x] 31 free browser tools at /tools (no sign-up)
+- [x] Public site: AI/MCP removed; app pages show what is inside each app; sign-up carries ?app= through onboarding
+- [x] Playwright e2e (e2e/apps.spec.ts): app lifecycle, invoice totals and print, public pages and tools
+
+## M2 Billing
+- [x] Stripe Checkout (inline prices), billing portal, signed webhook with idempotency, plan page
+- [x] Limits enforced: apps, records, members (seat limit), expired trial falls back to Free
+- [ ] Add Stripe keys to .env and test with Stripe CLI (`stripe listen --forward-to localhost:3000/api/stripe/webhook`)
+

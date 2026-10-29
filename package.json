@@ -2,7 +2,9 @@
   "name": "mewemarket",
   "private": true,
   "packageManager": "pnpm@10.18.0",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
@@ -12,5 +14,9 @@
     "db:generate": "pnpm --filter @mewe/db generate",
     "db:migrate": "pnpm --filter @mewe/db migrate"
   },
-  "devDependencies": { "turbo": "^2.5.0", "typescript": "^5.9.0" }
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "turbo": "^2.5.0",
+    "typescript": "^5.9.0"
+  }
 }

@@ -1,5 +1,5 @@
 import { db, schema } from "@mewe/db";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, notInArray } from "drizzle-orm";
 import { CATALOG, CATEGORIES } from "./catalog-data";
 
 export type CatalogApp = typeof schema.catalogApps.$inferSelect & { features: string[] };
@@ -38,28 +38,37 @@ export async function seedCatalog() {
   for (const a of CATALOG) {
     const row = {
       id: a.slug, slug: a.slug, name: a.name, tagline: a.tagline, description: a.description, tier: a.tier,
-      category: a.category, license: a.license ?? null, sourceUrl: a.sourceUrl ?? null, poweredBy: a.poweredBy ?? null,
-      status: "published",
+      category: a.category, license: null, sourceUrl: null, poweredBy: null, status: "published",
       definition: { features: a.features, legacyProductIds: a.legacyProductIds ?? [] },
     };
     const { id, ...update } = row;
     await db.insert(schema.catalogApps).values(row).onConflictDoUpdate({ target: schema.catalogApps.id, set: { ...update, updatedAt: new Date() } });
   }
+  // Retired entries (e.g. the old hosted tier) stay for install history but leave the catalogue.
+  await db.update(schema.catalogApps).set({ status: "unpublished" })
+    .where(notInArray(schema.catalogApps.id, CATALOG.map((a) => a.slug)));
   return CATALOG.length;
 }
 
+/** Slugs from earlier catalogue versions → current slug. */
+export const RENAMED_APPS: Record<string, string> = {
+  kanboard: "kanban-board", jorani: "leave-management", kimai: "time-tracking", "cal-com": "bookings", chatwoot: "helpdesk",
+  "jitsi-meet": "video-meeting", excalidraw: "whiteboard", "snipe-it": "asset-register", bookstack: "wiki",
+  documenso: "contracts", listmonk: "mailing-lists", "uptime-kuma": "projects",
+};
+
 // Old hosted demo folders (mewemarket.com/apps/<dir>/...) → new app slug.
 const LEGACY_APP_DIRS: Record<string, string> = {
-  kanboard: "kanboard", jorani: "jorani", "inventory-management-system": "inventory", "client-management-system": "crm",
+  kanboard: "kanban-board", jorani: "leave-management", "inventory-management-system": "inventory", "client-management-system": "crm",
   "inventory-system": "inventory", companyexpense: "expense-tracker", hms: "clinic", visiopath: "clinic", "hotel-management-system": "hotel",
-  "logic-invoice": "invoices", invoicesystem: "invoices", wis: "inventory", snaptime: "kimai", phpqrcode: "qr-code-generator",
-  dbdiagram: "db-diagram", draw: "excalidraw", wireframer: "excalidraw", "video-conferencing": "jitsi-meet", videochat: "jitsi-meet",
-  "screen-sharing": "jitsi-meet", "web broadcasting": "jitsi-meet", timestampconverter: "timestamp-converter", crmsystem: "crm",
+  "logic-invoice": "invoices", invoicesystem: "invoices", wis: "inventory", snaptime: "time-tracking", phpqrcode: "qr-code-generator",
+  dbdiagram: "db-diagram", draw: "whiteboard", wireframer: "whiteboard", "video-conferencing": "video-meeting", videochat: "video-meeting",
+  "screen-sharing": "video-meeting", "web broadcasting": "video-meeting", timestampconverter: "timestamp-converter", crmsystem: "crm",
   payrollsystem: "payroll-attendance", "employee_management_system": "team-hr", "ems-system": "team-hr", "task-management-system": "projects",
   "task_management_system": "projects", "asset-management-system": "asset-register", pos: "inventory", "inventory-system-2": "inventory",
-  server: "uptime-kuma", frontaccounting: "invoices", hmis: "clinic", "hotel-management": "hotel",
+  frontaccounting: "invoices", hmis: "clinic", "hotel-management": "hotel",
 };
 
 export function legacyAppDirSlug(dir: string) {
-  return LEGACY_APP_DIRS[dir.toLowerCase()] ?? null;
+  return LEGACY_APP_DIRS[decodeURIComponent(dir).toLowerCase()] ?? null;
 }

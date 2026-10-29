@@ -6,7 +6,7 @@ import { authClient } from "@/lib/auth-client";
 
 const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
 
-export function CreateWorkspaceForm() {
+export function CreateWorkspaceForm({ app }: { app?: string }) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -29,7 +29,7 @@ export function CreateWorkspaceForm() {
       return setError(error?.message ?? "Could not create the workspace");
     }
     await authClient.organization.setActive({ organizationId: data.id });
-    router.push(`/w/${data.slug}`);
+    router.push(app ? `/w/${data.slug}/apps?app=${app}#${app}` : `/w/${data.slug}/apps`);
     router.refresh();
   }
 

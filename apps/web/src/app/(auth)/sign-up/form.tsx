@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Alert, Button, Field, Input, TextLink } from "@/components/ui";
 import { authClient } from "@/lib/auth-client";
 
-export function SignUpForm() {
+export function SignUpForm({ app }: { app?: string }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -16,7 +16,7 @@ export function SignUpForm() {
     const f = new FormData(e.currentTarget);
     const email = String(f.get("email"));
     const { error } = await authClient.signUp.email({
-      name: String(f.get("name")), email, password: String(f.get("password")), callbackURL: "/onboarding",
+      name: String(f.get("name")), email, password: String(f.get("password")), callbackURL: app ? `/onboarding?app=${app}` : "/onboarding",
     });
     setPending(false);
     if (error) return setError(error.message ?? "Sign up failed");

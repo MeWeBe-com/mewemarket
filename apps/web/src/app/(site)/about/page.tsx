@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "About",
-  description: "MeweMarket brings the business apps small companies need into one workspace that people and AI assistants can use. Part of the MeWeBe Studio Network.",
+  description: "MeweMarket brings the business apps small companies need into one simple subscription. Part of the MeWeBe Studio Network.",
 };
 
 export default function AboutPage() {
@@ -21,12 +21,8 @@ export default function AboutPage() {
           products and people. You install the apps you need, and they work together from day one.
         </p>
         <p>
-          We also built it for how people work today. Many owners now run their day through an AI assistant, so every
-          MeweMarket workspace can be connected to Claude, ChatGPT or Gemini. Ask for an invoice, a report or a booking, and it happens.
-        </p>
-        <p>
-          Our catalogue includes respected open-source projects alongside our own apps. We host them for you, credit every
-          project and link to its source code.
+          Today the App Store has over 100 apps, from CRM and invoicing to clinics, hotels, schools, property and
+          nonprofits, plus free online tools anyone can use without an account. We add new apps every month.
         </p>
       </div>
       <h2 className="mt-12 text-2xl font-bold">Part of the MeWeBe Studio Network</h2>

@@ -5,10 +5,10 @@ import Link from "next/link";
 import { useState } from "react";
 
 const HIGHLIGHTS: Record<string, string[]> = {
-  free: ["3 users", "3 apps", "50 AI credits / month", "AI assistant read access"],
-  starter: ["5 users", "All apps", "1,000 AI credits / month", "Full AI assistant and API access", "1 hosted open-source app"],
-  business: ["20 users", "Unlimited automations", "5,000 AI credits / month", "3 hosted open-source apps", "Roles and audit log"],
-  scale: ["50 users", "20,000 AI credits / month", "10 hosted open-source apps", "Priority support", "Sandbox workspace"],
+  free: ["3 users", "3 apps", "1,000 records", "All free tools"],
+  starter: ["5 users", "All 100+ apps", "25,000 records", "CSV import and export"],
+  business: ["20 users", "All 100+ apps", "250,000 records", "Roles and guest access"],
+  scale: ["50 users", "All 100+ apps", "Unlimited records", "Priority support"],
 };
 
 export function PricingCards({ plans }: { plans: typeof PLANS }) {

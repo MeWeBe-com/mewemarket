@@ -5,7 +5,7 @@ import { ThemeToggle } from "./theme-toggle";
 
 export const NAV = [
   { href: "/apps", label: "Apps" },
-  { href: "/ai", label: "AI & MCP" },
+  { href: "/tools", label: "Free tools" },
   { href: "/pricing", label: "Pricing" },
   { href: "/about", label: "About" },
 ];

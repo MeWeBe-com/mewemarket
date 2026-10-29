@@ -6,7 +6,7 @@ import { PricingCards } from "./cards";
 
 export const metadata: Metadata = {
   title: "Pricing",
-  description: "Simple workspace pricing. Free plan forever, Starter $19, Business $49, Scale $129 per month. AI credits included. Save two months with annual billing.",
+  description: "Simple workspace pricing. Free plan forever, Starter $19, Business $49, Scale $129 per month. Save two months with annual billing.",
 };
 
 const fmt = (n: number) => (n < 0 ? "Unlimited" : n.toLocaleString("en-US"));
@@ -16,14 +16,10 @@ const ROWS: [string, (l: (typeof PLANS)[number]["limits"]) => string][] = [
   ["Apps", (l) => (l.apps < 0 ? "All apps" : fmt(l.apps))],
   ["Records", (l) => fmt(l.records)],
   ["Automations", (l) => fmt(l.automations)],
-  ["AI credits per month", (l) => fmt(l.aiCreditsMonthly)],
-  ["Hosted open-source apps", (l) => fmt(l.hostedApps)],
-  ["AI assistant (MCP) access", (l) => (l.mcpWrite ? "Read and write" : "Read only")],
 ];
 
 const FAQ = [
   ["What counts as a user?", "Anyone you invite to your workspace. Guests (for example clients who only view their invoices) are free on paid plans."],
-  ["What are AI credits?", "AI actions such as drafting an email, reading a receipt or building an app use credits. Simple actions use 1 credit; larger ones use more. Extra packs cost $10 per 1,000 credits."],
   ["Can I change plans later?", "Yes, upgrade or downgrade at any time. Changes are prorated automatically."],
   ["Do you offer annual billing?", "Yes. Pay yearly and get two months free."],
   ["What happens when my trial ends?", "Your workspace moves to the Free plan unless you choose a paid plan. Nothing is deleted."],
@@ -63,7 +59,7 @@ export default function PricingPage() {
             ))}
           </tbody>
         </table>
-        <p className="mt-3 text-xs text-[var(--muted)]">Extra users $5 per month each. AI credit packs $10 per 1,000.</p>
+        <p className="mt-3 text-xs text-[var(--muted)]">Extra users $5 per month each.</p>
       </section>
 
       <section id="supporter" className="mt-20 scroll-mt-24 rounded-2xl border border-[var(--border)] bg-[var(--bg-subtle)] p-8 sm:flex sm:items-center sm:justify-between sm:gap-8">

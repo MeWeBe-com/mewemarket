@@ -1,5 +1,5 @@
-import { getCatalogApp, getCategory, legacyAppDirSlug, listCatalogApps } from "@mewe/core";
-import { Check, ExternalLink } from "lucide-react";
+import { RENAMED_APPS, getAppDef, getCatalogApp, getCategory, legacyAppDirSlug, listCatalogApps } from "@mewe/core";
+import { Check } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
@@ -16,13 +16,14 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
   const { slug } = await params;
   const app = await getCatalogApp(slug);
   if (!app) {
-    const moved = legacyAppDirSlug(decodeURIComponent(slug));
+    const moved = RENAMED_APPS[slug] ?? legacyAppDirSlug(slug);
     if (moved) permanentRedirect(`/apps/${moved}`);
     notFound();
   }
   const category = getCategory(app.category);
   const related = (await listCatalogApps(app.category)).filter((a) => a.slug !== slug).slice(0, 3);
-  const isTool = app.tier === "tool";
+  if (app.tier === "tool") permanentRedirect(`/tools/${app.slug}`);
+  const def = getAppDef(app.slug);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-14">
@@ -44,38 +45,29 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
           <ul className="mt-4 grid gap-3 sm:grid-cols-2">
             {app.features.map((f) => <li key={f} className="flex gap-2"><Check className="mt-0.5 size-5 shrink-0 text-emerald-500" />{f}</li>)}
           </ul>
-          {!isTool && (
+          {def && (
             <>
-              <h2 className="mt-10 text-xl font-semibold">Works with the rest of your workspace</h2>
-              <p className="mt-3 text-[var(--muted)]">
-                {app.name} shares customers, team members and files with your other MeweMarket apps, and your AI assistant can use it too.
-              </p>
+              <h2 className="mt-10 text-xl font-semibold">What's inside</h2>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {def.entities.map((e) => (
+                  <div key={e.key} className="rounded-xl border border-[var(--border)] p-4">
+                    <p className="font-semibold">{e.plural}</p>
+                    <p className="mt-1 text-sm text-[var(--muted)]">{e.fields.map((f) => f.label).join(", ")}</p>
+                    <p className="mt-2 text-xs text-[var(--muted)]">{["Table", e.board && "Board", e.calendar && "Calendar", e.totals?.length && "Totals"].filter(Boolean).join(" · ")}</p>
+                  </div>
+                ))}
+              </div>
             </>
           )}
         </div>
         <aside className="h-fit rounded-xl border border-[var(--border)] p-6 lg:sticky lg:top-24">
           <span className="rounded-full border border-[var(--border)] px-2 py-0.5 text-xs font-medium text-[var(--muted)]">{TIER_LABEL[app.tier]}</span>
-          {isTool ? (
-            <span className="mt-5 flex w-full items-center justify-center rounded-lg border border-[var(--border)] px-4 py-3 font-semibold text-[var(--muted)]">
-              Free tool coming soon
-            </span>
-          ) : (
-            <Link href={`/sign-up?app=${app.slug}`}
-              className="mt-5 flex w-full items-center justify-center rounded-lg bg-accent px-4 py-3 font-semibold text-white hover:bg-accent-strong">
-              Install to workspace
-            </Link>
-          )}
-          <p className="mt-3 text-center text-xs text-[var(--muted)]">{isTool ? "No sign-up needed" : "Free plan available · 14-day Business trial"}</p>
-          {app.poweredBy && (
-            <dl className="mt-6 space-y-2 border-t border-[var(--border)] pt-4 text-sm">
-              <div className="flex justify-between"><dt className="text-[var(--muted)]">Powered by</dt><dd>{app.poweredBy}</dd></div>
-              <div className="flex justify-between"><dt className="text-[var(--muted)]">Licence</dt><dd>{app.license}</dd></div>
-              {app.sourceUrl && (
-                <div className="flex justify-between"><dt className="text-[var(--muted)]">Source code</dt>
-                  <dd><a href={app.sourceUrl} rel="noopener" className="inline-flex items-center gap-1 text-accent hover:underline">GitHub <ExternalLink className="size-3" /></a></dd></div>
-              )}
-            </dl>
-          )}
+          <Link href={`/sign-up?app=${app.slug}`}
+            className="mt-5 flex w-full items-center justify-center rounded-lg bg-accent px-4 py-3 font-semibold text-white hover:bg-accent-strong">
+            Start using {app.name}
+          </Link>
+          <p className="mt-3 text-center text-xs text-[var(--muted)]">Free plan available · 14-day Business trial</p>
+          <Link href="/sign-in" className="mt-3 block text-center text-sm text-accent hover:underline">Already have an account? Sign in</Link>
         </aside>
       </div>
       {related.length > 0 && (
