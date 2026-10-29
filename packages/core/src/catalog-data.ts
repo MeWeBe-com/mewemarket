@@ -10,7 +10,7 @@ export type CatalogCategory = { slug: string; name: string; icon: string; blurb:
 // The first eight keep the legacy site's categories (and their URLs) alive.
 export const CATEGORIES: CatalogCategory[] = [
   { slug: "business", name: "Business", icon: "briefcase", blurb: "Run day-to-day operations, projects and admin." },
-  { slug: "application", name: "Application", icon: "app-window", blurb: "Utilities and productivity apps for any team." },
+  { slug: "application", name: "Productivity", icon: "app-window", blurb: "Notes, wikis, bug tracking and personal productivity." },
   { slug: "customer-service", name: "Customer Service", icon: "headset", blurb: "Bookings, support desks and customer communication." },
   { slug: "education", name: "Education", icon: "graduation-cap", blurb: "Courses, students, attendance and training." },
   { slug: "finance", name: "Finance", icon: "chart-line", blurb: "Invoicing, expenses, payroll and purchasing." },

@@ -39,3 +39,8 @@ export async function claimStripeEvent(id: string, type: string) {
 export async function setStripeCustomer(workspaceId: string, customerId: string) {
   await db.update(schema.subscriptions).set({ stripeCustomerId: customerId }).where(eq(schema.subscriptions.workspaceId, workspaceId));
 }
+
+/** Undoes claimStripeEvent when processing failed, so Stripe's retry is handled. */
+export async function releaseStripeEvent(id: string) {
+  await db.delete(schema.stripeEvents).where(eq(schema.stripeEvents.id, id));
+}

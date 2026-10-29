@@ -132,7 +132,7 @@ function Table({ rows, fields, titleKey, f, base, sp, qs, totals }: {
               const dir = active && sp.dir === "asc" ? "desc" : "asc";
               return (
                 <th key={c.key} className={`whitespace-nowrap px-3 py-2 font-medium ${right(c) ? "text-right" : ""}`} aria-sort={active ? (sp.dir === "asc" ? "ascending" : "descending") : undefined}>
-                  {c.type === "lines" ? c.label : <Link href={qs({ sort: c.key, dir, page: undefined })} className="hover:text-[var(--fg)]">{c.label}{active ? (sp.dir === "asc" ? " ↑" : " ↓") : ""}</Link>}
+                  {c.type === "lines" ? `${c.label} (subtotal)` : <Link href={qs({ sort: c.key, dir, page: undefined })} className="hover:text-[var(--fg)]">{c.label}{active ? (sp.dir === "asc" ? " ↑" : " ↓") : ""}</Link>}
                 </th>
               );
             })}
@@ -189,14 +189,14 @@ function Calendar({ rows, field, month, title, base, qs }: {
         <span className="min-w-32 text-center font-semibold">{first.toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" })}</span>
         <Link href={qs({ month: shift(1) })} className="rounded-lg border border-[var(--border)] px-2 py-1" aria-label="Next month">→</Link>
       </div>
-      <div className="grid grid-cols-7 overflow-hidden rounded-xl border border-[var(--border)] text-xs">
+      <div className="grid grid-cols-7 gap-px overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--border)] text-xs">
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => <div key={d} className="bg-[var(--bg-subtle)] px-2 py-1 font-medium text-[var(--muted)]">{d}</div>)}
-        {Array.from({ length: lead }, (_, i) => <div key={`l${i}`} className="min-h-24 border-t border-[var(--border)]" />)}
+        {Array.from({ length: lead }, (_, i) => <div key={`l${i}`} className="min-h-24 bg-[var(--bg-subtle)]" />)}
         {Array.from({ length: days }, (_, i) => {
           const d = i + 1;
           const iso = `${m}-${String(d).padStart(2, "0")}`;
           return (
-            <div key={d} className="min-h-24 border-t border-l border-[var(--border)] p-1">
+            <div key={d} className="min-h-24 bg-[var(--bg)] p-1">
               <span className={`inline-grid size-5 place-items-center rounded-full ${iso === today ? "bg-accent text-white" : "text-[var(--muted)]"}`}>{d}</span>
               <ul className="mt-1 space-y-0.5">
                 {(byDay.get(d) ?? []).slice(0, 4).map((r) => (

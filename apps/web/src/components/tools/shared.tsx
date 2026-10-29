@@ -51,4 +51,4 @@ export function Stat({ label, value }: { label: string; value: ReactNode }) {
 }
 
 export const num = (v: string) => { const n = parseFloat(v); return Number.isFinite(n) ? n : 0; };
-export const fmt = (n: number, d = 2) => (Number.isFinite(n) ? n.toLocaleString(undefined, { maximumFractionDigits: d }) : "-");
+export const fmt = (n: number, d = 2, min = 0) => (Number.isFinite(n) ? n.toLocaleString(undefined, { minimumFractionDigits: min, maximumFractionDigits: d }) : "-");

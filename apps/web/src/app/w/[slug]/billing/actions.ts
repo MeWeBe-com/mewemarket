@@ -16,7 +16,7 @@ async function owner(slug: string) {
 export async function checkoutAction(slug: string, planId: string, interval: "month" | "year") {
   const { workspace, session, stripe } = await owner(slug);
   const plan = PLANS.find((p) => p.id === planId && p.priceMonthlyCents > 0);
-  if (!plan) redirect(`/w/${slug}/billing`);
+  if (!plan || (interval !== "month" && interval !== "year")) redirect(`/w/${slug}/billing`);
   const sub = await getSubscription(workspace.id);
   let customer = sub?.sub.stripeCustomerId ?? undefined;
   if (!customer) {

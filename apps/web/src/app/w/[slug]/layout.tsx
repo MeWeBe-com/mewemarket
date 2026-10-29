@@ -44,7 +44,18 @@ export default async function WorkspaceLayout({ children, params }: { children: 
       <div className="min-w-0 flex-1">
         <header className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3 md:hidden print:hidden">
           <span className="font-semibold">{workspace.name}</span>
-          <nav className="flex gap-3 text-sm text-accent"><Link href={`/w/${slug}/apps`}>Apps</Link><Link href={`/w/${slug}/settings`}>Settings</Link></nav>
+          <details className="relative">
+            <summary className="cursor-pointer list-none rounded-lg border border-[var(--border)] px-3 py-1.5 text-sm">Menu</summary>
+            <nav className="absolute right-0 z-20 mt-2 max-h-[70dvh] w-64 overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--card)] p-2 text-sm shadow-xl">
+              {[...nav, { href: "/account", label: "Your account" }].map((n) => (
+                <Link key={n.href} href={n.href} className="block rounded-lg px-2 py-1.5 hover:bg-black/5 dark:hover:bg-white/5">{n.label}</Link>
+              ))}
+              {installed.length > 0 && <p className="px-2 pt-3 pb-1 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">Your apps</p>}
+              {installed.map((a) => (
+                <Link key={a.slug} href={`/w/${slug}/a/${a.slug}`} className="block truncate rounded-lg px-2 py-1.5 hover:bg-black/5 dark:hover:bg-white/5">{a.name}</Link>
+              ))}
+            </nav>
+          </details>
         </header>
         <main className="mx-auto max-w-6xl px-4 py-8 md:px-8 print:p-0">{children}</main>
       </div>

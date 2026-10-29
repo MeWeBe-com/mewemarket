@@ -24,14 +24,14 @@ export default function LoanCalculator() {
         <Field label="Term (years)"><Input type="number" min={0} step="0.5" value={years} onChange={(e) => setYears(e.target.value)} /></Field>
       </div>
       <div className="grid gap-3 sm:grid-cols-3" aria-live="polite">
-        <Stat label="Monthly payment" value={fmt(pay)} />
-        <Stat label="Total paid" value={fmt(pay * n)} />
-        <Stat label="Total interest" value={fmt(pay * n - P)} />
+        <Stat label="Monthly payment" value={fmt(pay, 2, 2)} />
+        <Stat label="Total paid" value={fmt(pay * n, 2, 2)} />
+        <Stat label="Total interest" value={fmt(pay * n - P, 2, 2)} />
       </div>
       {rows.length > 0 && (
         <div className="overflow-x-auto"><table className="w-full text-right text-sm"><caption className="mb-2 text-left font-medium">Yearly schedule</caption>
           <thead><tr className="border-b border-[var(--border)]"><th className="py-1 text-left">Year</th><th>Principal</th><th>Interest</th><th>Balance</th></tr></thead>
-          <tbody>{rows.map((x) => <tr key={x.y} className="border-b border-[var(--border)]"><td className="py-1 text-left">{x.y}</td><td>{fmt(x.principal)}</td><td>{fmt(x.interest)}</td><td>{fmt(x.balance)}</td></tr>)}</tbody></table></div>
+          <tbody>{rows.map((x) => <tr key={x.y} className="border-b border-[var(--border)]"><td className="py-1 text-left">{x.y}</td><td>{fmt(x.principal, 2, 2)}</td><td>{fmt(x.interest, 2, 2)}</td><td>{fmt(x.balance, 2, 2)}</td></tr>)}</tbody></table></div>
       )}
     </div>
   );

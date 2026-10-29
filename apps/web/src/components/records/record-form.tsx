@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useActionState, useState } from "react";
 import type { FormState } from "@/app/w/[slug]/a/actions";
 import { Alert, Button, Input } from "@/components/ui";
-import { money } from "@/lib/format";
+import { linesSum, money } from "@/lib/format";
 
 type Line = { description: string; qty: number; price: number };
 type Props = {
@@ -18,6 +18,8 @@ type Props = {
   isNew: boolean;
   readOnly: boolean;
 };
+
+const SIGNED = /(balance|change|adjust|variance|difference|delta|profit|net|temperature|offset)/;
 
 const box = "w-full rounded-lg border border-[var(--border)] bg-transparent px-3 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:opacity-70";
 
@@ -54,7 +56,7 @@ function Control({ field: f, value, refs, currency, locale }: { field: FieldDef;
   const common = { id, name: f.key, required: f.required, defaultValue: v };
   switch (f.type) {
     case "long": return <textarea {...common} rows={4} className={`${box} py-2`} />;
-    case "number": return <Input {...common} type="number" step="any" />;
+    case "number": return <Input {...common} type="number" step="any" min={SIGNED.test(f.key) ? undefined : 0} />;
     case "money": return <Input {...common} type="number" step="0.01" placeholder={currency} />;
     case "percent": return <Input {...common} type="number" step="0.01" min={0} max={100} placeholder="%" />;
     case "rating": return (
@@ -94,7 +96,7 @@ function Control({ field: f, value, refs, currency, locale }: { field: FieldDef;
 function LinesEditor({ name, initial, currency, locale }: { name: string; initial: Line[]; currency: string; locale: string }) {
   const [lines, setLines] = useState<Line[]>(initial.length ? initial : [{ description: "", qty: 1, price: 0 }]);
   const set = (i: number, patch: Partial<Line>) => setLines(lines.map((l, j) => (j === i ? { ...l, ...patch } : l)));
-  const total = lines.reduce((s, l) => s + (Number(l.qty) || 0) * (Number(l.price) || 0), 0);
+  const total = linesSum(lines);
   const fmt = { currency, locale };
   return (
     <div className="rounded-lg border border-[var(--border)]">

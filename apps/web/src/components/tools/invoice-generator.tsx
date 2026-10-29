@@ -45,7 +45,7 @@ export default function InvoiceGenerator() {
           <Field label="From"><TextArea className="min-h-24 font-sans" value={from} onChange={(e) => setFrom(e.target.value)} /></Field>
           <Field label="Bill to"><TextArea className="min-h-24 font-sans" value={to} onChange={(e) => setTo(e.target.value)} /></Field>
         </div>
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           <table className="w-full min-w-[560px] text-sm">
             <thead><tr className="border-b border-[var(--border)] text-left"><th className="py-2">Description</th><th className="w-20">Qty</th><th className="w-32">Price</th><th className="w-32 text-right">Amount</th><th className="w-10 print:hidden"><span className="sr-only">Remove</span></th></tr></thead>
             <tbody>

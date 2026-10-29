@@ -61,17 +61,6 @@ export const BATCH_B = [
     ],
   }),
   app({
-    slug: "staff-training", name: "Training Records", category: "hr",
-    tagline: "Who is trained on what, and when it needs renewing.",
-    description: "Keep a list of courses and certificates, record who completed them and when, and see upcoming renewals on a calendar.",
-    features: ["Course catalogue with cost and duration", "Completion records per employee", "Renewal dates on a calendar", "Training status board", "Training cost and hours totals"],
-    entities: [
-      entity("course", "Course", "Courses", ["name*", "provider", "type:select=Internal|External|Online|Certification", "duration_hours:number", "cost:money", "renewal_months:number", "description:long"], { totals: ["cost"] }),
-      entity("employee", "Employee", "Employees", ["name*", "job_title", "department", "email:email"]),
-      entity("record", "Training record", "Training records", ["employee*:ref=employee", "course*:ref=course", "scheduled_date:date", "completed_date:date", "renewal_date:date", "hours:number", "status*:select=Planned|Booked|Completed|Expired", "certificate_link:url"], { title: "employee", board: "status", calendar: "renewal_date", totals: ["hours"] }),
-    ],
-  }),
-  app({
     slug: "shift-rota", name: "Shift Rota", category: "hr",
     tagline: "Plan staff shifts and swaps on a simple calendar.",
     description: "Build your weekly rota by adding shifts for each staff member, handle swap requests, and see total scheduled hours at a glance.",
@@ -481,7 +470,7 @@ export const BATCH_B = [
     description: "Keep a list of creators with their audience size, track outreach from first contact to agreed deal, and record what each collaboration delivered.",
     features: ["Creator list with platform and followers", "Outreach board", "Collaboration fees and dates", "Results with reach and clicks", "Fee and reach totals"],
     entities: [
-      entity("creator", "Creator", "Creators", ["name*", "platform:select=Instagram|TikTok|YouTube|Blog|Podcast|Other", "handle", "followers:number", "niche", "email:email", "outreach_status*:select=Prospect|Contacted|Replied|Negotiating|Agreed|Declined"], { board: "outreach_status", totals: ["followers"] }),
+      entity("creator", "Creator", "Creators", ["name*", "platform:select=Instagram|TikTok|YouTube|Blog|Podcast|Other", "handle", "followers:number", "niche", "email:email", "outreach_status*:select=Prospect|Contacted|Replied|Negotiating|Agreed|Declined"], { board: "outreach_status", totals: [] }),
       entity("collaboration", "Collaboration", "Collaborations", ["title*", "creator*:ref=creator", "deliverables:long", "go_live_date:date", "fee:money", "status*:select=Agreed|In production|Live|Completed|Cancelled", "reach:number", "clicks:number"], { board: "status", calendar: "go_live_date", totals: ["fee", "reach", "clicks"] }),
     ],
   }),

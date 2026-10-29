@@ -1,4 +1,4 @@
-import { applyStripeSubscription, claimStripeEvent } from "@mewe/core";
+import { applyStripeSubscription, claimStripeEvent, releaseStripeEvent } from "@mewe/core";
 import type Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 
@@ -7,7 +7,9 @@ const STATUS: Record<string, string> = {
   incomplete: "past_due", incomplete_expired: "canceled", paused: "past_due",
 };
 
-async function sync(sub: Stripe.Subscription) {
+// Always re-read the subscription: Stripe doesn't guarantee event order, so the payload may be stale.
+async function sync(id: string) {
+  const sub = await stripe!.subscriptions.retrieve(id);
   const workspaceId = sub.metadata.workspaceId;
   const planId = sub.metadata.planId;
   if (!workspaceId || !planId) return;
@@ -32,17 +34,22 @@ export async function POST(req: Request) {
     return new Response("Bad signature", { status: 400 });
   }
   if (!(await claimStripeEvent(event.id, event.type))) return Response.json({ duplicate: true });
-  switch (event.type) {
-    case "checkout.session.completed": {
-      const s = event.data.object;
-      if (s.subscription) await sync(await stripe.subscriptions.retrieve(String(s.subscription)));
-      break;
+  try {
+    switch (event.type) {
+      case "checkout.session.completed": {
+        const s = event.data.object;
+        if (s.subscription) await sync(String(s.subscription));
+        break;
+      }
+      case "customer.subscription.created":
+      case "customer.subscription.updated":
+      case "customer.subscription.deleted":
+        await sync(event.data.object.id);
+        break;
     }
-    case "customer.subscription.created":
-    case "customer.subscription.updated":
-    case "customer.subscription.deleted":
-      await sync(event.data.object);
-      break;
+  } catch (e) {
+    await releaseStripeEvent(event.id);
+    throw e;
   }
   return Response.json({ received: true });
 }

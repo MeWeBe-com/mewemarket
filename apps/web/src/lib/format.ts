@@ -2,8 +2,9 @@ import type { FieldDef } from "@mewe/core";
 
 export type Fmt = { currency: string; locale: string; refs?: Record<string, string> };
 
+const cents = (n: number) => Math.round(n * 100) / 100;
 const linesSum = (v: unknown) =>
-  Array.isArray(v) ? v.reduce((s: number, l: { qty?: number; price?: number }) => s + (Number(l.qty) || 0) * (Number(l.price) || 0), 0) : 0;
+  Array.isArray(v) ? cents(v.reduce((s: number, l: { qty?: number; price?: number }) => s + cents((Number(l.qty) || 0) * (Number(l.price) || 0)), 0)) : 0;
 
 export function money(n: number, f: Fmt) {
   try { return new Intl.NumberFormat(f.locale, { style: "currency", currency: f.currency }).format(n); }
@@ -27,4 +28,4 @@ export function formatValue(field: FieldDef, v: unknown, f: Fmt): string {
   }
 }
 
-export { linesSum };
+export { cents, linesSum };

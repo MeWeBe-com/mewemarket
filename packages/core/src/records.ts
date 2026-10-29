@@ -10,12 +10,16 @@ export type Values = Record<string, unknown>;
 
 const r = schema.records;
 
+const cents = (n: number) => Math.round(n * 100) / 100;
 export const linesTotal = (v: unknown) =>
-  Array.isArray(v) ? (v as Line[]).reduce((s, l) => s + (Number(l.qty) || 0) * (Number(l.price) || 0), 0) : 0;
+  Array.isArray(v) ? cents((v as Line[]).reduce((s, l) => s + cents((Number(l.qty) || 0) * (Number(l.price) || 0)), 0)) : 0;
 
 export class LimitError extends Error {}
 
 // --- Validation -----------------------------------------------------------
+
+// Number fields that may legitimately go below zero.
+const SIGNED = /(balance|change|adjust|variance|difference|delta|profit|net|temperature|offset)/;
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -39,6 +43,8 @@ export function coerce(entity: EntityDef, raw: Record<string, unknown>) {
         const n = t === "" ? NaN : Number(t);
         if (!Number.isFinite(n)) err(`${f.label} must be a number`);
         else if (f.type === "rating" && (n < 0 || n > 5)) err(`${f.label} must be 0–5`);
+        else if (f.type === "percent" && (n < 0 || n > 100)) err(`${f.label} must be 0–100`);
+        else if (n < 0 && f.type === "number" && !SIGNED.test(f.key)) err(`${f.label} can't be negative`);
         else data[f.key] = n;
         break;
       }
@@ -46,13 +52,15 @@ export function coerce(entity: EntityDef, raw: Record<string, unknown>) {
         data[f.key] = s === true || ["true", "on", "yes", "1"].includes(String(s).toLowerCase());
         break;
       case "date":
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(String(s)) || Number.isNaN(Date.parse(String(s)))) err(`${f.label} must be a date`);
+        if (!realDate(String(s))) err(`${f.label} must be a date (YYYY-MM-DD)`);
         else data[f.key] = String(s);
         break;
-      case "datetime":
-        if (Number.isNaN(Date.parse(String(s)))) err(`${f.label} must be a date and time`);
-        else data[f.key] = String(s).slice(0, 16);
+      case "datetime": {
+        const m = /^(\d{4}-\d{2}-\d{2})[T ](\d{2}):(\d{2})/.exec(String(s));
+        if (!m || !realDate(m[1]!) || Number(m[2]) > 23 || Number(m[3]) > 59) err(`${f.label} must be a date and time (YYYY-MM-DD HH:MM)`);
+        else data[f.key] = `${m[1]}T${m[2]}:${m[3]}`;
         break;
+      }
       case "time":
         if (!/^\d{2}:\d{2}/.test(String(s))) err(`${f.label} must be a time`);
         else data[f.key] = String(s).slice(0, 5);
@@ -86,6 +94,13 @@ export function coerce(entity: EntityDef, raw: Record<string, unknown>) {
     }
   }
   return { data, errors };
+}
+
+/** Rejects impossible dates like 2025-02-31, which Date would roll over. */
+function realDate(v: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
+  const d = new Date(`${v}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v;
 }
 
 const safeJson = (s: string) => { try { return JSON.parse(s); } catch { return null; } };
@@ -209,7 +224,10 @@ async function checkRefs(workspaceId: string, app: string, e: EntityDef, data: V
   for (const f of e.fields) {
     if (f.type !== "ref" || !data[f.key]) continue;
     const ok = await getRecord(workspaceId, app, f.ref!, String(data[f.key]));
-    if (!ok) errors[f.key] = `${f.label} not found`;
+    if (ok) continue;
+    // A pointer to a deleted record is cleared rather than blocking every later save.
+    delete data[f.key];
+    if (f.required) errors[f.key] = `${f.label} not found`;
   }
   return errors;
 }
@@ -228,6 +246,7 @@ export async function createRecord(workspaceId: string, app: string, entity: str
 
 export async function updateRecord(workspaceId: string, app: string, entity: string, id: string, raw: Values, userId: string) {
   const e = mustEntity(app, entity);
+  await assertInstalled(workspaceId, app);
   const { data, errors } = coerce(e, raw);
   Object.assign(errors, await checkRefs(workspaceId, app, e, data));
   if (Object.keys(errors).length) return { errors };
@@ -238,6 +257,7 @@ export async function updateRecord(workspaceId: string, app: string, entity: str
 
 /** Moves a card on a board: sets one select field. */
 export async function setRecordField(workspaceId: string, app: string, entity: string, id: string, key: string, value: string, userId: string) {
+  if (mustEntity(app, entity).board !== key) return { errors: { _: "That field can't be changed from the board" } };
   const row = await getRecord(workspaceId, app, entity, id);
   if (!row) return { errors: { _: "Record not found" } };
   return updateRecord(workspaceId, app, entity, id, { ...row.data, [key]: value }, userId);
@@ -245,6 +265,7 @@ export async function setRecordField(workspaceId: string, app: string, entity: s
 
 export async function deleteRecords(workspaceId: string, app: string, entity: string, ids: string[]) {
   if (!ids.length) return 0;
+  await assertInstalled(workspaceId, app);
   const res = await db.delete(r)
     .where(and(eq(r.workspaceId, workspaceId), eq(r.app, app), eq(r.entity, entity), inArray(r.id, ids))).returning({ id: r.id });
   return res.length;
@@ -254,7 +275,6 @@ export async function deleteRecords(workspaceId: string, app: string, entity: st
 export async function importRecords(workspaceId: string, app: string, entity: string, rows: Record<string, string>[], userId: string) {
   const e = mustEntity(app, entity);
   await assertInstalled(workspaceId, app);
-  await assertRecordQuota(workspaceId, rows.length);
   const refs = await refOptions(workspaceId, app, e.fields);
   const byLabel = new Map(e.fields.flatMap((f) => [[f.key.toLowerCase(), f], [f.label.toLowerCase(), f]] as const));
   const values: (typeof r.$inferInsert)[] = [];
@@ -273,6 +293,7 @@ export async function importRecords(workspaceId: string, app: string, entity: st
     if (Object.keys(errors).length) failed.push({ row: i + 2, error: Object.values(errors)[0] ?? "Invalid row" });
     else values.push({ id: randomUUID(), workspaceId, app, entity, data, search: searchText(data), createdBy: userId, updatedBy: userId });
   });
+  await assertRecordQuota(workspaceId, values.length);
   for (let i = 0; i < values.length; i += 500) await db.insert(r).values(values.slice(i, i + 500));
   return { imported: values.length, failed };
 }
@@ -317,32 +338,46 @@ export async function uninstallApp(workspaceId: string, app: string, deleteData 
 
 // --- Sample data -------------------------------------------------------------
 
-const NAMES = ["Alex Morgan", "Sam Patel", "Jordan Lee", "Taylor Brooks", "Casey Kim", "Riley Chen", "Jamie Fox", "Morgan Diaz"];
-const WORDS = ["Northwind", "Bluebird", "Summit", "Harbor", "Maple", "Atlas", "Orchid", "Granite"];
+const PEOPLE = ["Alex Morgan", "Sam Patel", "Jordan Lee", "Taylor Brooks", "Casey Kim", "Riley Chen", "Jamie Fox", "Morgan Diaz"];
+const PLACES = ["Northwind", "Bluebird", "Summit", "Harbor", "Maple", "Atlas", "Orchid", "Granite"];
+const PERSON = /(^|_)(contact|customer|client|person|owner|assignee|employee|staff|guest|patient|student|member|donor|tenant|volunteer|teacher|tutor|manager|driver|reported_by|assigned_to|candidate|author|host|reviewer|trainer|coach|doctor|vet|therapist|landlord|buyer|seller|agent|rep|requested_by|approved_by|full_name|first_name|last_name)($|_)/;
 
-function sample(f: FieldDef, i: number, title: boolean): unknown {
-  const name = NAMES[i % NAMES.length]!, word = WORDS[i % WORDS.length]!;
+// Stable per-field variety so rent, deposit and price don't all come out the same.
+const spread = (key: string) => [...key].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 997, 7);
+
+function sample(f: FieldDef, i: number, title: boolean, entity: EntityDef): unknown {
+  const name = PEOPLE[(i + spread(entity.key)) % PEOPLE.length]!, word = PLACES[(i + spread(f.key)) % PLACES.length]!;
   const day = (d: number) => new Date(Date.now() + d * 86_400_000).toISOString().slice(0, 10);
+  // End-type dates land after start-type dates.
+  const later = /(end|until|to|due|expiry|expires|checkout|check_out|return|deadline|renewal|valid)/.test(f.key) ? 14 + (spread(f.key) % 30) : 0;
+  const h = spread(f.key);
   switch (f.type) {
-    case "number": return (i + 1) * 3;
-    case "money": return (i + 1) * 125;
+    case "number":
+      if (/(party|guests|people|seats|size|adults|children|qty|quantity|count|days|nights|rooms|beds|floor)/.test(f.key)) return 1 + ((i + h) % 5);
+      if (/(hours|duration)/.test(f.key)) return [1.5, 3, 7.5][i % 3];
+      if (/(minutes)/.test(f.key)) return [30, 45, 60][i % 3];
+      return (i + 1) * (5 + (h % 20));
+    case "money": return Math.round(((i + 1) * (20 + (h % 50)) * (1 + (h % 7))) * 100) / 100;
     case "percent": return [5, 10, 20][i % 3];
-    case "rating": return (i % 5) + 1;
-    case "date": return day(i * 3 - 4);
-    case "datetime": return `${day(i * 2 - 2)}T${String(9 + i).padStart(2, "0")}:00`;
-    case "time": return `${String(9 + i).padStart(2, "0")}:30`;
+    case "rating": return 3 + (i % 3);
+    case "date": return /(birth|dob)/.test(f.key) ? `${1975 + i * 9}-0${3 + i}-1${i}` : day(i * 5 - 6 + later);
+    case "datetime": return `${day(i * 2 - 1 + later)}T${String(9 + i * 2).padStart(2, "0")}:00`;
+    case "time": return `${String(9 + i * 2).padStart(2, "0")}:30`;
     case "bool": return i % 2 === 0;
     case "email": return `${name.split(" ")[0]!.toLowerCase()}@example.com`;
     case "phone": return `+1 555 010${i}`;
     case "url": return `https://example.com/${word.toLowerCase()}`;
-    case "select": return f.options![i % f.options!.length];
+    case "select": return f.options![(i + h) % f.options!.length];
     case "lines": return [{ description: `${word} service`, qty: i + 1, price: 50 }, { description: "Materials", qty: 1, price: 30 + i * 10 }];
-    case "long": return `Sample notes for ${word}.`;
+    case "long": return `Example ${f.label.toLowerCase()} for this ${entity.name.toLowerCase()}.`;
     case "ref": return undefined;
     default:
       if (/(^|_)(number|no|ref|reference|code|sku)$/.test(f.key)) return `${f.key === "sku" ? "SKU" : "NO"}-${1001 + i}`;
-      if (/name|contact|customer|person|owner|assignee|employee|staff|guest|patient|student|member|donor|tenant|volunteer/i.test(f.key)) return name;
-      return title ? `${word} ${f.label.toLowerCase()}`.replace(/^./, (c) => c.toUpperCase()) : word;
+      if (PERSON.test(f.key) || /_name$/.test(f.key) || (f.key === "name" && PERSON.test(entity.key))) return name;
+      if (/(address|location)/.test(f.key)) return `${10 + i * 7} ${word} Street`;
+      if (/city/.test(f.key)) return ["London", "Austin", "Toronto"][i % 3];
+      if (title) return `${word} ${entity.name.toLowerCase()}`;
+      return `${word} ${f.label.toLowerCase()}`;
   }
 }
 
@@ -358,7 +393,7 @@ export async function addSampleData(workspaceId: string, app: string, userId: st
     for (let i = 0; i < 3; i++) {
       const data: Values = {};
       for (const f of e.fields) {
-        const v = f.type === "ref" ? ids[f.ref!]?.[i % (ids[f.ref!]?.length || 1)] : sample(f, i, f.key === e.title);
+        const v = f.type === "ref" ? ids[f.ref!]?.[i % (ids[f.ref!]?.length || 1)] : sample(f, i, f.key === e.title, e);
         if (v !== undefined) data[f.key] = v;
       }
       const id = randomUUID();

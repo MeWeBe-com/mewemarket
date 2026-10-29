@@ -123,6 +123,7 @@ test("invoice line items total and print view", async ({ page }) => {
   const id = page.url().split("/").pop();
   await page.goto(`/w/acme/a/invoices/invoice/${id}/print`);
   await expect(page.getByText("$385.00")).toBeVisible();
+  await expect(page.getByText("Tax (10%)")).toBeVisible();
   page.on("dialog", (d) => d.accept());
   await page.goto(`/w/acme/a/invoices/invoice/${id}`);
   await page.getByRole("button", { name: "Delete" }).click();
@@ -141,4 +142,16 @@ test("public pages and free tools load without errors", async ({ page }) => {
   await page.getByRole("button", { name: "Format" }).click();
   await expect(page.locator("body")).toContainText('"b": [');
   expect(errors).toEqual([]);
+});
+
+test("no horizontal scrolling at phone width", async ({ browser }) => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const wide: string[] = [];
+  for (const p of ["/", "/apps", "/apps/hotel", "/pricing", "/tools", "/tools/invoice-generator", "/tools/loan-calculator", "/tools/db-diagram", "/tools/whiteboard"]) {
+    await page.goto(p);
+    await page.waitForLoadState("networkidle");
+    const w = await page.evaluate(() => document.documentElement.scrollWidth);
+    if (w > 392) wide.push(`${p}: ${w}px`);
+  }
+  expect(wide).toEqual([]);
 });
