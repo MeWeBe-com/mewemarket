@@ -69,6 +69,7 @@ test("add an app, create, edit, move, search, import and delete records", async 
     await page.reload();
     await expect(page.getByLabel("Move Login button fixed")).toHaveValue(options[options.length - 1]!);
     await page.getByRole("tab", { name: "table" }).click();
+    await page.waitForURL(/view=table/);
   }
 
   // Search.
