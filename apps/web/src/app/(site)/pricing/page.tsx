@@ -1,7 +1,8 @@
 import { PLANS } from "@mewe/core";
-import { Check, Heart } from "lucide-react";
+import { Check, Heart, Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PageHero } from "@/components/site/page-hero";
 import { PricingCards } from "./cards";
 
 export const metadata: Metadata = {
@@ -27,19 +28,18 @@ const FAQ = [
 
 export default function PricingPage() {
   return (
-    <div className="mx-auto max-w-6xl px-4 py-14">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Simple pricing for the whole workspace</h1>
-        <p className="mx-auto mt-4 max-w-2xl text-[var(--muted)]">One price for all your apps, not per tool. Start free, upgrade when your team grows.</p>
-      </div>
-
+    <>
+    <PageHero center eyebrow="Pricing" title={<>Simple pricing for <span className="text-gradient">the whole workspace</span></>}
+      intro="One price for all your apps, not per tool. Start free, upgrade when your team grows." />
+    <div className="mx-auto max-w-6xl px-4 pb-14">
       <PricingCards plans={PLANS} />
 
-      <section className="mt-20 overflow-x-auto">
+      <section className="mt-24">
         <h2 className="text-2xl font-bold">Compare plans</h2>
-        <table className="mt-6 w-full min-w-[640px] text-sm">
+        <div className="surface mt-6 overflow-x-auto">
+        <table className="w-full min-w-[640px] text-sm [&_td]:px-5 [&_th]:px-5">
           <thead>
-            <tr className="border-b border-[var(--border)] text-left">
+            <tr className="border-b border-[var(--border)] bg-[var(--bg-subtle)] text-left">
               <th className="py-3 font-medium text-[var(--muted)]">Feature</th>
               {PLANS.map((p) => <th key={p.id} className="py-3 font-semibold">{p.name}</th>)}
             </tr>
@@ -59,32 +59,34 @@ export default function PricingPage() {
             ))}
           </tbody>
         </table>
+        </div>
         <p className="mt-3 text-xs text-[var(--muted)]">Extra users $5 per month each.</p>
       </section>
 
-      <section id="supporter" className="mt-20 scroll-mt-24 rounded-2xl border border-[var(--border)] bg-[var(--bg-subtle)] p-8 sm:flex sm:items-center sm:justify-between sm:gap-8">
+      <section id="supporter" className="mt-20 scroll-mt-24 rounded-2xl border border-rose-500/20 bg-gradient-to-br from-rose-500/[0.07] to-fuchsia-500/[0.07] p-8 sm:flex sm:items-center sm:justify-between sm:gap-8">
         <div>
           <p className="inline-flex items-center gap-2 font-semibold"><Heart className="size-4 text-rose-500" /> Supporter · $1 per month</p>
           <p className="mt-2 max-w-xl text-sm text-[var(--muted)]">
             Not ready for a workspace? Support MeweMarket and the open-source projects in our catalogue, and get a supporter badge plus early access to new apps.
           </p>
         </div>
-        <Link href="/sign-up?plan=supporter" className="mt-6 inline-flex shrink-0 rounded-lg border border-[var(--border)] bg-[var(--card)] px-5 py-2.5 font-semibold hover:border-accent sm:mt-0">
+        <Link href="/sign-up?plan=supporter" className="mt-6 inline-flex shrink-0 rounded-xl border border-[var(--border)] bg-[var(--card)] px-5 py-2.5 font-semibold shadow-[var(--shadow-sm)] hover:border-rose-400 sm:mt-0">
           Become a supporter
         </Link>
       </section>
 
       <section className="mx-auto mt-20 max-w-3xl">
         <h2 className="text-center text-2xl font-bold">Pricing questions</h2>
-        <div className="mt-8 divide-y divide-[var(--border)] border-y border-[var(--border)]">
+        <div className="mt-8 space-y-3">
           {FAQ.map(([q, a]) => (
-            <details key={q} className="group py-4">
-              <summary className="flex cursor-pointer list-none items-center justify-between font-medium">{q}<span className="text-[var(--muted)] transition group-open:rotate-45">+</span></summary>
+            <details key={q} className="surface group px-5 py-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold">{q}<span className="grid size-7 shrink-0 place-items-center rounded-full bg-[var(--bg-subtle)] transition group-open:rotate-45 group-open:bg-accent group-open:text-white"><Plus className="size-4" /></span></summary>
               <p className="mt-3 text-[var(--muted)]">{a}</p>
             </details>
           ))}
         </div>
       </section>
     </div>
+    </>
   );
 }

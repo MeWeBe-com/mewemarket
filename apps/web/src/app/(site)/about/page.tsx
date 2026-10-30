@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <article className="mx-auto max-w-3xl px-4 py-14">
-      <h1 className="text-4xl font-bold tracking-tight">About MeweMarket</h1>
+      <h1 className="text-4xl font-extrabold sm:text-5xl">About MeweMarket</h1>
       <div className="mt-8 space-y-5 text-lg leading-relaxed text-[var(--muted)]">
         <p>
           MeweMarket started as a marketplace of ready-to-use business apps: CRM, inventory, invoicing, HR, hospital and hotel

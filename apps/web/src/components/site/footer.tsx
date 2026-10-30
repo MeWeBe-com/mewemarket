@@ -1,5 +1,6 @@
 import { CATEGORIES } from "@mewe/core";
 import Link from "next/link";
+import { Logo } from "@/components/ui";
 
 const COLS = [
   { title: "Product", links: [["/apps", "All apps"], ["/tools", "Free tools"], ["/pricing", "Pricing"]] },
@@ -9,10 +10,10 @@ const COLS = [
 
 export function SiteFooter() {
   return (
-    <footer className="mt-24 border-t border-[var(--border)] bg-[var(--bg-subtle)]">
+    <footer className="mt-28 border-t border-[var(--border)] bg-[var(--bg-subtle)]">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:grid-cols-2 lg:grid-cols-5">
         <div className="lg:col-span-2">
-          <p className="font-bold">MeweMarket</p>
+          <Logo />
           <p className="mt-2 max-w-xs text-sm text-[var(--muted)]">
             Every business app your company runs on, in one workspace, on one subscription.
           </p>

@@ -34,7 +34,7 @@ test("add an app, create, edit, move, search, import and delete records", async 
   const entityLink = page.locator('nav[aria-label$="sections"] a').nth(1);
   await entityLink.click();
   await page.waitForURL(/\/a\/bug-tracker\/[a-z_]+$/);
-  await page.getByRole("link", { name: /^\+ New/ }).click();
+  await page.getByRole("link", { name: /^New / }).click();
   const title = page.locator("form input[type=text]").first();
   await title.fill("Login button broken");
   // Fill any other required text inputs.
@@ -44,7 +44,7 @@ test("add an app, create, edit, move, search, import and delete records", async 
   await expect(page.getByRole("link", { name: "Login button broken" })).toBeVisible();
 
   // Validation: an empty required title is rejected.
-  await page.getByRole("link", { name: /^\+ New/ }).click();
+  await page.getByRole("link", { name: /^New / }).click();
   await page.locator("form input[required]").first().evaluate((el: HTMLInputElement) => el.removeAttribute("required"));
   await page.getByRole("button", { name: /^Create/ }).click();
   await expect(page.getByText(/is required/).first()).toBeVisible();

@@ -4,27 +4,63 @@
 
 @theme {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --color-accent: #6366f1;
-  --color-accent-strong: #4f46e5;
+  --font-display: var(--font-jakarta), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --color-accent: #5b5bf6;
+  --color-accent-strong: #4338ca;
+  --color-accent-soft: #eef0ff;
 }
 
 :root {
   --bg: #ffffff;
-  --bg-subtle: #f8fafc;
-  --fg: #0b0f19;
-  --muted: #64748b;
-  --border: #e2e8f0;
+  --bg-subtle: #f7f8fb;
+  --fg: #0b1020;
+  --muted: #5f6b80;
+  --border: #e6e8ef;
   --card: #ffffff;
+  --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.05);
+  --shadow: 0 1px 2px rgb(16 24 40 / 0.04), 0 4px 12px -2px rgb(16 24 40 / 0.06);
+  --shadow-lg: 0 2px 4px rgb(16 24 40 / 0.04), 0 16px 40px -8px rgb(16 24 40 / 0.14);
 }
 .dark {
-  --bg: #0b0f19;
-  --bg-subtle: #111827;
-  --fg: #e2e8f0;
-  --muted: #94a3b8;
-  --border: #1e293b;
-  --card: #0f1525;
+  --bg: #090c16;
+  --bg-subtle: #0f1322;
+  --fg: #e6e9f2;
+  --muted: #949db3;
+  --border: #1d2336;
+  --card: #0f1424;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 12px -2px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 2px 4px rgb(0 0 0 / 0.4), 0 16px 40px -8px rgb(0 0 0 / 0.6);
+  --color-accent-soft: #1b1d3d;
 }
 
 html { scroll-behavior: smooth; }
-body { background: var(--bg); color: var(--fg); }
+body { background: var(--bg); color: var(--fg); font-feature-settings: "cv11", "ss01"; }
 ::selection { background: color-mix(in srgb, var(--color-accent) 25%, transparent); }
+h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0.02em; }
+
+@utility surface {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  box-shadow: var(--shadow);
+}
+@utility surface-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  &:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); border-color: color-mix(in srgb, var(--color-accent) 35%, var(--border)); }
+}
+/* Faint dotted grid behind hero sections. */
+@utility bg-grid {
+  background-image: radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--fg) 9%, transparent) 1px, transparent 0);
+  background-size: 22px 22px;
+}
+@utility text-gradient {
+  background-image: linear-gradient(100deg, #5b5bf6 0%, #8b5cf6 45%, #ec4899 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@keyframes marquee { to { transform: translateX(-50%); } }
+@keyframes float { 50% { transform: translateY(-8px); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; } }

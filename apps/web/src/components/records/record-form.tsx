@@ -22,7 +22,7 @@ type Props = {
 
 const SIGNED = /(balance|change|adjust|variance|difference|delta|profit|net|temperature|offset)/;
 
-const box = "w-full rounded-lg border border-[var(--border)] bg-transparent px-3 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:opacity-70";
+const box = "w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 text-sm shadow-[var(--shadow-sm)] outline-none transition focus:border-accent focus:ring-4 focus:ring-accent/15 disabled:opacity-70";
 
 export function RecordForm({ entity, values, refs, action, cancelHref, currency, locale, isNew, readOnly, slug }: Props) {
   const [state, formAction, pending] = useActionState(action, null);
@@ -91,7 +91,7 @@ function Control({ field: f, value, refs, currency, locale, slug }: { field: Fie
       if (!refs) return (
         <p className="flex h-10 items-center text-sm text-[var(--muted)]">
           <input type="hidden" name={f.key} value={v} />
-          <Link href={`/w/${slug}/apps?app=${f.refApp}#${f.refApp}`} className="text-accent hover:underline">Add the app</Link>&nbsp;to link a {f.ref!.replace(/_/g, " ")}.
+          <Link href={`/w/${slug}/apps?app=${f.refApp}#${f.refApp}`} className="text-accent hover:underline">Add the app</Link>&nbsp;to link {/^[aeiou]/.test(f.ref!) ? "an" : "a"} {f.ref!.replace(/_/g, " ")}.
         </p>
       );
       // Text saved before this field became a link; kept visible until a record is picked.

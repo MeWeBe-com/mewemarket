@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { CategoryIcon } from "@/components/site/category-icon";
+import { AppIcon } from "@/components/app-icon";
+import { NavLink } from "@/components/shell/nav-link";
 import { CATEGORIES } from "@mewe/core";
 import { appContext } from "../context";
 
@@ -10,15 +11,16 @@ export default async function AppLayout({ children, params }: { children: React.
   const base = `/w/${slug}/a/${app.slug}`;
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-3 print:hidden">
-        <span className="grid size-9 place-items-center rounded-lg bg-accent/10 text-accent"><CategoryIcon name={cat?.icon ?? "app-window"} className="size-5" /></span>
-        <Link href={base} className="text-xl font-bold hover:underline">{app.name}</Link>
+      <div className="flex flex-wrap items-center gap-3.5 print:hidden">
+        <AppIcon slug={app.slug} name={app.name} category={app.category} />
+        <div>
+          <Link href={base} className="font-display text-xl font-extrabold tracking-tight hover:text-accent">{app.name}</Link>
+          {cat && <p className="text-xs font-medium text-[var(--muted)]">{cat.name}</p>}
+        </div>
       </div>
-      <nav className="mt-4 flex gap-1 overflow-x-auto print:hidden border-b border-[var(--border)] text-sm" aria-label={`${app.name} sections`}>
-        <Link href={base} className="whitespace-nowrap px-3 py-2 text-[var(--muted)] hover:text-[var(--fg)]">Overview</Link>
-        {app.entities.map((e) => (
-          <Link key={e.key} href={`${base}/${e.key}`} className="whitespace-nowrap px-3 py-2 text-[var(--muted)] hover:text-[var(--fg)]">{e.plural}</Link>
-        ))}
+      <nav className="mt-5 flex gap-1 overflow-x-auto border-b border-[var(--border)] print:hidden" aria-label={`${app.name} sections`}>
+        <NavLink variant="tab" href={base} exact>Overview</NavLink>
+        {app.entities.map((e) => <NavLink key={e.key} variant="tab" href={`${base}/${e.key}`}>{e.plural}</NavLink>)}
       </nav>
       <div className="mt-6">{children}</div>
     </div>

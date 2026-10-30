@@ -1,7 +1,9 @@
 import { CATEGORIES, getCategory, listCatalogApps } from "@mewe/core";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { CategoryIcon, tone } from "@/components/app-icon";
 import { CatalogBrowser } from "@/components/site/catalog-browser";
+import { PageHero } from "@/components/site/page-hero";
 
 export const revalidate = 3600;
 export const generateStaticParams = () => CATEGORIES.map((c) => ({ slug: c.slug }));
@@ -16,11 +18,11 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   const category = getCategory(slug);
   if (!category) notFound();
   const apps = await listCatalogApps(slug);
+  const t = tone(slug);
   return (
-    <div className="mx-auto max-w-6xl px-4 py-14">
-      <h1 className="text-4xl font-bold tracking-tight">{category.name} apps</h1>
-      <p className="mt-3 max-w-2xl text-[var(--muted)]">{category.blurb}</p>
-      <div className="mt-10"><CatalogBrowser apps={apps} active={slug} /></div>
-    </div>
+    <>
+      <PageHero tint={t.from} eyebrow={<><CategoryIcon category={slug} className="size-4" />{apps.length} apps</>} title={`${category.name} apps`} intro={category.blurb} />
+      <div className="mx-auto max-w-6xl px-4 py-12"><CatalogBrowser apps={apps} active={slug} /></div>
+    </>
   );
 }

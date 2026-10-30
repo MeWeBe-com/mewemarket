@@ -1,5 +1,7 @@
 import { canManageWorkspace, entityCounts, entityTotals } from "@mewe/core";
+import { ArrowRight, Plus } from "lucide-react";
 import Link from "next/link";
+import { tone } from "@/components/app-icon";
 import { Card } from "@/components/ui";
 import { formatValue } from "@/lib/format";
 import { uninstallAppAction } from "../actions";
@@ -12,30 +14,30 @@ export default async function AppHome({ params }: { params: Promise<{ slug: stri
   const totals = await Promise.all(app.entities.map((e) => entityTotals(workspace.id, app.slug, e)));
   const base = `/w/${slug}/a/${app.slug}`;
   const empty = Object.values(counts).every((n) => !n);
+  const t = tone(app.category);
 
   return (
     <>
       <p className="max-w-2xl text-[var(--muted)]">{app.description}</p>
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {app.entities.map((e, i) => (
-          <Card key={e.key} className="flex flex-col gap-3">
-            <div className="flex items-baseline justify-between">
-              <Link href={`${base}/${e.key}`} className="font-semibold hover:underline">{e.plural}</Link>
-              <span className="text-2xl font-bold tabular-nums">{counts[e.key] ?? 0}</span>
-            </div>
+          <Card key={e.key} className="relative flex flex-col gap-3 overflow-hidden p-5">
+            <div aria-hidden className="absolute inset-x-0 top-0 h-1" style={{ background: `linear-gradient(90deg, ${t.from}, ${t.to})` }} />
+            <Link href={`${base}/${e.key}`} className="text-sm font-bold text-[var(--muted)] hover:text-accent">{e.plural}</Link>
+            <p className="-mt-1 font-display text-4xl font-extrabold tabular-nums">{counts[e.key] ?? 0}</p>
             {(e.totals ?? []).map((k) => {
               const f = e.fields.find((x) => x.key === k)!;
               const n = totals[i]?.[k] ?? 0;
               return (
-                <p key={k} className="flex justify-between text-sm text-[var(--muted)]">
-                  <span>Total {f.label.toLowerCase()}</span>
-                  <span className="tabular-nums">{f.type === "number" ? n.toLocaleString(fmt.locale) : formatValue({ ...f, type: "money" }, n, fmt)}</span>
+                <p key={k} className="flex justify-between rounded-lg bg-[var(--bg-subtle)] px-3 py-2 text-sm">
+                  <span className="text-[var(--muted)]">Total {f.label.toLowerCase()}</span>
+                  <span className="font-bold tabular-nums">{f.type === "number" ? n.toLocaleString(fmt.locale) : formatValue({ ...f, type: "money" }, n, fmt)}</span>
                 </p>
               );
             })}
-            <div className="mt-auto flex gap-3 text-sm">
-              <Link href={`${base}/${e.key}`} className="text-accent hover:underline">Open</Link>
-              {canEdit && <Link href={`${base}/${e.key}/new`} className="text-accent hover:underline">+ New {e.name.toLowerCase()}</Link>}
+            <div className="mt-auto flex gap-2 border-t border-[var(--border)] pt-3 text-sm font-semibold">
+              <Link href={`${base}/${e.key}`} className="inline-flex items-center gap-1 rounded-lg px-2 py-1 hover:bg-[var(--bg-subtle)]">Open <ArrowRight className="size-3.5" /></Link>
+              {canEdit && <Link href={`${base}/${e.key}/new`} className="ml-auto inline-flex items-center gap-1 rounded-lg px-2 py-1 hover:bg-[var(--bg-subtle)]" style={{ color: t.text }}><Plus className="size-3.5" />New {e.name.toLowerCase()}</Link>}
             </div>
           </Card>
         ))}
