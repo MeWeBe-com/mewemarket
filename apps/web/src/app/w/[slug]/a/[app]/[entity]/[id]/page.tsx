@@ -1,9 +1,12 @@
 import { APPS, displayTitle, getRecord, listInstalledApps, listRecords, recordTitles, refOptions } from "@mewe/core";
+import { ArrowLeft, Printer } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DeleteRecord } from "@/components/records/delete-record";
 import { RecordForm } from "@/components/records/record-form";
-import { Card } from "@/components/ui";
+import { AppIcon } from "@/components/app-icon";
+import { optionColor, Pill, Value } from "@/components/records/value";
+import { BUTTON_BASE, BUTTON_SECONDARY, Card } from "@/components/ui";
 import { saveRecordAction } from "../../../actions";
 import { appContext } from "../../../context";
 
@@ -25,33 +28,67 @@ export default async function RecordPage({ params }: { params: Promise<{ slug: s
       .map(async ({ a, e, f }) => ({ a, e, f, ...(await listRecords(workspace.id, a.slug, e.key, { filter: { [f.key]: id }, limit: 10 })) })),
   );
 
+  const status = entity.board ? String(record.data[entity.board] ?? "") : "";
+  const statusField = entity.fields.find((x) => x.key === entity.board);
+  // A few headline values for the side panel: money, dates and links first.
+  const rank = (t: string) => ["money", "lines", "date", "datetime", "ref", "number", "rating", "select"].indexOf(t);
+  const summary = entity.fields
+    .filter((x) => x.key !== entity.title && x.key !== entity.board && rank(x.type) >= 0 && record.data[x.key] !== undefined && record.data[x.key] !== "")
+    .sort((a, b) => rank(a.type) - rank(b.type)).slice(0, 5);
+  const f = { ...fmt, refs: titles };
+  const when = (d: Date) => d.toLocaleDateString(fmt.locale, { day: "numeric", month: "short", year: "numeric" });
+  const related = backlinks.filter((b) => b.total > 0);
+
   return (
-    <div className="max-w-3xl">
-      <Link href={base} className="text-sm text-accent">← {entity.plural}</Link>
-      <Card className="mt-3">
-        <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="text-lg font-semibold">{title}</h1>
-            <p className="text-xs text-[var(--muted)]">Updated {record.updatedAt.toLocaleString(fmt.locale)}</p>
-          </div>
-          <div className="flex gap-2">
-            {hasLines && <Link href={`${base}/${id}/print`} target="_blank" className="inline-flex h-9 items-center rounded-lg border border-[var(--border)] px-3 text-sm">Print / PDF</Link>}
-            {canEdit && <DeleteRecord slug={slug} app={app.slug} entity={entity.key} id={id} back={base} name={entity.name.toLowerCase()} />}
-          </div>
+    <div>
+      <Link href={base} className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--muted)] hover:text-accent"><ArrowLeft className="size-4" />{entity.plural}</Link>
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <h1 className="text-2xl font-extrabold sm:text-3xl">{title}</h1>
+        {status && <Pill value={status} color={optionColor(status, statusField?.options)} />}
+        <div className="ml-auto flex gap-2">
+          {hasLines && <Link href={`${base}/${id}/print`} target="_blank" className={`${BUTTON_BASE} ${BUTTON_SECONDARY} h-9 px-3`}><Printer className="size-4" />Print / PDF</Link>}
+          {canEdit && <DeleteRecord slug={slug} app={app.slug} entity={entity.key} id={id} back={base} name={entity.name.toLowerCase()} />}
         </div>
-        <RecordForm entity={entity} values={record.data} refs={refs} action={saveRecordAction.bind(null, slug, app.slug, entity.key, id)}
-          cancelHref={base} currency={fmt.currency} locale={fmt.locale} isNew={false} readOnly={!canEdit} slug={slug} />
-      </Card>
-      {backlinks.filter((b) => b.total > 0).map(({ a, e, f, rows, total }) => (
-        <Card key={`${a.slug}.${e.key}.${f.key}`} className="mt-4">
-          <h2 className="text-sm font-semibold">{e.plural}{a.slug !== app.slug && <span className="font-normal text-[var(--muted)]"> in {a.name}</span>} <span className="font-normal text-[var(--muted)]">({total}{f.label.toLowerCase() !== entity.name.toLowerCase() ? `, as ${f.label.toLowerCase()}` : ""})</span></h2>
-          <ul className="mt-2 divide-y divide-[var(--border)] text-sm">
-            {rows.map((r) => (
-              <li key={r.id} className="py-1.5"><Link href={`/w/${slug}/a/${a.slug}/${e.key}/${r.id}`} className="text-accent hover:underline">{displayTitle(e, r.data, { [id]: title })}</Link></li>
-            ))}
-          </ul>
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_300px]">
+        <Card className="min-w-0">
+          <RecordForm entity={entity} values={record.data} refs={refs} action={saveRecordAction.bind(null, slug, app.slug, entity.key, id)}
+            cancelHref={base} currency={fmt.currency} locale={fmt.locale} isNew={false} readOnly={!canEdit} slug={slug} />
         </Card>
-      ))}
+
+        <aside className="space-y-4">
+          <Card className="p-5">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">Summary</h2>
+            <dl className="mt-3 space-y-3 text-sm">
+              {summary.map((x) => (
+                <div key={x.key} className="flex items-center justify-between gap-3">
+                  <dt className="shrink-0 text-[var(--muted)]">{x.label}</dt>
+                  <dd className="min-w-0 truncate text-right font-semibold"><Value field={x} value={record.data[x.key]} f={f} /></dd>
+                </div>
+              ))}
+              <div className="flex justify-between gap-3 border-t border-[var(--border)] pt-3"><dt className="text-[var(--muted)]">Created</dt><dd>{when(record.createdAt)}</dd></div>
+              <div className="flex justify-between gap-3"><dt className="text-[var(--muted)]">Updated</dt><dd>{when(record.updatedAt)}</dd></div>
+            </dl>
+          </Card>
+
+          {related.map(({ a, e, f: rf, rows, total }) => (
+            <Card key={`${a.slug}.${e.key}.${rf.key}`} className="p-5">
+              <h2 className="flex items-center gap-2 text-sm font-bold">
+                <AppIcon slug={a.slug} name={a.name} category={a.category} size="sm" className="!size-6 !rounded-md [&>svg]:size-3.5" />
+                <span className="min-w-0 flex-1 truncate">{e.plural}{a.slug !== app.slug && <span className="font-normal text-[var(--muted)]"> in {a.name}</span>}</span>
+                <span className="rounded-full bg-[var(--bg-subtle)] px-2 py-0.5 text-xs text-[var(--muted)] ring-1 ring-[var(--border)]">{total}</span>
+              </h2>
+              {rf.label.toLowerCase() !== entity.name.toLowerCase() && <p className="mt-1 text-xs text-[var(--muted)]">as {rf.label.toLowerCase()}</p>}
+              <ul className="mt-3 space-y-1 text-sm">
+                {rows.map((r) => (
+                  <li key={r.id}><Link href={`/w/${slug}/a/${a.slug}/${e.key}/${r.id}`} className="block truncate rounded-lg px-2 py-1.5 font-medium hover:bg-[var(--bg-subtle)] hover:text-accent">{displayTitle(e, r.data, { [id]: title })}</Link></li>
+                ))}
+              </ul>
+            </Card>
+          ))}
+        </aside>
+      </div>
     </div>
   );
 }

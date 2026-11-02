@@ -185,6 +185,12 @@ export async function entityCounts(workspaceId: string, app: string) {
   return Object.fromEntries(rows.map((x) => [x.entity, x.n]));
 }
 
+/** All records in the workspace, as counted against the plan's record limit. */
+export async function workspaceRecordCount(workspaceId: string) {
+  const [row] = await db.select({ n: count() }).from(r).where(eq(r.workspaceId, workspaceId));
+  return row?.n ?? 0;
+}
+
 /** Records grouped by a select field's value, for kanban boards. */
 export async function boardCounts(workspaceId: string, app: string, entity: string, field: string) {
   const rows = await db.select({ v: sql<string>`${r.data}->>${field}`, n: count() }).from(r)

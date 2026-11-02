@@ -33,6 +33,10 @@ Then deploy with:
 ```bash
 git push production main
 ```
+The hook deploys the server's `main` branch. While the new platform lives on the GitHub branch `updated`, push that branch to the server's `main`:
+```bash
+git push production updated:main
+```
 
 The hook then:
 1. checks out a new release in `/srv/mewemarket/releases/<timestamp>`;
@@ -59,3 +63,15 @@ The worker runs the backups every night at 02:30 as a BullMQ scheduled job. If y
 30 2 * * * bash /srv/mewemarket/current/infra/backup.sh
 ```
 For off-site copies, set `RCLONE_REMOTE` in `.env`.
+
+## Video meetings
+The meeting tool connects browsers directly over WebRTC; the server only relays the setup messages through `/api/meet/`.
+- The Caddyfile streams `/api/meet/*` without buffering and allows camera, microphone and screen sharing. Keep both if you edit it.
+- A few strict office or hotel networks block direct connections. If people report "Couldn't connect", run a TURN relay (for example coturn on this server) and set `NEXT_PUBLIC_TURN_URL`, `NEXT_PUBLIC_TURN_USER` and `NEXT_PUBLIC_TURN_PASS` in `.env`, then deploy again (they are baked in at build time).
+
+## Turning on Stripe payments
+Until the keys are set, the billing page says online payments are not switched on, and everything else works.
+1. In the Stripe dashboard, copy the secret and publishable keys into `.env` (`STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`).
+2. Add a webhook endpoint at `https://mewemarket.com/api/stripe/webhook` for these events: `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`. Copy its signing secret into `STRIPE_WEBHOOK_SECRET`.
+3. Deploy again so the new values are picked up.
+4. Test with a Stripe test card (4242 4242 4242 4242) from the workspace's **Plan & billing** page.

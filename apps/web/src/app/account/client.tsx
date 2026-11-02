@@ -17,7 +17,7 @@ export function ProfileForm({ name, email }: { name: string; email: string }) {
       setMsg(error ? { tone: "error", text: error.message ?? "Update failed" } : { tone: "success", text: "Profile updated." });
       router.refresh();
     }}>
-      <h2 className="font-semibold">Profile</h2>
+      <h2 className="text-lg font-bold">Profile</h2>
       {msg && <Alert tone={msg.tone}>{msg.text}</Alert>}
       <Field label="Name"><Input name="name" defaultValue={name} required /></Field>
       <Field label="Email"><Input value={email} disabled /></Field>
@@ -39,7 +39,7 @@ export function PasswordForm() {
       if (!error) form.reset();
       setMsg(error ? { tone: "error", text: error.message ?? "Could not change password" } : { tone: "success", text: "Password changed. Other devices were signed out." });
     }}>
-      <h2 className="font-semibold">Password</h2>
+      <h2 className="text-lg font-bold">Password</h2>
       {msg && <Alert tone={msg.tone}>{msg.text}</Alert>}
       <Field label="Current password"><Input name="current" type="password" autoComplete="current-password" required /></Field>
       <Field label="New password" hint="At least 10 characters."><Input name="next" type="password" autoComplete="new-password" minLength={10} required /></Field>
@@ -79,7 +79,7 @@ export function TwoFactorSetup({ enabled }: { enabled: boolean }) {
 
   return (
     <div className="space-y-4">
-      <h2 className="font-semibold">Two-factor authentication</h2>
+      <h2 className="text-lg font-bold">Two-factor authentication</h2>
       <p className="text-sm text-[var(--muted)]">{enabled ? "On. You'll be asked for a code when you sign in." : "Add a second step to sign-in with an authenticator app."}</p>
       {error && <Alert>{error}</Alert>}
       {step === "idle" && <Button variant={enabled ? "secondary" : "primary"} onClick={() => setStep("password")}>{enabled ? "Turn off" : "Turn on"}</Button>}
@@ -93,7 +93,7 @@ export function TwoFactorSetup({ enabled }: { enabled: boolean }) {
         <div className="space-y-4">
           <div className="inline-block rounded-lg bg-white p-3"><QRCode value={uri} size={160} /></div>
           <p className="text-sm">Scan this with your authenticator app, then enter the 6-digit code.</p>
-          <div className="rounded-lg border border-[var(--border)] p-3">
+          <div className="rounded-xl bg-[var(--bg-subtle)] p-4 ring-1 ring-[var(--border)]">
             <p className="text-sm font-medium">Backup codes. Save these somewhere safe:</p>
             <p className="mt-2 grid grid-cols-2 gap-1 font-mono text-xs">{codes.map((c) => <span key={c}>{c}</span>)}</p>
           </div>
@@ -114,7 +114,7 @@ export function SessionList({ sessions, currentToken }: { sessions: S[]; current
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="font-semibold">Active sessions</h2>
+        <h2 className="text-lg font-bold">Active sessions</h2>
         {sessions.length > 1 && (
           <Button variant="ghost" className="h-8 text-xs" onClick={async () => { await authClient.revokeOtherSessions(); router.refresh(); }}>
             Sign out other devices
@@ -129,7 +129,7 @@ export function SessionList({ sessions, currentToken }: { sessions: S[]; current
               <span className="text-xs text-[var(--muted)]">{s.ipAddress} · since {new Date(s.createdAt).toLocaleDateString()}</span>
             </span>
             {s.token === currentToken ? (
-              <span className="text-xs text-emerald-600">This device</span>
+              <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-bold text-emerald-600">This device</span>
             ) : (
               <Button variant="ghost" className="h-8 text-xs" onClick={async () => { await authClient.revokeSession({ token: s.token }); router.refresh(); }}>Revoke</Button>
             )}

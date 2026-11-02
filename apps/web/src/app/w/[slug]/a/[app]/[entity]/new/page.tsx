@@ -14,8 +14,8 @@ export default async function NewRecord({ params, searchParams }: { params: Prom
   const refs = await refOptions(workspace.id, app.slug, entity.fields);
   const defaults = Object.fromEntries(entity.fields.filter((f) => f.type === "select" && f.required).map((f) => [f.key, f.options![0]]));
   return (
-    <Card className="max-w-3xl">
-      <h1 className="mb-5 text-lg font-semibold">New {entity.name.toLowerCase()}</h1>
+    <Card className="max-w-3xl p-6 sm:p-8">
+      <h1 className="mb-6 text-2xl font-extrabold">New {entity.name.toLowerCase()}</h1>
       {saved && <div className="mb-4"><Alert tone="success">Saved. Add another below.</Alert></div>}
       <RecordForm entity={entity} values={defaults} refs={refs} action={saveRecordAction.bind(null, slug, app.slug, entity.key, null)}
         cancelHref={base} currency={fmt.currency} locale={fmt.locale} isNew readOnly={false} slug={slug} />

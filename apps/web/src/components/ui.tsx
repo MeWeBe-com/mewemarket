@@ -50,7 +50,8 @@ export function Field({ label, hint, children }: { label: string; hint?: ReactNo
 }
 
 export function Card({ className, ...p }: ComponentProps<"div">) {
-  return <div {...p} className={cx("surface p-6", className)} />;
+  // Default padding only when the caller doesn't set its own (class order can't decide between p-6 and p-0).
+  return <div {...p} className={cx("surface", /(^|\s)!?p-\d/.test(className ?? "") ? "" : "p-6", className)} />;
 }
 
 export function Alert({ tone = "error", children }: { tone?: "error" | "success"; children: ReactNode }) {
