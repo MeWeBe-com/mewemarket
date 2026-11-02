@@ -12,7 +12,9 @@ export const metadata: Metadata = { title: "Account" };
 
 export default async function AccountPage() {
   const { user, session } = await requireUser();
-  const sessions = await auth.api.listSessions({ headers: await headers() });
+  const all = (await auth.api.listSessions({ headers: await headers() }))
+    .sort((a, b) => Number(b.token === session.token) - Number(a.token === session.token) || +new Date(b.createdAt) - +new Date(a.createdAt));
+  const sessions = all.slice(0, 10);
 
   return (
     <div className="min-h-dvh bg-[var(--bg-subtle)]">
@@ -39,7 +41,9 @@ export default async function AccountPage() {
       <Card className="mt-6">
         <SessionList
           currentToken={session.token}
-          sessions={sessions.map((s) => ({ token: s.token, userAgent: s.userAgent ?? "Unknown device", ipAddress: s.ipAddress ?? "", createdAt: new Date(s.createdAt).toISOString() }))}
+          more={all.length - sessions.length}
+          sessions={sessions.map((s) => ({ token: s.token, userAgent: s.userAgent ?? "Unknown device", ipAddress: s.ipAddress ?? "",
+            since: new Date(s.createdAt).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }) }))}
         />
       </Card>
     </main>

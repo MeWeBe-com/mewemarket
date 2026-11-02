@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ComponentProps, ReactNode } from "react";
+import { useId, type ComponentProps, type ReactNode } from "react";
 
 // Shared primitives. Colours come from the tokens in globals.css.
 export const cx = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(" ");
@@ -72,11 +72,13 @@ export function Badge({ className, ...p }: ComponentProps<"span">) {
 }
 
 export function Logo({ className }: { className?: string }) {
+  // Header and footer both draw the logo, so each gradient needs its own id.
+  const g = `mm-${useId().replace(/:/g, "")}`;
   return (
     <span className={cx("inline-flex items-center gap-2 font-display text-[17px] font-extrabold tracking-tight", className)}>
       <svg viewBox="0 0 32 32" className="size-8 drop-shadow-[0_4px_10px_rgb(91_91_246/0.45)]" aria-hidden>
-        <defs><linearGradient id="mm-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#7c7cfa" /><stop offset="0.55" stopColor="#5b5bf6" /><stop offset="1" stopColor="#a855f7" /></linearGradient></defs>
-        <rect width="32" height="32" rx="9" fill="url(#mm-g)" />
+        <defs><linearGradient id={g} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#7c7cfa" /><stop offset="0.55" stopColor="#5b5bf6" /><stop offset="1" stopColor="#a855f7" /></linearGradient></defs>
+        <rect width="32" height="32" rx="9" fill={`url(#${g})`} />
         <rect x="7" y="7" width="8" height="8" rx="2.5" fill="#fff" />
         <rect x="17" y="7" width="8" height="8" rx="2.5" fill="#fff" fillOpacity=".55" />
         <rect x="7" y="17" width="8" height="8" rx="2.5" fill="#fff" fillOpacity=".55" />

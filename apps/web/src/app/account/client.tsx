@@ -107,15 +107,16 @@ export function TwoFactorSetup({ enabled }: { enabled: boolean }) {
   );
 }
 
-type S = { token: string; userAgent: string; ipAddress: string; createdAt: string };
+// `since` is formatted on the server so the text matches during hydration.
+type S = { token: string; userAgent: string; ipAddress: string; since: string };
 
-export function SessionList({ sessions, currentToken }: { sessions: S[]; currentToken: string }) {
+export function SessionList({ sessions, currentToken, more }: { sessions: S[]; currentToken: string; more: number }) {
   const router = useRouter();
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold">Active sessions</h2>
-        {sessions.length > 1 && (
+        {sessions.length + more > 1 && (
           <Button variant="ghost" className="h-8 text-xs" onClick={async () => { await authClient.revokeOtherSessions(); router.refresh(); }}>
             Sign out other devices
           </Button>
@@ -126,7 +127,7 @@ export function SessionList({ sessions, currentToken }: { sessions: S[]; current
           <li key={s.token} className="flex items-center justify-between gap-4 py-2">
             <span className="min-w-0">
               <span className="block truncate">{s.userAgent}</span>
-              <span className="text-xs text-[var(--muted)]">{s.ipAddress} · since {new Date(s.createdAt).toLocaleDateString()}</span>
+              <span className="text-xs text-[var(--muted)]">{s.ipAddress} · since {s.since}</span>
             </span>
             {s.token === currentToken ? (
               <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-bold text-emerald-600">This device</span>
@@ -136,6 +137,7 @@ export function SessionList({ sessions, currentToken }: { sessions: S[]; current
           </li>
         ))}
       </ul>
+      {more > 0 && <p className="text-xs text-[var(--muted)]">And {more} older sessions. "Sign out other devices" ends them all.</p>}
     </div>
   );
 }
