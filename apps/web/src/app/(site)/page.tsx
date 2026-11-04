@@ -15,7 +15,7 @@ const STEPS = [
 
 const FAQ = [
   ["What is MeweMarket?", "One workspace with the business apps a small company needs: CRM, invoicing, projects, inventory, HR, bookings and a growing catalogue of more. Everything shares the same customers, team and data."],
-  ["How many apps are there?", "Over 100 business apps across sales, finance, HR, healthcare, hospitality, education, property, logistics, legal, marketing and community groups, plus 30 free online tools. We add more every month."],
+  ["How many apps are there?", "Over 100 business apps across sales, finance, HR, healthcare, hospitality, education, property, logistics, legal, marketing and community groups, plus over 40 free online tools and Pro tools for paid plans. We add more every month."],
   ["Is there a free plan?", "Yes. The Free plan includes 3 users and 3 apps, forever. Every new workspace also gets a 14-day trial of the Business plan, with no card needed."],
   ["Can I bring my existing data?", "Yes. Import contacts, products and other records from CSV or Excel, by matching column names. You can export any list back to CSV at any time."],
   ["Do the free tools need an account?", "No. Tools such as the invoice generator, QR code generator and whiteboard work in your browser with no sign-up, and your data never leaves your device."],
@@ -25,8 +25,8 @@ export default async function HomePage() {
   const apps = await listCatalogApps();
   const featured = CORE_SUITE_SLUGS.map((s) => apps.find((a) => a.slug === s)).filter((a) => a !== undefined);
   const appCount = apps.filter((a) => a.tier === "app").length;
-  const toolCount = apps.length - appCount;
-  const tools = apps.filter((a) => a.tier === "tool");
+  const tools = apps.filter((a) => a.tier === "tool" && !a.definition.pro);
+  const toolCount = tools.length;
   const marquee = apps.filter((a) => a.tier === "app" && !CORE_SUITE_SLUGS.includes(a.slug)).slice(0, 28);
 
   return (

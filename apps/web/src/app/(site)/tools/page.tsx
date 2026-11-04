@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CATEGORIES, TOOLS } from "@mewe/core";
-import { ShieldCheck, Sparkles, UserX } from "lucide-react";
+import { CATEGORIES, FREE_TOOLS, PRO_TOOLS } from "@mewe/core";
+import { Crown, ShieldCheck, Sparkles, UserX } from "lucide-react";
 import { AppIcon } from "@/components/app-icon";
 import { PageHero } from "@/components/site/page-hero";
 
@@ -13,6 +13,7 @@ export const metadata: Metadata = {
 const GROUP_NAME: Record<string, string> = { developer: "Developer tools" };
 
 export default function ToolsPage() {
+  const TOOLS = FREE_TOOLS;
   const groups = [...new Set(TOOLS.map((t) => t.category))].sort((a, b) => TOOLS.filter((t) => t.category === b).length - TOOLS.filter((t) => t.category === a).length);
   return (
     <>
@@ -44,6 +45,24 @@ export default function ToolsPage() {
             </ul>
           </section>
         ))}
+        <section className="rounded-3xl bg-gradient-to-br from-accent/10 to-fuchsia-500/10 p-6 ring-1 ring-accent/20 sm:p-8">
+          <p className="inline-flex items-center gap-1.5 text-sm font-bold text-accent"><Crown className="size-4" />Pro tools</p>
+          <h2 className="mt-1 text-xl font-bold">More power for paid plans</h2>
+          <p className="mt-1 text-sm text-[var(--muted)]">Included in every paid plan and the 14-day free trial. Like the free tools, your files never leave your device.</p>
+          <ul className="mt-5 grid gap-3 sm:grid-cols-2">
+            {PRO_TOOLS.map((t) => (
+              <li key={t.slug}>
+                <Link href={`/tools/${t.slug}`} className="surface surface-hover flex h-full items-start gap-4 p-4">
+                  <AppIcon slug={t.slug} name={t.name} category={t.category} />
+                  <span className="min-w-0">
+                    <span className="block font-bold">{t.name}</span>
+                    <span className="mt-0.5 block text-sm leading-relaxed text-[var(--muted)]">{t.tagline}</span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
       </div>
     </>
   );

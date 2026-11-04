@@ -1,5 +1,5 @@
 import { getSubscription, listInstalledApps, listUserWorkspaces } from "@mewe/core";
-import { CreditCard, Home, LayoutGrid, Plus, Settings, Sparkles, Users } from "lucide-react";
+import { CreditCard, Home, LayoutGrid, Plus, Settings, Sparkles, Users, Wrench } from "lucide-react";
 import Link from "next/link";
 import { AppIcon } from "@/components/app-icon";
 import { NavLink } from "@/components/shell/nav-link";
@@ -19,6 +19,7 @@ export default async function WorkspaceLayout({ children, params }: { children: 
   const nav = [
     { href: `/w/${slug}`, label: "Home", icon: Home, exact: true },
     { href: `/w/${slug}/apps`, label: "App Store", icon: LayoutGrid },
+    { href: `/w/${slug}/tools`, label: "Tools", icon: Wrench },
     { href: `/w/${slug}/billing`, label: "Plan & billing", icon: CreditCard },
     { href: `/w/${slug}/settings`, label: "Settings", icon: Settings, exact: true },
     { href: `/w/${slug}/settings/members`, label: "Members", icon: Users },

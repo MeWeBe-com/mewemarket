@@ -35,6 +35,7 @@ export type CatalogEntry = {
   category: string;
   features: string[];
   legacyProductIds?: number[];
+  pro?: boolean;
 };
 
 export const CATALOG: CatalogEntry[] = [

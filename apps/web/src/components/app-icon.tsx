@@ -5,7 +5,7 @@ import {
   HeartPulse, Home, IdCard, KeyRound, Landmark, LayoutGrid, Library, Link2, ListChecks, Mail, MapPin, Megaphone, MessageSquare, Microscope,
   Music, Notebook, Package, Palette, PartyPopper, Percent, PiggyBank, Plane, QrCode, Receipt, Scale, Scissors, Shield, ShoppingCart, Smile,
   Sparkles, Star, Stethoscope, Store, Tag, Target, Ticket, Timer, Truck, Type, Users, Utensils, Video, Wallet, Warehouse, Wrench,
-  type LucideIcon, type LucideProps,
+  Dices, FileStack, Hourglass, Image as ImageIcon, Images, Sheet, Shuffle, Volume2, type LucideIcon, type LucideProps,
 } from "lucide-react";
 
 // One colour per category, so apps read as families across the site and the workspace.
@@ -62,7 +62,10 @@ const CATEGORY_ICON: Record<string, LucideIcon> = {
 
 // Where keywords guess wrong.
 const OVERRIDE: Record<string, LucideIcon> = {
-  "ai-assistant": Sparkles,
+  "ai-assistant": Sparkles, "receipt-maker": Receipt, "business-name-generator": Sparkles, "break-even-calculator": Scale,
+  "salary-converter": Banknote, "discount-calculator": Percent, "meeting-cost-calculator": Clock, "email-signature-generator": Mail,
+  "image-resizer": ImageIcon, stopwatch: Timer, "countdown-timer": Hourglass, "random-picker": Shuffle, "text-to-speech": Volume2,
+  "coin-dice": Dices, "pdf-tools": FileStack, "bulk-image-compressor": Images, "bulk-qr-codes": QrCode, "csv-cleaner": Sheet,
   bookings: Calendar, wiki: BookOpen, bookmarks: Bookmark, "habit-tracker": ListChecks, onboarding: ClipboardCheck,
   "restaurant-reservations": Utensils, catering: ChefHat, "library-loans": Library, helpdesk: Headset, "warranty-claims": Shield,
   "field-service": Wrench, returns: Package, "returns-rma": Package, "trade-shows": Ticket, "ip-register": Award, "nda-tracker": FileSignature,

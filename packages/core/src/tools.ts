@@ -1,4 +1,5 @@
-export type ToolMeta = { slug: string; name: string; tagline: string; description: string; category: string; features: string[] };
+/** `pro` tools run inside a workspace and need a paid plan (or the trial). */
+export type ToolMeta = { slug: string; name: string; tagline: string; description: string; category: string; features: string[]; pro?: boolean };
 
 const t = (slug: string, name: string, category: string, tagline: string, description: string, features: string[]): ToolMeta => ({ slug, name, category, tagline, description, features });
 
@@ -34,6 +35,29 @@ export const TOOLS: ToolMeta[] = [
   t("age-calculator", "Age calculator", "hr", "Work out exact age from a date of birth.", "See age in years, months and days, plus total days and the next birthday.", ["Years, months, days", "Next birthday"]),
   t("date-difference", "Date difference", "hr", "Count days between two dates.", "Find the number of days, weeks and working days between two dates, or add days to a date.", ["Calendar and working days", "Add or subtract days"]),
   t("pomodoro-timer", "Pomodoro timer", "business", "Focus in 25 minute blocks with breaks.", "A simple focus timer with work and break sessions and a sound when time is up.", ["Custom lengths", "Session count", "Sound alert"]),
+  // Business
+  t("receipt-maker", "Receipt maker", "finance", "Make a payment receipt and print it or save it as PDF.", "Add your business, the customer, what they paid for and how they paid. Totals and tax are worked out for you. Nothing leaves your device.", ["Line items and tax", "Any payment method", "Print-friendly layout"]),
+  t("business-name-generator", "Business name generator", "marketing", "Get name ideas for a new business or product.", "Enter a few words about your business and pick a style to get dozens of name ideas you can copy.", ["Four naming styles", "Dozens of ideas at a time", "One click copy"]),
+  t("break-even-calculator", "Break-even calculator", "finance", "Find how many sales you need to cover your costs.", "Enter your fixed costs, price and cost per unit to see your break-even point in units and revenue, and your profit at different sales levels.", ["Break-even units and revenue", "Contribution margin", "Profit at different volumes"]),
+  t("salary-converter", "Salary converter", "hr", "Convert pay between hourly, daily, weekly, monthly and yearly.", "Enter a pay rate and your working pattern to see the same pay for every other period.", ["Five pay periods", "Custom hours and days", "Instant results"]),
+  t("discount-calculator", "Discount calculator", "sales", "Work out sale prices and how much you save.", "Take a percentage off a price, stack a second discount, add tax, or find the percentage between two prices.", ["Stacked discounts", "Tax option", "Reverse percentage"]),
+  t("meeting-cost-calculator", "Meeting cost calculator", "business", "See what a meeting really costs.", "Enter the people and their pay to see the cost of a meeting, or run the live timer and watch the cost add up.", ["Hourly rate or salary", "Live cost timer", "Cost per minute"]),
+  t("email-signature-generator", "Email signature generator", "marketing", "Create a professional email signature.", "Fill in your details, choose a layout and colour, and copy a signature that works in Gmail, Outlook and Apple Mail.", ["Three layouts", "Logo or photo", "Copy for any email app"]),
+  // Everyday
+  t("image-resizer", "Image resizer", "application", "Resize and compress an image in your browser.", "Change an image's size or format and shrink its file size. Your image never leaves your device.", ["Resize by pixels or percent", "JPEG, PNG or WebP", "Before and after file size"]),
+  t("stopwatch", "Stopwatch", "application", "A simple online stopwatch with laps.", "Start, pause and record laps with split times. Press space to start or pause.", ["Lap and split times", "Keyboard shortcut", "Hundredths of a second"]),
+  t("countdown-timer", "Countdown timer", "application", "Count down a time or to a date.", "Set a timer or pick a date and time to count down to, with a sound when time is up.", ["Quick presets", "Count down to a date", "Sound alert"]),
+  t("random-picker", "Random name picker", "application", "Pick winners or split a list into teams.", "Paste a list to pick one or more at random, shuffle it, or split it into groups. Uses secure randomness.", ["Pick several winners", "Shuffle", "Split into teams"]),
+  t("text-to-speech", "Text to speech", "application", "Hear any text read aloud.", "Paste text and listen to it with your device's voices. Change the voice, speed and pitch.", ["All voices on your device", "Speed and pitch", "Pause and resume"]),
+  t("coin-dice", "Coin flip and dice roller", "application", "Flip a coin or roll dice.", "Flip a coin or roll up to ten dice of any common size, with totals and history.", ["d4 to d20", "Totals and history", "Secure randomness"]),
+  // Pro: inside a workspace on a paid plan or trial
+  { ...t("pdf-tools", "PDF tools", "business", "Merge, split, rotate and remove pages from PDFs.", "Combine PDFs, split one into several files, rotate or delete pages. Everything happens in your browser, so private documents never leave your device.", ["Merge many PDFs", "Split by page ranges", "Rotate and delete pages", "No uploads"]), pro: true },
+  { ...t("bulk-image-compressor", "Bulk image compressor", "marketing", "Resize and compress many images at once.", "Drop in a batch of images, set a size and quality, and download them all as one ZIP, with the space saved for each.", ["Many images at once", "JPEG, WebP or PNG", "Download all as ZIP"]), pro: true },
+  { ...t("bulk-qr-codes", "Bulk QR codes", "marketing", "Make hundreds of QR codes from a list.", "Paste a list of links or a CSV and download a ZIP of QR codes as PNG or SVG, named the way you choose.", ["From a list or CSV", "PNG or SVG", "Custom colours and size", "Download as ZIP"]), pro: true },
+  { ...t("csv-cleaner", "CSV cleaner", "business", "Tidy up spreadsheets and contact lists.", "Remove duplicates and empty rows, trim spaces, fix capitals, find and replace, and sort or pick columns, then download a clean CSV.", ["Remove duplicates", "Trim and fix case", "Sort and choose columns", "Preview before download"]), pro: true },
 ];
+
+export const FREE_TOOLS = TOOLS.filter((x) => !x.pro);
+export const PRO_TOOLS = TOOLS.filter((x) => x.pro);
 
 export const getTool = (slug: string) => TOOLS.find((x) => x.slug === slug);

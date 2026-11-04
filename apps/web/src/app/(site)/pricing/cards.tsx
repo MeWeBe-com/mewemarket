@@ -7,9 +7,9 @@ import { BUTTON_BASE, BUTTON_PRIMARY, BUTTON_SECONDARY } from "@/components/ui";
 
 const HIGHLIGHTS: Record<string, string[]> = {
   free: ["3 users", "3 apps", "1,000 records", "All free tools"],
-  starter: ["5 users", "All 100+ apps", "25,000 records", "CSV import and export"],
-  business: ["20 users", "All 100+ apps", "250,000 records", "Roles and guest access"],
-  scale: ["50 users", "All 100+ apps", "Unlimited records", "Priority support"],
+  starter: ["5 users", "All 100+ apps", "25,000 records", "Pro tools: PDF, bulk images, bulk QR, CSV cleaner"],
+  business: ["20 users", "All 100+ apps", "250,000 records", "All Pro tools", "Roles and guest access"],
+  scale: ["50 users", "All 100+ apps", "Unlimited records", "All Pro tools", "Priority support"],
 };
 
 export function PricingCards({ plans }: { plans: typeof PLANS }) {

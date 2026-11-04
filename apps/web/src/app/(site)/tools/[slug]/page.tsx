@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { TOOLS } from "@mewe/core";
-import { Check } from "lucide-react";
+import { Check, Crown, Lock } from "lucide-react";
 import { AppIcon } from "@/components/app-icon";
-import { Card } from "@/components/ui";
+import { BUTTON_BASE, BUTTON_PRIMARY, BUTTON_SECONDARY, Card } from "@/components/ui";
 import ToolMount from "@/components/tools/mount";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const tool = TOOLS.find((t) => t.slug === slug);
   if (!tool) return {};
-  return { title: `${tool.name} - free online tool`, description: `${tool.tagline} ${tool.description}` };
+  return { title: tool.pro ? `${tool.name} - Pro tool` : `${tool.name} - free online tool`, description: `${tool.tagline} ${tool.description}` };
 }
 
 export default async function ToolPage({ params }: Props) {
@@ -33,11 +33,25 @@ export default async function ToolPage({ params }: Props) {
           <h1 className="text-3xl font-extrabold sm:text-4xl">{tool.name}</h1>
           <p className="mt-1 text-lg text-[var(--muted)]">{tool.tagline}</p>
         </div>
-        <span className="ml-auto hidden rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-700 sm:inline dark:text-emerald-400">Free · no sign-up</span>
+        {tool.pro
+          ? <span className="ml-auto hidden items-center gap-1 rounded-full bg-gradient-to-r from-accent to-fuchsia-500 px-3 py-1 text-xs font-bold text-white sm:inline-flex"><Crown className="size-3.5" />Pro</span>
+          : <span className="ml-auto hidden rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-700 sm:inline dark:text-emerald-400">Free · no sign-up</span>}
       </div>
-      <Card className="mt-8 p-4 shadow-[var(--shadow-lg)] sm:p-6 print:border-0 print:p-0 print:shadow-none">
-        <ToolMount slug={tool.slug} />
-      </Card>
+      {tool.pro ? (
+        <Card className="mt-8 flex flex-col items-center p-8 text-center shadow-[var(--shadow-lg)] sm:p-12">
+          <span className="grid size-14 place-items-center rounded-2xl bg-gradient-to-br from-accent to-fuchsia-500 text-white shadow-lg"><Lock className="size-6" /></span>
+          <h2 className="mt-4 font-display text-2xl font-extrabold">A Pro tool, included in every paid plan</h2>
+          <p className="mt-2 max-w-md text-[var(--muted)]">Use {tool.name} inside your MeweMarket workspace. New workspaces get a 14-day free trial with all Pro tools, no card needed.</p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Link href="/sign-up" className={`${BUTTON_BASE} ${BUTTON_PRIMARY} h-11 px-6`}>Start free trial</Link>
+            <Link href={`/dashboard?to=tools/${tool.slug}`} className={`${BUTTON_BASE} ${BUTTON_SECONDARY} h-11 px-6`}>I have an account</Link>
+          </div>
+        </Card>
+      ) : (
+        <Card className="mt-8 p-4 shadow-[var(--shadow-lg)] sm:p-6 print:border-0 print:p-0 print:shadow-none">
+          <ToolMount slug={tool.slug} />
+        </Card>
+      )}
       <section className="mt-10 grid gap-4 md:grid-cols-2 print:hidden">
         <Card>
           <h2 className="text-lg font-bold">About this tool</h2>
