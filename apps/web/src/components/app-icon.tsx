@@ -62,6 +62,7 @@ const CATEGORY_ICON: Record<string, LucideIcon> = {
 
 // Where keywords guess wrong.
 const OVERRIDE: Record<string, LucideIcon> = {
+  "ai-assistant": Sparkles,
   bookings: Calendar, wiki: BookOpen, bookmarks: Bookmark, "habit-tracker": ListChecks, onboarding: ClipboardCheck,
   "restaurant-reservations": Utensils, catering: ChefHat, "library-loans": Library, helpdesk: Headset, "warranty-claims": Shield,
   "field-service": Wrench, returns: Package, "returns-rma": Package, "trade-shows": Ticket, "ip-register": Award, "nda-tracker": FileSignature,

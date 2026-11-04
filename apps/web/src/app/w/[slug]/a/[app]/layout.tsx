@@ -18,10 +18,10 @@ export default async function AppLayout({ children, params }: { children: React.
           {cat && <p className="text-xs font-medium text-[var(--muted)]">{cat.name}</p>}
         </div>
       </div>
-      <nav className="mt-5 flex gap-1 overflow-x-auto border-b border-[var(--border)] print:hidden" aria-label={`${app.name} sections`}>
+      {!app.kind && <nav className="mt-5 flex gap-1 overflow-x-auto border-b border-[var(--border)] print:hidden" aria-label={`${app.name} sections`}>
         <NavLink variant="tab" href={base} exact>Overview</NavLink>
         {app.entities.map((e) => <NavLink key={e.key} variant="tab" href={`${base}/${e.key}`}>{e.plural}</NavLink>)}
-      </nav>
+      </nav>}
       <div className="mt-6">{children}</div>
     </div>
   );

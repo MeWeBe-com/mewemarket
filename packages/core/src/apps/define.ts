@@ -33,6 +33,8 @@ export type AppDef = {
   features: string[];
   entities: EntityDef[];
   legacyProductIds?: number[];
+  /** Apps with their own screen instead of records (e.g. the AI assistant). */
+  kind?: "assistant";
 };
 
 const TYPES = new Set<FieldType>(["text", "long", "number", "money", "percent", "date", "datetime", "time", "select", "bool", "email", "phone", "url", "rating", "ref", "lines"]);
@@ -80,7 +82,7 @@ export function validateApps(apps: AppDef[]) {
     if (!/^[a-z0-9-]+$/.test(a.slug)) throw new Error(`Bad slug ${a.slug}`);
     if (slugs.has(a.slug)) throw new Error(`Duplicate app slug ${a.slug}`);
     slugs.add(a.slug);
-    if (!a.entities.length) throw new Error(`${a.slug}: no entities`);
+    if (!a.entities.length && !a.kind) throw new Error(`${a.slug}: no entities`);
     const ents = new Map(a.entities.map((e) => [e.key, e]));
     if (ents.size !== a.entities.length) throw new Error(`${a.slug}: duplicate entity key`);
     for (const e of a.entities) {

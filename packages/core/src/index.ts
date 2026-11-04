@@ -7,3 +7,4 @@ export * from "./tools";
 export * from "./apps";
 export * from "./records";
 export * from "./billing";
+export * from "./ai";

@@ -1,3 +1,4 @@
+import { AI_APPS } from "./ai";
 import { BATCH_A } from "./batch-a";
 import { BATCH_B } from "./batch-b";
 import { CORE_SUITE } from "./core-suite";
@@ -5,7 +6,7 @@ import type { AppDef } from "./define";
 
 export * from "./define";
 
-export const APPS: AppDef[] = [...CORE_SUITE, ...BATCH_A, ...BATCH_B];
+export const APPS: AppDef[] = [...CORE_SUITE, ...BATCH_A, ...BATCH_B, ...AI_APPS];
 
 const bySlug = new Map(APPS.map((a) => [a.slug, a]));
 

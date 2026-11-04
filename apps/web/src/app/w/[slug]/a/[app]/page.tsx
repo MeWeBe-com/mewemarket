@@ -2,6 +2,7 @@ import { canManageWorkspace, entityCounts, entityTotals } from "@mewe/core";
 import { ArrowRight, Plus } from "lucide-react";
 import Link from "next/link";
 import { tone } from "@/components/app-icon";
+import { AssistantHome } from "@/components/assistant/home";
 import { Card } from "@/components/ui";
 import { formatValue } from "@/lib/format";
 import { uninstallAppAction } from "../actions";
@@ -10,6 +11,7 @@ import { appContext } from "../context";
 export default async function AppHome({ params }: { params: Promise<{ slug: string; app: string }> }) {
   const { slug, app: appSlug } = await params;
   const { app, workspace, role, fmt, canEdit } = await appContext(slug, appSlug);
+  if (app.kind === "assistant") return <AssistantHome slug={slug} workspaceId={workspace.id} role={role} />;
   const counts = await entityCounts(workspace.id, app.slug);
   const totals = await Promise.all(app.entities.map((e) => entityTotals(workspace.id, app.slug, e)));
   const base = `/w/${slug}/a/${app.slug}`;

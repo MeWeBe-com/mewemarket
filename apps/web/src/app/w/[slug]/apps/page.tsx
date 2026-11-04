@@ -16,7 +16,7 @@ export default async function WorkspaceApps({ params, searchParams }: { params: 
   const have = new Set(installed.map((a) => a.slug));
   const manage = canManageWorkspace(role);
   const q = sp.q?.trim().toLowerCase() ?? "";
-  const apps = APPS.filter((a) => (!sp.c || a.category === sp.c) && (!q || `${a.name} ${a.tagline} ${a.category}`.toLowerCase().includes(q)));
+  const apps = [...APPS].sort((x, y) => Number(!!y.kind) - Number(!!x.kind)).filter((a) => (!sp.c || a.category === sp.c) && (!q || `${a.name} ${a.tagline} ${a.category}`.toLowerCase().includes(q)));
   const max = sub?.plan.limits.apps ?? 3;
   const cats = CATEGORIES.filter((c) => APPS.some((a) => a.category === c.slug));
 
@@ -26,7 +26,7 @@ export default async function WorkspaceApps({ params, searchParams }: { params: 
         <div>
           <h1 className="text-3xl font-extrabold">App Store</h1>
           <p className="mt-1 text-sm text-[var(--muted)]">
-            {APPS.length} apps. {installed.length} added to {workspace.name}{max >= 0 ? ` (your ${sub?.plan.name ?? "Free"} plan includes ${max})` : ""}.
+            {APPS.length} apps. {installed.filter((a) => !a.kind).length} added to {workspace.name}{max >= 0 ? ` (your ${sub?.plan.name ?? "Free"} plan includes ${max})` : ""}.
           </p>
         </div>
         <form className="flex gap-2">
@@ -62,6 +62,7 @@ export default async function WorkspaceApps({ params, searchParams }: { params: 
               <div className="flex items-center gap-3">
                 <AppIcon slug={a.slug} name={a.name} category={a.category} />
                 <div className="min-w-0 flex-1"><p className="truncate font-bold">{a.name}</p><p className="text-xs font-medium" style={{ color: tone(a.category).text }}>{cat?.name}</p></div>
+                {a.kind && !added && <span className="rounded-full bg-gradient-to-r from-accent to-fuchsia-500 px-2 py-0.5 text-[11px] font-bold text-white">AI</span>}
                 {added && <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-bold text-emerald-600"><Check className="size-3" strokeWidth={3} />Added</span>}
               </div>
               <p className="mt-3 flex-1 text-sm leading-relaxed text-[var(--muted)]">{a.tagline}</p>
@@ -71,7 +72,9 @@ export default async function WorkspaceApps({ params, searchParams }: { params: 
                 ) : manage ? (
                   <form action={installAppAction.bind(null, slug, a.slug)} className="flex flex-wrap items-center gap-3">
                     <button className={`${BUTTON_BASE} ${BUTTON_PRIMARY} h-9`}>Add app</button>
-                    <label className="flex items-center gap-1.5 text-xs text-[var(--muted)]"><input type="checkbox" name="samples" defaultChecked className="accent-[var(--color-accent)]" /> with sample data</label>
+                    {a.kind ? <span className="text-xs text-[var(--muted)]">Free, uses your own AI key</span> : (
+                      <label className="flex items-center gap-1.5 text-xs text-[var(--muted)]"><input type="checkbox" name="samples" defaultChecked className="accent-[var(--color-accent)]" /> with sample data</label>
+                    )}
                   </form>
                 ) : (
                   <p className="text-xs text-[var(--muted)]">Ask an owner or admin to add this app.</p>

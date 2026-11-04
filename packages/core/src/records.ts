@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { db, schema } from "@mewe/db";
-import { and, asc, count, desc, eq, ilike, inArray, sql } from "drizzle-orm";
-import { getAppDef, getEntityDef, refKey, refTarget, type EntityDef, type FieldDef } from "./apps";
+import { and, asc, count, desc, eq, ilike, inArray, notInArray, sql } from "drizzle-orm";
+import { APPS, getAppDef, getEntityDef, refKey, refTarget, type EntityDef, type FieldDef } from "./apps";
 import { evalCalc } from "./apps/calc";
 import { currentPlan } from "./billing";
 
@@ -373,8 +373,11 @@ export async function installApp(workspaceId: string, app: string, userId: strin
     const [dup] = await tx.select({ id: schema.installedApps.id }).from(schema.installedApps)
       .where(and(eq(schema.installedApps.workspaceId, workspaceId), eq(schema.installedApps.catalogAppId, app))).limit(1);
     if (dup) return false;
-    if (max >= 0) {
-      const [row] = await tx.select({ n: count() }).from(schema.installedApps).where(eq(schema.installedApps.workspaceId, workspaceId));
+    if (max >= 0 && !def.kind) {
+      // Assistant-type apps hold no records and don't count towards the plan's app limit.
+      const free = APPS.filter((a) => a.kind).map((a) => a.slug);
+      const [row] = await tx.select({ n: count() }).from(schema.installedApps)
+        .where(and(eq(schema.installedApps.workspaceId, workspaceId), notInArray(schema.installedApps.catalogAppId, free)));
       if ((row?.n ?? 0) >= max) throw new LimitError(`Your ${plan.name} plan includes ${max} apps. Upgrade to add more.`);
     }
     await tx.insert(schema.installedApps).values({ id: randomUUID(), workspaceId, catalogAppId: app, installedBy: userId });

@@ -75,3 +75,9 @@ Until the keys are set, the billing page says online payments are not switched o
 2. Add a webhook endpoint at `https://mewemarket.com/api/stripe/webhook` for these events: `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`. Copy its signing secret into `STRIPE_WEBHOOK_SECRET`.
 3. Deploy again so the new values are picked up.
 4. Test with a Stripe test card (4242 4242 4242 4242) from the workspace's **Plan & billing** page.
+
+## AI Assistant
+The AI Assistant app is free to add. Each workspace uses its own Claude or OpenAI API key, which an owner or admin enters on the assistant's page, so AI usage is billed to that workspace's provider account, not to MeweMarket.
+- Saved keys are encrypted with `ENCRYPTION_KEY`. Set it once and keep it: if it changes, saved keys can't be read and workspaces must enter them again.
+- The server must be able to reach `api.anthropic.com` and `api.openai.com`.
+- The assistant can only read records in apps the workspace has installed. It can't create, change or delete anything.
