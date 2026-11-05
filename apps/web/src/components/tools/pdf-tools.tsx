@@ -141,7 +141,7 @@ function Split() {
         const out = await PDFDocument.create();
         (await out.copyPages(src, g)).forEach((p) => out.addPage(p));
         const label = g.length === 1 ? `page-${g[0]! + 1}` : `pages-${g[0]! + 1}-${g[g.length - 1]! + 1}`;
-        let fn = `${name}-${label}.pdf`, k = 2; while (files[fn]) fn = `${name}-${label}-${k++}.pdf`;
+        let fn = `${name}-${label}.pdf`, k = 2; while (files[fn]) fn = `${name}-${label}-copy${k++}.pdf`;
         files[fn] = await out.save();
       }
       if (groups.length === 1) saveBlob(Object.values(files)[0]!, Object.keys(files)[0]!);

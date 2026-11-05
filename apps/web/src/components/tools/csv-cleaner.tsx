@@ -39,7 +39,12 @@ function toCsv(rows: string[][], d: string): string {
 
 const titleCase = (s: string) => s.toLowerCase().replace(/(^|[\s\-_/])(\p{L})/gu, (_, a: string, b: string) => a + b.toUpperCase());
 const cmp = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
-const asNum = (v: string) => { const t = v.trim().replace(/[,\s]/g, ""); return t !== "" && !isNaN(Number(t)) ? Number(t) : null; };
+const asNum = (v: string) => {
+  let t = v.trim().replace(/\s/g, "");
+  // "1,5" is a decimal comma (common with ; delimited files); "1,200" / "1,200.50" use thousands separators
+  t = /^[-+]?\d+,\d{1,2}$|^[-+]?\d+,\d{4,}$/.test(t) ? t.replace(",", ".") : t.replace(/,/g, "");
+  return t !== "" && !isNaN(Number(t)) ? Number(t) : null;
+};
 
 function Check({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
   return <label className="flex items-center gap-2 text-sm font-medium"><input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />{label}</label>;
@@ -79,11 +84,11 @@ export default function CsvCleaner() {
   const headerKey = header.join("\u0001");
   useEffect(() => { setOrder(header.map((_, i) => i)); setHidden([]); setDedupeCols([]); setCaseCols([]); }, [headerKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const body = hasHeader ? parsed.slice(1) : parsed;
+  const body = useMemo(() => (hasHeader ? parsed.slice(1) : parsed), [parsed, hasHeader]);
 
   const result = useMemo(() => {
     let rows = body.map((r) => Array.from({ length: width }, (_, i) => r[i] ?? ""));
-    if (trim) rows = rows.map((r) => r.map((v) => v.trim().replace(/\s+/g, (s) => (s.includes("\n") ? s : " "))));
+    if (trim) rows = rows.map((r) => r.map((v) => v.trim().replace(/ {2,}/g, " ")));
     if (dropEmpty) rows = rows.filter((r) => r.some((v) => v.trim() !== ""));
     if (frOn && find) {
       const re = new RegExp(find.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), frCase ? "g" : "gi"); const c = +frCol;
@@ -107,9 +112,9 @@ export default function CsvCleaner() {
       });
     }
     const cols = colsOn ? order.filter((i) => !hidden.includes(i) && i < width) : header.map((_, i) => i);
-    const head = cols.map((i) => header[i] ?? "");
+    const head = cols.map((i) => (hasHeader ? (parsed[0]?.[i] ?? "").trim() : header[i] ?? ""));
     return { head, rows: rows.map((r) => cols.map((i) => r[i] ?? "")) };
-  }, [body, width, trim, dropEmpty, frOn, find, repl, frCol, frCase, caseOn, caseCols, caseMode, dedupe, dedupeCols, sortOn, sortCol, sortDir, colsOn, order, hidden, header]);
+  }, [body, width, trim, dropEmpty, frOn, find, repl, frCol, frCase, caseOn, caseCols, caseMode, dedupe, dedupeCols, sortOn, sortCol, sortDir, colsOn, order, hidden, header, hasHeader, parsed]);
 
   const od = outDelim === "same" ? delim : outDelim;
   const output = useMemo(() => (result.head.length ? toCsv(hasHeader ? [result.head, ...result.rows] : result.rows, od) : ""), [result, od, hasHeader]);

@@ -3,6 +3,8 @@ import type { NextConfig } from "next";
 const config: NextConfig = {
   transpilePackages: ["@mewe/db", "@mewe/core"],
   poweredByHeader: false,
+  // Lets a second dev server run beside the main build (e.g. NEXT_DIST_DIR=.next-test).
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   // Legacy CodeIgniter URLs → new structure (keeps old SEO value).
   // Product ids and old /apps/<dir>/... demo folders are mapped in code (products route, apps/[slug] routes).
   async redirects() {

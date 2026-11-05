@@ -33,14 +33,11 @@ export default function ImageResizer() {
     if (!f) return;
     if (!/^image\/(jpeg|png|webp)$/.test(f.type)) { setErr("Please choose a JPG, PNG or WebP image."); return; }
     setErr("");
-    if (src) URL.revokeObjectURL(src);
     const u = track(URL.createObjectURL(f));
     const img = new Image();
-    img.onload = () => { imgRef.current = img; setNat({ w: img.naturalWidth, h: img.naturalHeight }); setW(String(img.naturalWidth)); setH(String(img.naturalHeight)); };
+    img.onload = () => { imgRef.current = img; setFile(f); setFormat(f.type as Fmt); setSrc(u); setOut(null); setNat({ w: img.naturalWidth, h: img.naturalHeight }); setW(String(img.naturalWidth)); setH(String(img.naturalHeight)); };
     img.onerror = () => setErr("That image could not be read.");
     img.src = u;
-    setFile(f); setSrc(u); setOut(null);
-    if (f.type !== "image/jpeg") setFormat(f.type as Fmt);
   };
 
   const target = () => {

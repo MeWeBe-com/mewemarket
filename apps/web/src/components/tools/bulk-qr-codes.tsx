@@ -21,14 +21,15 @@ function splitLine(line: string): [string, string] | null {
 }
 
 function parse(src: string, csv: boolean): Entry[] {
-  const used = new Map<string, number>();
-  return src.split(/\r?\n/).map((l) => l.trim()).filter(Boolean).map((line, i) => {
+  const used = new Set<string>();
+  return src.split(/\r?\n/).map((l) => l.trim()).filter(Boolean).flatMap((line, i) => {
     let name = "", content = line;
-    if (csv) { const p = splitLine(line); if (p && p[1]) [name, content] = p; }
-    let base = sanitize(name || content) || `qr-${i + 1}`;
-    const key = base.toLowerCase(); const n = used.get(key) ?? 0; used.set(key, n + 1);
-    if (n) base = `${base}-${n + 1}`;
-    return { name: base, content };
+    if (csv) { const p = splitLine(line); if (p) { if (!p[1]) return []; [name, content] = p; } }
+    const base = sanitize(name || content) || `qr-${i + 1}`;
+    // Names are unique case-insensitively, and a generated "-2" suffix never clashes with a real name
+    let n = base, k = 2; while (used.has(n.toLowerCase())) n = `${base}-${k++}`;
+    used.add(n.toLowerCase());
+    return [{ name: n, content }];
   });
 }
 

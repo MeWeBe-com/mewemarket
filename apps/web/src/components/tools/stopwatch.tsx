@@ -28,7 +28,7 @@ export default function Stopwatch() {
   const now = () => (running ? base.current + performance.now() - start.current : base.current);
   const toggle = () => setRunning((r) => !r);
   const lap = () => { if (running) setLaps((l) => [...l, now()]); };
-  const reset = () => { setRunning(false); base.current = 0; setElapsed(0); setLaps([]); };
+  const reset = () => { setRunning(false); base.current = 0; start.current = performance.now(); setElapsed(0); setLaps([]); };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

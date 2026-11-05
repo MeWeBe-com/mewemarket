@@ -31,7 +31,8 @@ async function compress(file: File, maxW: number, maxH: number, format: Fmt, qua
   ctx.imageSmoothingQuality = "high"; ctx.drawImage(img, 0, 0, w, h);
   const blob = await new Promise<Blob | null>((r) => c.toBlob(r, type, quality / 100));
   if (!blob) throw new Error("Your browser could not encode this format.");
-  const name = file.name.replace(/\.[^.]+$/, "") + "." + EXT[type];
+  // Browsers without an encoder for the format (e.g. WebP in Safari) silently return PNG; name the file after what we really got
+  const name = file.name.replace(/\.[^.]+$/, "") + "." + (EXT[blob.type] ?? EXT[type]);
   return { blob, name, w, h };
 }
 

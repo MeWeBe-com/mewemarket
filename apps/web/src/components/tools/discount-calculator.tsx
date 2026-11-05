@@ -54,7 +54,7 @@ export default function DiscountCalculator() {
           </div>
           <div className="grid gap-3 sm:grid-cols-2" aria-live="polite">
             <Stat label={revPct < 0 ? "Price increase" : "Discount"} value={Number.isFinite(revPct) ? `${fmt(Math.abs(revPct))}%` : "-"} />
-            <Stat label="You save" value={fmt(a - b)} />
+            <Stat label={b > a ? "You pay more" : "You save"} value={fmt(Math.abs(a - b))} />
           </div>
         </>
       )}

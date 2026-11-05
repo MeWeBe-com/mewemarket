@@ -47,7 +47,7 @@ export default function TextToSpeech() {
       <div className="grid gap-4 sm:grid-cols-3">
         <Field label="Voice">
           <Select value={voice} onChange={(e) => setVoice(e.target.value)} disabled={!voices.length}>
-            {!voices.length && <option value="">Loading voices…</option>}
+            {!voices.length && <option value="">Device default voice</option>}
             {voices.map((v) => <option key={v.voiceURI} value={v.voiceURI}>{v.name} ({v.lang})</option>)}
           </Select>
         </Field>
