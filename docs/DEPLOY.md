@@ -70,11 +70,14 @@ The meeting tool connects browsers directly over WebRTC; the server only relays 
 - A few strict office or hotel networks block direct connections. If people report "Couldn't connect", run a TURN relay (for example coturn on this server) and set `NEXT_PUBLIC_TURN_URL`, `NEXT_PUBLIC_TURN_USER` and `NEXT_PUBLIC_TURN_PASS` in `.env`, then deploy again (they are baked in at build time).
 
 ## Turning on Stripe payments
-Until the keys are set, the billing page says online payments are not switched on, and everything else works.
-1. In the Stripe dashboard, copy the secret and publishable keys into `.env` (`STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`).
-2. Add a webhook endpoint at `https://mewemarket.com/api/stripe/webhook` for these events: `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`. Copy its signing secret into `STRIPE_WEBHOOK_SECRET`.
-3. Deploy again so the new values are picked up.
-4. Test with a Stripe test card (4242 4242 4242 4242) from the workspace's **Plan & billing** page.
+Until the keys are set, the billing page says online payments are not switched on, and everything else works. Prices are created at checkout from `packages/core/src/plans.ts`, so no products or prices need to exist in Stripe.
+1. Copy the **secret key** into `.env` as `STRIPE_SECRET_KEY` (`sk_test_…` in the sandbox, `sk_live_…` for real payments). The publishable key isn't used.
+2. **Developers → Webhooks → Add endpoint**: URL `https://mewemarket.com/api/stripe/webhook`, events `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`. Copy its signing secret (`whsec_…`) into `STRIPE_WEBHOOK_SECRET`.
+3. **Settings → Billing → Customer portal**: activate it (allow cancelling and updating the payment method). "Manage billing" opens this portal.
+4. Restart the app so the new values are read, then test from a workspace's **Plan & billing** page with the test card 4242 4242 4242 4242.
+
+## Email
+Mail is sent over SMTP: set `SMTP_HOST`, `SMTP_PORT` (587 for STARTTLS, 465 for TLS), `SMTP_USER`, `SMTP_PASS` and `EMAIL_FROM` (the sender should be the SMTP mailbox or a domain it may send for). Without `SMTP_HOST`, mail is only written to the app log.
 
 ## AI Assistant
 The AI Assistant app is free to add. Each workspace uses its own Claude or OpenAI API key, which an owner or admin enters on the assistant's page, so AI usage is billed to that workspace's provider account, not to MeweMarket.
