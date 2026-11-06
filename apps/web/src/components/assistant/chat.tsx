@@ -71,7 +71,7 @@ export function AssistantChat({ slug, name, suggestions, ready }: { slug: string
             <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-accent to-fuchsia-500 text-white"><Sparkles className="size-4" /></span>
             {m.error
               ? <p className="max-w-[85%] rounded-2xl rounded-tl-md bg-red-500/10 px-4 py-2.5 text-sm text-red-600">{m.content}</p>
-              : <div className={`min-w-0 max-w-[85%] rounded-2xl rounded-tl-md bg-[var(--bg-subtle)] px-4 py-2.5 ${PROSE}`} dangerouslySetInnerHTML={{ __html: markdownToHtml(m.content) }} />}
+              : <div className={`min-w-0 max-w-[85%] rounded-2xl rounded-tl-md bg-[var(--bg-subtle)] px-4 py-2.5 ${PROSE}`} dangerouslySetInnerHTML={{ __html: markdownToHtml(m.content, { images: false }) }} />}
           </div>
         ))}
         {pending && (

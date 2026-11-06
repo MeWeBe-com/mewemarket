@@ -11,7 +11,8 @@ export async function currentPlan(workspaceId: string) {
   if (!s) return { ...FREE, status: "none" as const, sub: null };
   const now = Date.now();
   const trialOver = s.sub.status === "trialing" && (!s.sub.trialEndsAt || s.sub.trialEndsAt.getTime() < now);
-  const ended = s.sub.status === "canceled" || s.sub.status === "unpaid";
+  // Only these statuses grant the paid plan; anything else (canceled, unpaid, incomplete, paused) gets Free limits.
+  const ended = !["active", "trialing", "past_due"].includes(s.sub.status);
   if (trialOver || ended) return { ...FREE, status: trialOver ? ("trial_expired" as const) : ("canceled" as const), sub: s.sub };
   const plan = PLANS.find((p) => p.id === s.plan.id) ?? FREE;
   return { ...plan, status: s.sub.status as "trialing" | "active" | "past_due", sub: s.sub };
@@ -19,12 +20,18 @@ export async function currentPlan(workspaceId: string) {
 
 /** Applied from verified Stripe webhooks only. */
 export async function applyStripeSubscription(input: {
-  workspaceId: string; planId: string; status: string; interval: string; customerId: string; subscriptionId: string; periodEnd: Date | null;
+  workspaceId: string; planId: string; status: string; interval: string; customerId: string; subscriptionId: string;
+  periodEnd: Date | null; trialEnd: Date | null;
 }) {
   if (!PLANS.some((p) => p.id === input.planId)) throw new Error(`Unknown plan ${input.planId}`);
+  // A late event about an old, ended subscription must not overwrite the workspace's newer live one.
+  const [cur] = await db.select().from(schema.subscriptions).where(eq(schema.subscriptions.workspaceId, input.workspaceId)).limit(1);
+  const live = (st: string) => ["active", "trialing", "past_due"].includes(st);
+  if (cur?.stripeSubscriptionId && cur.stripeSubscriptionId !== input.subscriptionId && live(cur.status) && !live(input.status)) return;
   const values = {
     planId: input.planId, status: input.status, interval: input.interval, stripeCustomerId: input.customerId,
     stripeSubscriptionId: input.subscriptionId, currentPeriodEnd: input.periodEnd, updatedAt: new Date(),
+    ...(input.status === "trialing" ? { trialEndsAt: input.trialEnd } : {}),
   };
   await db.insert(schema.subscriptions).values({ workspaceId: input.workspaceId, ...values })
     .onConflictDoUpdate({ target: schema.subscriptions.workspaceId, set: values });

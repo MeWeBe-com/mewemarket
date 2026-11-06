@@ -3,10 +3,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Alert, Button, Field, Input, TextLink } from "@/components/ui";
 import { authClient } from "@/lib/auth-client";
+import { safeNext } from "@/lib/safe-next";
 
 export function SignInForm() {
   const router = useRouter();
-  const next = useSearchParams().get("next") ?? "/dashboard";
+  const next = safeNext(useSearchParams().get("next"));
   const [mode, setMode] = useState<"password" | "magic">("password");
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
@@ -52,7 +53,7 @@ export function SignInForm() {
         onClick={() => setMode(mode === "password" ? "magic" : "password")}>
         {mode === "password" ? "Sign in with an email link instead" : "Sign in with a password instead"}
       </button>
-      <p className="text-center text-sm text-[var(--muted)]">New here? <TextLink href="/sign-up">Create an account</TextLink></p>
+      <p className="text-center text-sm text-[var(--muted)]">New here? <TextLink href={next === "/dashboard" ? "/sign-up" : `/sign-up?next=${encodeURIComponent(next)}`}>Create an account</TextLink></p>
     </form>
   );
 }

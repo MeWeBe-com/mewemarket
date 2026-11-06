@@ -7,6 +7,19 @@ const config: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
   // Legacy CodeIgniter URLs → new structure (keeps old SEO value).
   // Product ids and old /apps/<dir>/... demo folders are mapped in code (products route, apps/[slug] routes).
+  async headers() {
+    return [{
+      source: "/:path*",
+      headers: [
+        // Nothing on the site is meant to be framed by other sites (clickjacking).
+        { key: "X-Frame-Options", value: "DENY" },
+        { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+        { key: "X-Content-Type-Options", value: "nosniff" },
+        { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        { key: "Permissions-Policy", value: "camera=(self), microphone=(self), display-capture=(self), geolocation=()" },
+      ],
+    }];
+  },
   async redirects() {
     return [
       { source: "/category/ViewCategory/:id/:slug/:page*", destination: "/apps/category/:slug", permanent: true },
@@ -16,8 +29,6 @@ const config: NextConfig = {
       { source: "/users/ForgetPassword", destination: "/forgot-password", permanent: true },
       { source: "/users/Support", destination: "/contact", permanent: true },
       { source: "/users/:path*", destination: "/sign-in", permanent: true },
-      // Insights are paused until the quality-gated pipeline ships (M10).
-      { source: "/insights/:path*", destination: "/", permanent: false },
     ];
   },
 };

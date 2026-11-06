@@ -9,8 +9,10 @@ import { CopyButton } from "./shared";
 const words = ["Blue", "Swift", "Bright", "Calm", "Golden", "Happy", "Quiet", "Brave", "Sunny", "Clever"];
 const things = ["River", "Falcon", "Garden", "Harbor", "Meadow", "Summit", "Lantern", "Comet", "Forest", "Bridge"];
 function randomRoom() {
-  const r = new Uint32Array(3); crypto.getRandomValues(r);
-  return `Mewe${words[r[0]! % words.length]}${things[r[1]! % things.length]}${(r[2]! % 9000) + 1000}`;
+  // A readable start plus 10 random characters (~50 bits), so room links can't be guessed.
+  const r = new Uint32Array(12); crypto.getRandomValues(r);
+  const tail = Array.from(r.slice(2), (n) => "abcdefghijkmnpqrstuvwxyz23456789"[n % 32]).join("");
+  return `Mewe${words[r[0]! % words.length]}${things[r[1]! % things.length]}-${tail}`;
 }
 
 const ICE: RTCIceServer[] = [

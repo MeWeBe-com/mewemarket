@@ -18,21 +18,24 @@ export async function GET() {
     maxRetriesPerRequest: 1,
     connectTimeout: 2000,
   });
-  const [db, cache, storage] = await Promise.all([
+  const [db, cache, storageCheck] = await Promise.all([
     check(() => sql`select 1`),
     check(async () => {
       await redis.connect();
       await redis.ping();
     }),
+    // Object storage is optional: no app feature uses it yet, so it's only checked when configured.
     check(async () => {
-      const res = await fetch(`${process.env.S3_ENDPOINT ?? "http://127.0.0.1:9000"}/minio/health/live`, {
+      if (!process.env.S3_ENDPOINT) return;
+      const res = await fetch(`${process.env.S3_ENDPOINT}/minio/health/live`, {
         signal: AbortSignal.timeout(2000),
       });
       if (!res.ok) throw new Error(`status ${res.status}`);
     }),
   ]);
   redis.disconnect();
+  const storage = process.env.S3_ENDPOINT ? storageCheck : "not configured";
 
-  const healthy = db === "ok" && cache === "ok" && storage === "ok";
+  const healthy = db === "ok" && cache === "ok" && storageCheck === "ok";
   return Response.json({ status: healthy ? "ok" : "degraded", db, cache, storage }, { status: healthy ? 200 : 503 });
 }

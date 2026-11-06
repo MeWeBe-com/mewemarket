@@ -29,9 +29,18 @@ export function getCategory(slug: string) {
   return CATEGORIES.find((c) => c.slug === slug) ?? null;
 }
 
-/** Old CodeIgniter product id → new app slug, for 301 redirects. */
-export function legacyProductSlug(id: number) {
-  return CATALOG.find((a) => a.legacyProductIds?.includes(id))?.slug ?? null;
+// Old products with no app definition of their own (ids from the old site's category pages).
+const LEGACY_PRODUCT_PATHS: Record<number, string> = {
+  16: "/apps/payroll-attendance", 24: "/apps/clinic", 44: "/apps/clinic", 25: "/apps/expense-tracker",
+  28: "/apps/wiki", 41: "/apps/projects", 42: "/apps/leave-management",
+  31: "/tools/video-meeting", 32: "/tools/video-meeting", 33: "/tools/video-meeting", 40: "/tools/video-meeting",
+  35: "/tools/whiteboard", 38: "/tools/whiteboard", 34: "/tools", 27: "/apps",
+};
+
+/** Old CodeIgniter product id → new page path, for 301 redirects; null when there is no match. */
+export function legacyProductPath(id: number) {
+  const a = CATALOG.find((x) => x.legacyProductIds?.includes(id));
+  return a ? `/${a.tier === "tool" ? "tools" : "apps"}/${a.slug}` : (LEGACY_PRODUCT_PATHS[id] ?? null);
 }
 
 export async function seedCatalog() {

@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Alert, Button, Field, Input, TextLink } from "@/components/ui";
 import { authClient } from "@/lib/auth-client";
 
-export function SignUpForm({ app }: { app?: string }) {
+// `next` (e.g. an invite link) wins over onboarding, so invited people join the team after verifying.
+export function SignUpForm({ app, next }: { app?: string; next?: string }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -16,7 +17,7 @@ export function SignUpForm({ app }: { app?: string }) {
     const f = new FormData(e.currentTarget);
     const email = String(f.get("email"));
     const { error } = await authClient.signUp.email({
-      name: String(f.get("name")), email, password: String(f.get("password")), callbackURL: app ? `/onboarding?app=${app}` : "/onboarding",
+      name: String(f.get("name")), email, password: String(f.get("password")), callbackURL: next ?? (app ? `/onboarding?app=${app}` : "/onboarding"),
     });
     setPending(false);
     if (error) return setError(error.message ?? "Sign up failed");
@@ -35,7 +36,7 @@ export function SignUpForm({ app }: { app?: string }) {
       <p className="text-center text-xs text-[var(--muted)]">
         By signing up you agree to our <TextLink href="/terms">Terms</TextLink> and <TextLink href="/privacy">Privacy Policy</TextLink>.
       </p>
-      <p className="text-center text-sm text-[var(--muted)]">Already have an account? <TextLink href="/sign-in">Sign in</TextLink></p>
+      <p className="text-center text-sm text-[var(--muted)]">Already have an account? <TextLink href={next ? `/sign-in?next=${encodeURIComponent(next)}` : "/sign-in"}>Sign in</TextLink></p>
     </form>
   );
 }

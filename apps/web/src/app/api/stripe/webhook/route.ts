@@ -4,7 +4,7 @@ import { stripe } from "@/lib/stripe";
 
 const STATUS: Record<string, string> = {
   active: "active", trialing: "trialing", past_due: "past_due", unpaid: "unpaid", canceled: "canceled",
-  incomplete: "past_due", incomplete_expired: "canceled", paused: "past_due",
+  incomplete: "incomplete", incomplete_expired: "canceled", paused: "paused",
 };
 
 // Always re-read the subscription: Stripe doesn't guarantee event order, so the payload may be stale.
@@ -21,6 +21,7 @@ async function sync(id: string) {
     customerId: typeof sub.customer === "string" ? sub.customer : sub.customer.id,
     subscriptionId: sub.id,
     periodEnd: item?.current_period_end ? new Date(item.current_period_end * 1000) : null,
+    trialEnd: sub.trial_end ? new Date(sub.trial_end * 1000) : null,
   });
 }
 

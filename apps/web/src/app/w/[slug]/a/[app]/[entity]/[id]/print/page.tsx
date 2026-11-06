@@ -13,7 +13,9 @@ export default async function PrintRecord({ params }: { params: Promise<{ slug: 
   if (!record) notFound();
   const refs = await recordTitles(workspace.id, entity.fields.filter((f) => f.type === "ref").map((f) => String(record.data[f.key] ?? "")).filter(Boolean));
   const f = { ...fmt, refs };
-  const linesField = entity.fields.find((x) => x.type === "lines")!;
+  // Only invoice-style records (with line items) have a print view.
+  const linesField = entity.fields.find((x) => x.type === "lines");
+  if (!linesField) notFound();
   const lines = (record.data[linesField.key] as Line[] | undefined) ?? [];
   const subtotal = linesSum(lines);
   const taxField = entity.fields.find((x) => x.type === "percent" && /tax|vat/i.test(x.key));
