@@ -1,3 +1,4 @@
+CREATE EXTENSION IF NOT EXISTS pg_trgm;--> statement-breakpoint
 CREATE TABLE "records" (
 	"id" text PRIMARY KEY NOT NULL,
 	"workspace_id" text NOT NULL,
