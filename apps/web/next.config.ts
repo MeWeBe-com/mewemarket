@@ -7,6 +7,20 @@ const config: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
   // Legacy CodeIgniter URLs → new structure (keeps old SEO value).
   // Product ids and old /apps/<dir>/... demo folders are mapped in code (products route, apps/[slug] routes).
+  // Trailing slashes are normalised in middleware instead, so /insights/ can keep its slash.
+  skipTrailingSlashRedirect: true,
+  // Search-engine verification files and the AI corpus come from the insights pipeline's folder.
+  async rewrites() {
+    return {
+      beforeFiles: [
+        { source: "/:file(google[0-9a-f]+\\.html)", destination: "/insights/:file" },
+        { source: "/:file([0-9a-f]{32}\\.txt)", destination: "/insights/:file" },
+        { source: "/llms-full.txt", destination: "/insights/llms-full.txt" },
+      ],
+      afterFiles: [],
+      fallback: [],
+    };
+  },
   async headers() {
     return [{
       source: "/:path*",

@@ -4,16 +4,22 @@ import { type NextRequest, NextResponse } from "next/server";
 // Fast cookie-presence check only; pages still verify the session server-side.
 const PROTECTED = ["/dashboard", "/onboarding", "/w/", "/account", "/invite/"];
 
+// Behind the proxy req.url has the internal host (127.0.0.1:port) and Cloudflare reaches the server over
+// plain HTTP, so redirects are built on the public site address.
+const origin = (req: NextRequest) => process.env.APP_URL ?? `https://${req.headers.get("x-forwarded-host") ?? req.headers.get("host")}`;
+
 export function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
+  // skipTrailingSlashRedirect is on so /insights/ keeps its slash; every other path drops it.
+  if (pathname.length > 1 && pathname.endsWith("/") && !pathname.startsWith("/insights/")) {
+    return NextResponse.redirect(new URL(pathname.replace(/\/+$/, "") + search, origin(req)), 308);
+  }
   if (PROTECTED.some((p) => pathname.startsWith(p)) && !getSessionCookie(req)) {
-    // Behind the proxy req.url has the internal host (127.0.0.1:port), so use the host the visitor asked for.
-    const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
-    const url = new URL("/sign-in", host ? `${req.headers.get("x-forwarded-proto") ?? "https"}://${host}` : req.url);
+    const url = new URL("/sign-in", origin(req));
     url.searchParams.set("next", pathname + search);
     return NextResponse.redirect(url);
   }
   return NextResponse.next();
 }
 
-export const config = { matcher: ["/dashboard", "/onboarding", "/w/:path*", "/account", "/invite/:path*"] };
+export const config = { matcher: ["/((?!_next/|api/|favicon\\.ico|icon\\.svg).*)"] };

@@ -79,6 +79,9 @@ Until the keys are set, the billing page says online payments are not switched o
 ## Email
 Mail is sent over SMTP: set `SMTP_HOST`, `SMTP_PORT` (587 for STARTTLS, 465 for TLS), `SMTP_USER`, `SMTP_PASS` and `EMAIL_FROM` (the sender should be the SMTP mailbox or a domain it may send for). Without `SMTP_HOST`, mail is only written to the app log.
 
+## Insights articles
+The separate mewebe-seo pipeline publishes the insights articles (plus `sitemap.xml`, `feed.json`, `widget.js`, `llms-full.txt` and the search-engine verification files) into a folder every day. Set `INSIGHTS_DIR` to that folder and the app serves it read-only at `/insights/`, with the verification files and `llms-full.txt` also at the site root. On the Hestia server this is `/home/saasthemes/web/mewemarket.com/public_html/insights`.
+
 ## AI Assistant
 The AI Assistant app is free to add. Each workspace uses its own Claude or OpenAI API key, which an owner or admin enters on the assistant's page, so AI usage is billed to that workspace's provider account, not to MeweMarket.
 - Saved keys are encrypted with `ENCRYPTION_KEY`. Set it once and keep it: if it changes, saved keys can't be read and workspaces must enter them again.
