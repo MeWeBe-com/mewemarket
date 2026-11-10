@@ -8,7 +8,7 @@ export async function appContext(slug: string, appSlug: string, entityKey?: stri
   const ctx = await requireWorkspace(slug);
   const app = getAppDef(appSlug);
   if (!app) notFound();
-  if (!(await isInstalled(ctx.workspace.id, app.slug))) redirect(`/w/${slug}/apps?app=${app.slug}`);
+  if (!(await isInstalled(ctx.workspace.id, app.slug))) redirect(`/${slug}/apps?app=${app.slug}`);
   const entity = entityKey ? app.entities.find((e) => e.key === entityKey) : undefined;
   if (entityKey && !entity) notFound();
   const fmt = { currency: ctx.workspace.currency, locale: ctx.workspace.locale === "en" ? "en-US" : ctx.workspace.locale };

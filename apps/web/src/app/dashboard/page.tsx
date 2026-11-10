@@ -10,5 +10,5 @@ export default async function DashboardRedirect({ searchParams }: { searchParams
   if (!workspaces.length) redirect("/onboarding");
   const active = workspaces.find((w) => w.id === session.activeOrganizationId) ?? workspaces[0]!;
   // `to` deep-links into the workspace, e.g. from a Pro tool's public page.
-  redirect(`/w/${active.slug}${to && /^tools\/[a-z0-9-]+$/.test(to) ? `/${to}` : ""}`);
+  redirect(`/${active.slug}${to && /^tools\/[a-z0-9-]+$/.test(to) ? `/${to}` : ""}`);
 }

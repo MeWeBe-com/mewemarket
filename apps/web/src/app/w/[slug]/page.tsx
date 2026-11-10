@@ -15,8 +15,8 @@ export default async function WorkspaceHome({ params }: { params: Promise<{ slug
 
   const steps = [
     { done: true, label: "Create your workspace", href: null },
-    { done: installed.length > 0, label: "Add your first app", href: `/w/${slug}/apps` },
-    { done: members.length > 1, label: "Invite your team", href: `/w/${slug}/settings/members` },
+    { done: installed.length > 0, label: "Add your first app", href: `/${slug}/apps` },
+    { done: members.length > 1, label: "Invite your team", href: `/${slug}/settings/members` },
     { done: session.user.twoFactorEnabled === true, label: "Turn on two-factor authentication", href: "/account" },
   ];
   const doneCount = steps.filter((s) => s.done).length;
@@ -24,10 +24,10 @@ export default async function WorkspaceHome({ params }: { params: Promise<{ slug
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   const stats = [
-    { label: "Apps", value: installed.length, icon: LayoutGrid, color: "#5b5bf6", href: `/w/${slug}/apps` },
+    { label: "Apps", value: installed.length, icon: LayoutGrid, color: "#5b5bf6", href: `/${slug}/apps` },
     { label: "Records", value: records.toLocaleString(), icon: Database, color: "#10b981", href: null },
-    { label: "Members", value: members.length, icon: Users, color: "#0ea5e9", href: `/w/${slug}/settings/members` },
-    { label: "Plan", value: sub?.plan.name ?? "Free", icon: Sparkles, color: "#ec4899", href: `/w/${slug}/billing` },
+    { label: "Members", value: members.length, icon: Users, color: "#0ea5e9", href: `/${slug}/settings/members` },
+    { label: "Plan", value: sub?.plan.name ?? "Free", icon: Sparkles, color: "#ec4899", href: `/${slug}/billing` },
   ];
 
   return (
@@ -37,7 +37,7 @@ export default async function WorkspaceHome({ params }: { params: Promise<{ slug
         <p className="relative text-sm font-semibold text-white/70">{workspace.name}</p>
         <h1 className="relative mt-1 text-3xl font-extrabold sm:text-4xl">{greeting}, {session.user.name.split(" ")[0]}</h1>
         <p className="relative mt-2 max-w-lg text-white/80">Everything your team works on, in one place. Pick an app below or add a new one from the App Store.</p>
-        <Link href={`/w/${slug}/apps`} className={`${BUTTON_BASE} relative mt-6 bg-white text-[#4338ca] shadow-lg hover:bg-white/90`}><Plus className="size-4" />Add an app</Link>
+        <Link href={`/${slug}/apps`} className={`${BUTTON_BASE} relative mt-6 bg-white text-[#4338ca] shadow-lg hover:bg-white/90`}><Plus className="size-4" />Add an app</Link>
       </section>
 
       <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -59,10 +59,10 @@ export default async function WorkspaceHome({ params }: { params: Promise<{ slug
         <section>
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold">Your apps</h2>
-            <Link href={`/w/${slug}/apps`} className="inline-flex items-center gap-1 text-sm font-semibold text-accent hover:underline">App Store <ArrowRight className="size-4" /></Link>
+            <Link href={`/${slug}/apps`} className="inline-flex items-center gap-1 text-sm font-semibold text-accent hover:underline">App Store <ArrowRight className="size-4" /></Link>
           </div>
           {installed.length === 0 ? (
-            <Link href={`/w/${slug}/apps`} className="mt-4 block rounded-2xl border-2 border-dashed border-[var(--border)] p-10 text-center hover:border-accent">
+            <Link href={`/${slug}/apps`} className="mt-4 block rounded-2xl border-2 border-dashed border-[var(--border)] p-10 text-center hover:border-accent">
               <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-accent/10 text-accent"><Plus className="size-6" /></span>
               <p className="mt-3 font-bold">Add your first app</p>
               <p className="mt-1 text-sm text-[var(--muted)]">Choose from over 100 apps. Each one is ready in a second.</p>
@@ -70,7 +70,7 @@ export default async function WorkspaceHome({ params }: { params: Promise<{ slug
           ) : (
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {installed.map((a, i) => (
-                <Link key={a.slug} href={`/w/${slug}/a/${a.slug}`} className="surface surface-hover group flex items-center gap-4 p-4">
+                <Link key={a.slug} href={`/${slug}/${a.slug}`} className="surface surface-hover group flex items-center gap-4 p-4">
                   <AppIcon slug={a.slug} name={a.name} category={a.category} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-bold group-hover:text-accent">{a.name}</span>

@@ -15,7 +15,7 @@ export default async function EntityList({ params, searchParams }: { params: Pro
   const { slug, app: appSlug, entity: entityKey } = await params;
   const sp = await searchParams;
   const { app, entity, workspace, fmt, canEdit } = await appContext(slug, appSlug, entityKey);
-  const base = `/w/${slug}/a/${app.slug}/${entity.key}`;
+  const base = `/${slug}/${app.slug}/${entity.key}`;
   const views = ["table", ...(entity.board ? ["board"] : []), ...(entity.calendar ? ["calendar"] : [])];
   const view = views.includes(sp.view ?? "") ? sp.view! : "table";
   const page = Math.max(1, Number(sp.page) || 1);

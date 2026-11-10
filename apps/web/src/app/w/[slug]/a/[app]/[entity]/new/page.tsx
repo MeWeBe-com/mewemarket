@@ -9,7 +9,7 @@ export default async function NewRecord({ params, searchParams }: { params: Prom
   const { slug, app: appSlug, entity: entityKey } = await params;
   const { saved } = await searchParams;
   const { app, entity, workspace, fmt, canEdit } = await appContext(slug, appSlug, entityKey);
-  const base = `/w/${slug}/a/${app.slug}/${entity.key}`;
+  const base = `/${slug}/${app.slug}/${entity.key}`;
   if (!canEdit) redirect(base);
   const refs = await refOptions(workspace.id, app.slug, entity.fields);
   const defaults = Object.fromEntries(entity.fields.filter((f) => f.type === "select" && f.required).map((f) => [f.key, f.options![0]]));

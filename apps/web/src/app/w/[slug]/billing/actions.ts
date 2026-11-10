@@ -8,15 +8,15 @@ const appUrl = process.env.APP_URL ?? "http://localhost:3000";
 
 async function owner(slug: string) {
   const ctx = await requireWorkspace(slug);
-  if (!canManageWorkspace(ctx.role)) redirect(`/w/${slug}/billing?error=${encodeURIComponent("Only owners and admins can change the plan.")}`);
-  if (!stripe) redirect(`/w/${slug}/billing?error=${encodeURIComponent("Online payments are not switched on yet.")}`);
+  if (!canManageWorkspace(ctx.role)) redirect(`/${slug}/billing?error=${encodeURIComponent("Only owners and admins can change the plan.")}`);
+  if (!stripe) redirect(`/${slug}/billing?error=${encodeURIComponent("Online payments are not switched on yet.")}`);
   return { ...ctx, stripe };
 }
 
 export async function checkoutAction(slug: string, planId: string, interval: "month" | "year") {
   const { workspace, session, stripe } = await owner(slug);
   const plan = PLANS.find((p) => p.id === planId && p.priceMonthlyCents > 0);
-  if (!plan || (interval !== "month" && interval !== "year")) redirect(`/w/${slug}/billing`);
+  if (!plan || (interval !== "month" && interval !== "year")) redirect(`/${slug}/billing`);
   const sub = await getSubscription(workspace.id);
   let customer = sub?.sub.stripeCustomerId ?? undefined;
   if (!customer) {
@@ -41,8 +41,8 @@ export async function checkoutAction(slug: string, planId: string, interval: "mo
     subscription_data: { metadata: { workspaceId: workspace.id, planId: plan.id } },
     metadata: { workspaceId: workspace.id, planId: plan.id },
     allow_promotion_codes: true,
-    success_url: `${appUrl}/w/${slug}/billing?success=1`,
-    cancel_url: `${appUrl}/w/${slug}/billing`,
+    success_url: `${appUrl}/${slug}/billing?success=1`,
+    cancel_url: `${appUrl}/${slug}/billing`,
   });
   redirect(checkout.url!);
 }
@@ -50,7 +50,7 @@ export async function checkoutAction(slug: string, planId: string, interval: "mo
 export async function portalAction(slug: string) {
   const { workspace, stripe } = await owner(slug);
   const sub = await getSubscription(workspace.id);
-  if (!sub?.sub.stripeCustomerId) redirect(`/w/${slug}/billing`);
-  const portal = await stripe.billingPortal.sessions.create({ customer: sub.sub.stripeCustomerId, return_url: `${appUrl}/w/${slug}/billing` });
+  if (!sub?.sub.stripeCustomerId) redirect(`/${slug}/billing`);
+  const portal = await stripe.billingPortal.sessions.create({ customer: sub.sub.stripeCustomerId, return_url: `${appUrl}/${slug}/billing` });
   redirect(portal.url);
 }

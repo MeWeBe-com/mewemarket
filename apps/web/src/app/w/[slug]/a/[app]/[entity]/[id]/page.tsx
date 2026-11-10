@@ -15,7 +15,7 @@ export default async function RecordPage({ params }: { params: Promise<{ slug: s
   const { app, entity, workspace, fmt, canEdit } = await appContext(slug, appSlug, entityKey);
   const record = await getRecord(workspace.id, app.slug, entity.key, id);
   if (!record) notFound();
-  const base = `/w/${slug}/a/${app.slug}/${entity.key}`;
+  const base = `/${slug}/${app.slug}/${entity.key}`;
   const refs = await refOptions(workspace.id, app.slug, entity.fields);
   const titles = await recordTitles(workspace.id, entity.fields.filter((f) => f.type === "ref").map((f) => String(record.data[f.key] ?? "")).filter(Boolean));
   const title = displayTitle(entity, record.data, titles);
@@ -82,7 +82,7 @@ export default async function RecordPage({ params }: { params: Promise<{ slug: s
               {rf.label.toLowerCase() !== entity.name.toLowerCase() && <p className="mt-1 text-xs text-[var(--muted)]">as {rf.label.toLowerCase()}</p>}
               <ul className="mt-3 space-y-1 text-sm">
                 {rows.map((r) => (
-                  <li key={r.id}><Link href={`/w/${slug}/a/${a.slug}/${e.key}/${r.id}`} className="block truncate rounded-lg px-2 py-1.5 font-medium hover:bg-[var(--bg-subtle)] hover:text-accent">{displayTitle(e, r.data, { [id]: title })}</Link></li>
+                  <li key={r.id}><Link href={`/${slug}/${a.slug}/${e.key}/${r.id}`} className="block truncate rounded-lg px-2 py-1.5 font-medium hover:bg-[var(--bg-subtle)] hover:text-accent">{displayTitle(e, r.data, { [id]: title })}</Link></li>
                 ))}
               </ul>
             </Card>

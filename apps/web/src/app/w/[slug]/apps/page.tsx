@@ -37,15 +37,15 @@ export default async function WorkspaceApps({ params, searchParams }: { params: 
           </span>
         </form>
       </div>
-      {sp.error && <div className="mt-4"><Alert>{sp.error} {max >= 0 && <Link href={`/w/${slug}/billing`} className="font-semibold underline">See plans</Link>}</Alert></div>}
+      {sp.error && <div className="mt-4"><Alert>{sp.error} {max >= 0 && <Link href={`/${slug}/billing`} className="font-semibold underline">See plans</Link>}</Alert></div>}
       {sp.app && !have.has(sp.app) && <div className="mt-4"><Alert tone="success">Add this app to your workspace to start using it.</Alert></div>}
 
       <nav className="mt-5 flex flex-wrap gap-2 text-sm" aria-label="Categories">
-        <Link href={`/w/${slug}/apps`} className={`rounded-full px-3.5 py-1.5 font-semibold transition ${!sp.c ? "bg-[var(--fg)] text-[var(--bg)]" : "bg-[var(--card)] text-[var(--muted)] ring-1 ring-[var(--border)] hover:text-[var(--fg)]"}`}>All</Link>
+        <Link href={`/${slug}/apps`} className={`rounded-full px-3.5 py-1.5 font-semibold transition ${!sp.c ? "bg-[var(--fg)] text-[var(--bg)]" : "bg-[var(--card)] text-[var(--muted)] ring-1 ring-[var(--border)] hover:text-[var(--fg)]"}`}>All</Link>
         {cats.map((c) => {
           const on = sp.c === c.slug, t = tone(c.slug);
           return (
-            <Link key={c.slug} href={`/w/${slug}/apps?c=${c.slug}`} className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-semibold transition ${on ? "text-white" : "bg-[var(--card)] text-[var(--muted)] ring-1 ring-[var(--border)] hover:text-[var(--fg)]"}`}
+            <Link key={c.slug} href={`/${slug}/apps?c=${c.slug}`} className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-semibold transition ${on ? "text-white" : "bg-[var(--card)] text-[var(--muted)] ring-1 ring-[var(--border)] hover:text-[var(--fg)]"}`}
               style={on ? { background: t.from } : undefined}>
               {!on && <span className="size-2 rounded-full" style={{ background: t.from }} />}{c.name}
             </Link>
@@ -68,7 +68,7 @@ export default async function WorkspaceApps({ params, searchParams }: { params: 
               <p className="mt-3 flex-1 text-sm leading-relaxed text-[var(--muted)]">{a.tagline}</p>
               <div className="mt-4 border-t border-[var(--border)] pt-4">
                 {added ? (
-                  <Link href={`/w/${slug}/a/${a.slug}`} className={`${BUTTON_BASE} ${BUTTON_SECONDARY} h-9`}>Open</Link>
+                  <Link href={`/${slug}/${a.slug}`} className={`${BUTTON_BASE} ${BUTTON_SECONDARY} h-9`}>Open</Link>
                 ) : manage ? (
                   <form action={installAppAction.bind(null, slug, a.slug)} className="flex flex-wrap items-center gap-3">
                     <button className={`${BUTTON_BASE} ${BUTTON_PRIMARY} h-9`}>Add app</button>
@@ -84,7 +84,7 @@ export default async function WorkspaceApps({ params, searchParams }: { params: 
           );
         })}
       </ul>
-      {!apps.length && <p className="mt-10 text-center text-[var(--muted)]">No apps match. <Link href={`/w/${slug}/apps`} className="text-accent">Show all</Link></p>}
+      {!apps.length && <p className="mt-10 text-center text-[var(--muted)]">No apps match. <Link href={`/${slug}/apps`} className="text-accent">Show all</Link></p>}
     </>
   );
 }

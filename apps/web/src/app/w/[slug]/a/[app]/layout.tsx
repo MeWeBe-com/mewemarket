@@ -8,7 +8,7 @@ export default async function AppLayout({ children, params }: { children: React.
   const { slug, app: appSlug } = await params;
   const { app } = await appContext(slug, appSlug);
   const cat = CATEGORIES.find((c) => c.slug === app.category);
-  const base = `/w/${slug}/a/${app.slug}`;
+  const base = `/${slug}/${app.slug}`;
   return (
     <div>
       <div className="flex flex-wrap items-center gap-3.5 print:hidden">

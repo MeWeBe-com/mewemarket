@@ -15,7 +15,7 @@ export default async function WorkspaceTool({ params }: { params: Promise<{ slug
   const plan = await currentPlan(workspace.id);
   return (
     <>
-      <nav className="text-sm text-[var(--muted)]"><Link href={`/w/${slug}/tools`} className="hover:text-accent">Tools</Link> / {tool.name}</nav>
+      <nav className="text-sm text-[var(--muted)]"><Link href={`/${slug}/tools`} className="hover:text-accent">Tools</Link> / {tool.name}</nav>
       <div className="mt-4 flex items-center gap-3.5">
         <AppIcon slug={tool.slug} name={tool.name} category={tool.category} />
         <div>
@@ -28,7 +28,7 @@ export default async function WorkspaceTool({ params }: { params: Promise<{ slug
           <span className="grid size-12 place-items-center rounded-2xl bg-accent/10 text-accent"><Lock className="size-6" /></span>
           <p className="mt-4 text-lg font-bold">{tool.name} is a Pro tool</p>
           <p className="mt-1 max-w-md text-sm text-[var(--muted)]">It's included in every paid plan. Upgrade {workspace.name} to use it and the other Pro tools.</p>
-          <Link href={`/w/${slug}/billing`} className={`${BUTTON_BASE} ${BUTTON_PRIMARY} mt-6 h-10 px-5`}>See plans</Link>
+          <Link href={`/${slug}/billing`} className={`${BUTTON_BASE} ${BUTTON_PRIMARY} mt-6 h-10 px-5`}>See plans</Link>
         </Card>
       ) : (
         <Card className="mt-6 p-4 sm:p-6"><ToolMount slug={tool.slug} /></Card>

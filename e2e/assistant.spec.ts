@@ -11,21 +11,21 @@ test("add the AI Assistant in one click and set it up", async ({ page }) => {
   await page.getByLabel("Email").fill(EMAIL);
   await page.locator("input[name=password]").fill(PASSWORD);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await page.waitForURL(/\/w\//);
+  await page.waitForURL(/\/acme(\/|$)/);
 
   // Start clean.
-  await page.goto("/w/acme/a/ai-assistant");
+  await page.goto("/acme/ai-assistant");
   if (page.url().includes("/a/ai-assistant")) {
     await page.getByText("Remove app").click();
     await page.getByRole("button", { name: "Remove AI Assistant" }).click();
     await page.waitForURL(/\/apps/);
   }
 
-  await page.goto("/w/acme/apps?q=assistant");
+  await page.goto("/acme/apps?q=assistant");
   const card = page.locator("li#ai-assistant");
   await expect(card.getByText("Free, uses your own AI key")).toBeVisible();
   await card.getByRole("button", { name: "Add app" }).click();
-  await page.waitForURL(/\/a\/ai-assistant$/);
+  await page.waitForURL(/\/acme\/ai-assistant$/);
 
   await expect(page.getByText(/Ask Assistant anything/)).toBeVisible();
   await expect(page.getByLabel("Message Assistant")).toBeDisabled();

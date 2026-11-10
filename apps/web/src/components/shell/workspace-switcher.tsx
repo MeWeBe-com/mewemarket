@@ -17,7 +17,7 @@ export function WorkspaceSwitcher({ current, workspaces }: { current: W; workspa
         if (e.target.value === "__new") return router.push("/onboarding");
         const w = workspaces.find((x) => x.slug === e.target.value)!;
         await authClient.organization.setActive({ organizationId: w.id });
-        router.push(`/w/${w.slug}`);
+        router.push(`/${w.slug}`);
       }}
     >
       {workspaces.map((w) => <option key={w.id} value={w.slug}>{w.name}</option>)}

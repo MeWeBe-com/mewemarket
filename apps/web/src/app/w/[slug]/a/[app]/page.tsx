@@ -14,7 +14,7 @@ export default async function AppHome({ params }: { params: Promise<{ slug: stri
   if (app.kind === "assistant") return <AssistantHome slug={slug} workspaceId={workspace.id} role={role} />;
   const counts = await entityCounts(workspace.id, app.slug);
   const totals = await Promise.all(app.entities.map((e) => entityTotals(workspace.id, app.slug, e)));
-  const base = `/w/${slug}/a/${app.slug}`;
+  const base = `/${slug}/${app.slug}`;
   const empty = Object.values(counts).every((n) => !n);
   const t = tone(app.category);
 

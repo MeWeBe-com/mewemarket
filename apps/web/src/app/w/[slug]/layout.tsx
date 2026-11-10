@@ -7,6 +7,9 @@ import { UserMenu } from "@/components/shell/user-menu";
 import { WorkspaceSwitcher } from "@/components/shell/workspace-switcher";
 import { requireWorkspace } from "@/lib/session";
 
+// Workspace pages are private; robots.txt cannot list every company address, so say it per page.
+export const metadata = { robots: { index: false, follow: false } };
+
 export default async function WorkspaceLayout({ children, params }: { children: React.ReactNode; params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const { session, workspace } = await requireWorkspace(slug);
@@ -17,12 +20,12 @@ export default async function WorkspaceLayout({ children, params }: { children: 
       : null;
 
   const nav = [
-    { href: `/w/${slug}`, label: "Home", icon: Home, exact: true },
-    { href: `/w/${slug}/apps`, label: "App Store", icon: LayoutGrid },
-    { href: `/w/${slug}/tools`, label: "Tools", icon: Wrench },
-    { href: `/w/${slug}/billing`, label: "Plan & billing", icon: CreditCard },
-    { href: `/w/${slug}/settings`, label: "Settings", icon: Settings, exact: true },
-    { href: `/w/${slug}/settings/members`, label: "Members", icon: Users },
+    { href: `/${slug}`, label: "Home", icon: Home, exact: true },
+    { href: `/${slug}/apps`, label: "App Store", icon: LayoutGrid },
+    { href: `/${slug}/tools`, label: "Tools", icon: Wrench },
+    { href: `/${slug}/billing`, label: "Plan & billing", icon: CreditCard },
+    { href: `/${slug}/settings`, label: "Settings", icon: Settings, exact: true },
+    { href: `/${slug}/settings/members`, label: "Members", icon: Users },
   ];
 
   return (
@@ -35,21 +38,21 @@ export default async function WorkspaceLayout({ children, params }: { children: 
           ))}
           <div className="flex items-center justify-between px-2 pb-1 pt-5">
             <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">Your apps</p>
-            <Link href={`/w/${slug}/apps`} aria-label="Add an app" className="grid size-5 place-items-center rounded-md text-[var(--muted)] hover:bg-[var(--card)] hover:text-accent"><Plus className="size-3.5" /></Link>
+            <Link href={`/${slug}/apps`} aria-label="Add an app" className="grid size-5 place-items-center rounded-md text-[var(--muted)] hover:bg-[var(--card)] hover:text-accent"><Plus className="size-3.5" /></Link>
           </div>
           {installed.map((a) => (
-            <NavLink key={a.slug} href={`/w/${slug}/a/${a.slug}`}>
+            <NavLink key={a.slug} href={`/${slug}/${a.slug}`}>
               <AppIcon slug={a.slug} name={a.name} category={a.category} size="sm" className="!size-6 !rounded-md [&>svg]:size-3.5" /><span className="truncate">{a.name}</span>
             </NavLink>
           ))}
-          {installed.length === 0 && <Link href={`/w/${slug}/apps`} className="block rounded-lg border border-dashed border-[var(--border)] px-3 py-3 text-center text-xs text-[var(--muted)] hover:border-accent hover:text-accent">Add your first app</Link>}
+          {installed.length === 0 && <Link href={`/${slug}/apps`} className="block rounded-lg border border-dashed border-[var(--border)] px-3 py-3 text-center text-xs text-[var(--muted)] hover:border-accent hover:text-accent">Add your first app</Link>}
         </nav>
         {trialDaysLeft !== null && (
           <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-accent to-fuchsia-500 p-3.5 text-xs text-white shadow-[0_8px_20px_-8px_rgb(91_91_246/0.7)]">
             <Sparkles className="absolute -right-1 -top-1 size-12 text-white/15" />
             <p className="font-bold">{trialDaysLeft} days left</p>
             <p className="mt-0.5 text-white/80">in your {sub!.plan.name} trial.</p>
-            <Link href={`/w/${slug}/billing`} className="mt-2.5 inline-block rounded-lg bg-white/20 px-2.5 py-1 font-semibold hover:bg-white/30">Choose a plan</Link>
+            <Link href={`/${slug}/billing`} className="mt-2.5 inline-block rounded-lg bg-white/20 px-2.5 py-1 font-semibold hover:bg-white/30">Choose a plan</Link>
           </div>
         )}
         <UserMenu name={session.user.name} email={session.user.email} />
@@ -65,7 +68,7 @@ export default async function WorkspaceLayout({ children, params }: { children: 
               ))}
               {installed.length > 0 && <p className="px-2 pt-3 pb-1 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">Your apps</p>}
               {installed.map((a) => (
-                <Link key={a.slug} href={`/w/${slug}/a/${a.slug}`} className="block truncate rounded-lg px-2 py-1.5 hover:bg-black/5 dark:hover:bg-white/5">{a.name}</Link>
+                <Link key={a.slug} href={`/${slug}/${a.slug}`} className="block truncate rounded-lg px-2 py-1.5 hover:bg-black/5 dark:hover:bg-white/5">{a.name}</Link>
               ))}
             </nav>
           </details>

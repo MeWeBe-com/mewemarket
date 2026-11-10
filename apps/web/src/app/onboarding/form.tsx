@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Alert, Button, Field, Input } from "@/components/ui";
 import { authClient } from "@/lib/auth-client";
+import { isUsableWorkspaceSlug } from "@mewe/core/urls";
 
 const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
 
@@ -17,6 +18,7 @@ export function CreateWorkspaceForm({ app }: { app?: string }) {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!isUsableWorkspaceSlug(slug)) return setError("That address is not available. Try another.");
     setPending(true);
     const { data: free } = await authClient.organization.checkSlug({ slug });
     if (!free?.status) {
@@ -29,7 +31,7 @@ export function CreateWorkspaceForm({ app }: { app?: string }) {
       return setError(error?.message ?? "Could not create the workspace");
     }
     await authClient.organization.setActive({ organizationId: data.id });
-    router.push(app ? `/w/${data.slug}/apps?app=${app}#${app}` : `/w/${data.slug}/apps`);
+    router.push(app ? `/${data.slug}/apps?app=${app}#${app}` : `/${data.slug}/apps`);
     router.refresh();
   }
 
@@ -40,14 +42,14 @@ export function CreateWorkspaceForm({ app }: { app?: string }) {
         <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-lg font-bold text-white shadow-sm">{(name.trim()[0] ?? "?").toUpperCase()}</span>
         <span className="min-w-0">
           <span className="block truncate font-bold">{name.trim() || "Your company"}</span>
-          <span className="block truncate text-xs text-[var(--muted)]">mewemarket.com/w/{slug || "your-company"}</span>
+          <span className="block truncate text-xs text-[var(--muted)]">mewemarket.com/{slug || "your-company"}</span>
         </span>
       </div>
       <Field label="Company or team name">
         <Input value={name} required autoFocus placeholder="Acme Ltd"
           onChange={(e) => { setName(e.target.value); if (!slugEdited) setSlug(slugify(e.target.value)); }} />
       </Field>
-      <Field label="Workspace address" hint={`mewemarket.com/w/${slug || "your-company"}`}>
+      <Field label="Workspace address" hint={`mewemarket.com/${slug || "your-company"}`}>
         <Input value={slug} required pattern="[a-z0-9-]{2,40}"
           onChange={(e) => { setSlug(slugify(e.target.value)); setSlugEdited(true); }} />
       </Field>

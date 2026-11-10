@@ -36,13 +36,13 @@ export default async function SettingsPage({ params }: { params: Promise<{ slug:
               <p className="font-display text-xl font-extrabold">{sub?.plan.name ?? "Free"}</p>
               <p className="text-sm capitalize text-[var(--muted)]">{sub ? sub.sub.status.replace(/_/g, " ") : "No subscription"}</p>
             </div>
-            <Link href={`/w/${slug}/billing`} className="inline-flex items-center gap-1 text-sm font-semibold text-accent hover:underline">Plan & billing <ArrowRight className="size-4" /></Link>
+            <Link href={`/${slug}/billing`} className="inline-flex items-center gap-1 text-sm font-semibold text-accent hover:underline">Plan & billing <ArrowRight className="size-4" /></Link>
           </Card>
         </Section>
         <Section title="Members" body="Invite your team and choose what each person can do.">
           <Card className="flex flex-wrap items-center justify-between gap-4 p-6">
             <p className="text-sm text-[var(--muted)]">Owner, admin, member and read-only guest roles.</p>
-            <Link href={`/w/${slug}/settings/members`} className="inline-flex items-center gap-1 text-sm font-semibold text-accent hover:underline">Manage members <ArrowRight className="size-4" /></Link>
+            <Link href={`/${slug}/settings/members`} className="inline-flex items-center gap-1 text-sm font-semibold text-accent hover:underline">Manage members <ArrowRight className="size-4" /></Link>
           </Card>
         </Section>
       </div>

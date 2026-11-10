@@ -24,7 +24,7 @@ export function HeroMock() {
         <div className="flex items-center gap-2 border-b border-[var(--border)] bg-[var(--bg-subtle)] px-4 py-2.5">
           <span className="size-3 rounded-full bg-[#ff5f57]" /><span className="size-3 rounded-full bg-[#febc2e]" /><span className="size-3 rounded-full bg-[#28c840]" />
           <span className="mx-auto hidden w-72 items-center justify-center gap-1.5 rounded-md bg-[var(--card)] px-3 py-1 text-[11px] text-[var(--muted)] ring-1 ring-[var(--border)] sm:flex">
-            mewemarket.com/w/acme/crm
+            mewemarket.com/acme/crm
           </span>
         </div>
         <div className="flex h-[300px] sm:h-[420px]">

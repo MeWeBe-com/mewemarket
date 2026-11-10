@@ -18,15 +18,15 @@ async function editor(slug: string) {
 
 export async function installAppAction(slug: string, app: string, form: FormData) {
   const { workspace, role, session } = await requireWorkspace(slug);
-  if (!canManageWorkspace(role)) redirect(`/w/${slug}/apps?error=${encodeURIComponent("Only owners and admins can add apps.")}`);
+  if (!canManageWorkspace(role)) redirect(`/${slug}/apps?error=${encodeURIComponent("Only owners and admins can add apps.")}`);
   try {
     await installApp(workspace.id, app, session.user.id, form.get("samples") === "on");
   } catch (e) {
-    if (e instanceof LimitError) redirect(`/w/${slug}/apps?error=${encodeURIComponent(e.message)}`);
+    if (e instanceof LimitError) redirect(`/${slug}/apps?error=${encodeURIComponent(e.message)}`);
     throw e;
   }
   revalidatePath(`/w/${slug}`, "layout");
-  redirect(`/w/${slug}/a/${app}`);
+  redirect(`/${slug}/${app}`);
 }
 
 export async function uninstallAppAction(slug: string, app: string, form: FormData) {
@@ -34,7 +34,7 @@ export async function uninstallAppAction(slug: string, app: string, form: FormDa
   if (!canManageWorkspace(role)) return;
   await uninstallApp(workspace.id, app, form.get("delete_data") === "on");
   revalidatePath(`/w/${slug}`, "layout");
-  redirect(`/w/${slug}/apps`);
+  redirect(`/${slug}/apps`);
 }
 
 /** Reads typed values out of the record form. Lines arrive as JSON in a hidden input. */
@@ -62,7 +62,7 @@ export async function saveRecordAction(slug: string, app: string, entity: string
   }
   if (res.errors) return { errors: res.errors, message: "Please fix the highlighted fields." };
   revalidatePath(`/w/${slug}/a/${app}`, "layout");
-  redirect(form.get("_next") === "new" ? `/w/${slug}/a/${app}/${entity}/new?saved=1` : `/w/${slug}/a/${app}/${entity}`);
+  redirect(form.get("_next") === "new" ? `/${slug}/${app}/${entity}/new?saved=1` : `/${slug}/${app}/${entity}`);
 }
 
 export async function deleteRecordAction(slug: string, app: string, entity: string, ids: string[]) {

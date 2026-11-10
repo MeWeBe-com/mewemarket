@@ -91,7 +91,7 @@ function Control({ field: f, value, refs, currency, locale, slug }: { field: Fie
       if (!refs) return (
         <p className="flex h-10 items-center text-sm text-[var(--muted)]">
           <input type="hidden" name={f.key} value={v} />
-          <Link href={`/w/${slug}/apps?app=${f.refApp}#${f.refApp}`} className="text-accent hover:underline">Add the app</Link>&nbsp;to link {/^[aeiou]/.test(f.ref!) ? "an" : "a"} {f.ref!.replace(/_/g, " ")}.
+          <Link href={`/${slug}/apps?app=${f.refApp}#${f.refApp}`} className="text-accent hover:underline">Add the app</Link>&nbsp;to link {/^[aeiou]/.test(f.ref!) ? "an" : "a"} {f.ref!.replace(/_/g, " ")}.
         </p>
       );
       // Text saved before this field became a link; kept visible until a record is picked.

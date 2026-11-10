@@ -12,10 +12,10 @@ test("add an app, create, edit, move, search, import and delete records", async 
   await page.getByLabel("Email").fill(EMAIL);
   await page.locator("input[name=password]").fill(PASSWORD);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await page.waitForURL(/\/w\//);
+  await page.waitForURL(/\/acme(\/|$)/);
 
   // Start clean: remove the app if a previous run left it.
-  await page.goto("/w/acme/a/bug-tracker");
+  await page.goto("/acme/bug-tracker");
   if (page.url().includes("/a/bug-tracker")) {
     await page.getByText("Remove app").click();
     await page.getByLabel(/also delete all/i).check();
@@ -23,24 +23,24 @@ test("add an app, create, edit, move, search, import and delete records", async 
     await page.waitForURL(/\/apps/);
   }
 
-  await page.goto("/w/acme/apps?q=bug");
+  await page.goto("/acme/apps?q=bug");
   const card = page.locator("li#bug-tracker");
   await card.getByLabel("with sample data").uncheck();
   await card.getByRole("button", { name: "Add app" }).click();
-  await page.waitForURL(/\/a\/bug-tracker$/);
+  await page.waitForURL(/\/acme\/bug-tracker$/);
   await expect(page.getByRole("link", { name: "Bug Tracker" }).first()).toBeVisible();
 
   // First entity of the app.
   const entityLink = page.locator('nav[aria-label$="sections"] a').nth(1);
   await entityLink.click();
-  await page.waitForURL(/\/a\/bug-tracker\/[a-z_]+$/);
+  await page.waitForURL(/\/acme\/bug-tracker\/[a-z_]+$/);
   await page.getByRole("link", { name: /^New / }).click();
   const title = page.locator("form input[type=text]").first();
   await title.fill("Login button broken");
   // Fill any other required text inputs.
   for (const input of await page.locator("form input[required][type=text]").all()) if (!(await input.inputValue())) await input.fill("x");
   await page.getByRole("button", { name: /^Create/ }).click();
-  await page.waitForURL(/\/a\/bug-tracker\/[a-z_]+$/);
+  await page.waitForURL(/\/acme\/bug-tracker\/[a-z_]+$/);
   await expect(page.getByRole("link", { name: "Login button broken" })).toBeVisible();
 
   // Validation: an empty required title is rejected.
@@ -93,7 +93,7 @@ test("add an app, create, edit, move, search, import and delete records", async 
   await page.goto(page.url());
   await page.getByRole("link", { name: "Login button fixed" }).click();
   await page.getByRole("button", { name: "Delete" }).click();
-  await page.waitForURL(/\/a\/bug-tracker\/[a-z_]+$/);
+  await page.waitForURL(/\/acme\/bug-tracker\/[a-z_]+$/);
   await expect(page.getByRole("link", { name: "Login button fixed" })).toHaveCount(0);
 
   expect(errors).toEqual([]);
@@ -104,8 +104,8 @@ test("invoice line items total and print view", async ({ page }) => {
   await page.getByLabel("Email").fill(EMAIL);
   await page.locator("input[name=password]").fill(PASSWORD);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await page.waitForURL(/\/w\//);
-  await page.goto("/w/acme/a/invoices/invoice/new");
+  await page.waitForURL(/\/acme(\/|$)/);
+  await page.goto("/acme/invoices/invoice/new");
   await page.getByLabel("Number").fill("INV-E2E");
   await page.getByLabel("Client").selectOption({ index: 1 });
   await page.getByLabel("Issue date").fill("2026-10-29");
@@ -122,11 +122,11 @@ test("invoice line items total and print view", async ({ page }) => {
   await page.getByRole("link", { name: "INV-E2E" }).first().click();
   await page.waitForURL(/\/invoice\/[0-9a-f-]{36}$/);
   const id = page.url().split("/").pop();
-  await page.goto(`/w/acme/a/invoices/invoice/${id}/print`);
+  await page.goto(`/acme/invoices/invoice/${id}/print`);
   await expect(page.getByText("$385.00")).toBeVisible();
   await expect(page.getByText("Tax (10%)")).toBeVisible();
   page.on("dialog", (d) => d.accept());
-  await page.goto(`/w/acme/a/invoices/invoice/${id}`);
+  await page.goto(`/acme/invoices/invoice/${id}`);
   await page.getByRole("button", { name: "Delete" }).click();
   await page.waitForURL(/\/invoice$/);
 });
@@ -136,11 +136,11 @@ test("links between apps: a project's client is a CRM company", async ({ page })
   await page.getByLabel("Email").fill(EMAIL);
   await page.locator("input[name=password]").fill(PASSWORD);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await page.waitForURL(/\/w\//);
+  await page.waitForURL(/\/acme(\/|$)/);
   // acme has CRM and Projects but not Team & HR.
-  await page.goto("/w/acme/a/projects/task/new");
+  await page.goto("/acme/projects/task/new");
   await expect(page.getByRole("link", { name: "Add the app" })).toHaveAttribute("href", /app=team-hr/);
-  await page.goto("/w/acme/a/projects/project/new");
+  await page.goto("/acme/projects/project/new");
   await page.getByLabel("Name").fill("E2E linked project");
   const client = page.getByLabel("Client");
   await client.selectOption({ index: 1 });
@@ -149,11 +149,11 @@ test("links between apps: a project's client is a CRM company", async ({ page })
   await page.waitForURL(/\/project$/);
   await expect(page.getByRole("row", { name: /E2E linked project/ })).toContainText(company);
   // The company page lists the project from the other app.
-  await page.goto("/w/acme/a/crm/company");
+  await page.goto("/acme/crm/company");
   await page.getByRole("link", { name: company, exact: true }).first().click();
   await expect(page.getByText(/Projects in Projects & Tasks/)).toBeVisible();
   await page.getByRole("link", { name: "E2E linked project" }).click();
-  await page.waitForURL(/\/a\/projects\/project\/[0-9a-f-]{36}$/);
+  await page.waitForURL(/\/acme\/projects\/project\/[0-9a-f-]{36}$/);
   page.on("dialog", (d) => d.accept());
   await page.getByRole("button", { name: "Delete" }).click();
   await page.waitForURL(/\/project$/);

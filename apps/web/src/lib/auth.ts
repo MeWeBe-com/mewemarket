@@ -1,5 +1,6 @@
 import { db, schema } from "@mewe/db";
-import { currentPlan, startTrial } from "@mewe/core";
+import { currentPlan, isUsableWorkspaceSlug, startTrial } from "@mewe/core";
+import { APIError } from "better-auth/api";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
@@ -105,6 +106,13 @@ export const auth = betterAuth({
           cta: { label: "Accept invitation", url: `${appUrl}/invite/${id}` },
         }),
       organizationHooks: {
+        // The slug is the company's address (mewemarket.com/{slug}), so it may not shadow a site page.
+        beforeCreateOrganization: async ({ organization: ws }) => {
+          if (!isUsableWorkspaceSlug(String(ws.slug ?? ""))) throw new APIError("BAD_REQUEST", { message: "That address is not available. Try another." });
+        },
+        beforeUpdateOrganization: async ({ organization: ws }) => {
+          if (ws.slug !== undefined && !isUsableWorkspaceSlug(String(ws.slug))) throw new APIError("BAD_REQUEST", { message: "That address is not available. Try another." });
+        },
         afterCreateOrganization: async ({ organization: ws }) => startTrial(ws.id),
       },
     }),

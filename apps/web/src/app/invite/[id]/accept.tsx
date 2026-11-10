@@ -18,7 +18,7 @@ export function AcceptInvite({ id, slug }: { id: string; slug: string }) {
       setPending(false);
       return setError(error.message ?? "Something went wrong");
     }
-    router.push(accept ? `/w/${slug}` : "/dashboard");
+    router.push(accept ? `/${slug}` : "/dashboard");
     router.refresh();
   }
 

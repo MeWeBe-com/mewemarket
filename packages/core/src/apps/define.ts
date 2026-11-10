@@ -6,6 +6,7 @@
 // Entity option calc: { field: "expression" } makes a number/money field computed on save (see calc.ts).
 
 import { calcInputs } from "./calc";
+import { WORKSPACE_PAGES } from "../urls";
 
 export type FieldType =
   | "text" | "long" | "number" | "money" | "percent" | "date" | "datetime" | "time"
@@ -80,6 +81,7 @@ export function validateApps(apps: AppDef[]) {
   const slugs = new Set<string>();
   for (const a of apps) {
     if (!/^[a-z0-9-]+$/.test(a.slug)) throw new Error(`Bad slug ${a.slug}`);
+    if ((WORKSPACE_PAGES as readonly string[]).includes(a.slug)) throw new Error(`App slug ${a.slug} clashes with a workspace page`);
     if (slugs.has(a.slug)) throw new Error(`Duplicate app slug ${a.slug}`);
     slugs.add(a.slug);
     if (!a.entities.length && !a.kind) throw new Error(`${a.slug}: no entities`);
