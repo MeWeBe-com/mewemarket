@@ -68,5 +68,8 @@ The source of truth is `MASTERPROMPT_PHASE1.md`. Tick each task when it's done.
 - [ ] Production: DNS and certificates (`*.crm`, `invoices`, `plane`, `chat`), then the steps in DEPLOY.md "Hosted apps"
 - [ ] Twenty Enterprise key once a 6th company adds the CRM
 - [ ] Retry queue for hosted sync failures (today a failed removal is logged; MeweMarket stops issuing sign-ins at once, but an open CRM session would last until it expires)
-- [ ] Server sizing: the four products add about 3.5 GB RAM idle
+- [x] E-Signatures (Documenso) at `/{company}/e-signatures`
+- [ ] Legal check: Documenso's self-hosted limits code lives in its commercial `packages/ee`
+- [ ] Team chat (Zulip) and Bookings (Easy!Appointments): checks done or in progress, owner decisions pending
+- [ ] Server sizing: the five products add about 3.8 GB RAM idle
 - [ ] Next hosted apps (each needs a multi-company check like Twenty's 5-workspace limit before choosing)

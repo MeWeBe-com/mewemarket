@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 // The full open-source apps shown inside the workspace, signed in. Each needs its service configured for the
 // app under test (see docs/DEPLOY.md, "Hosted apps") and runs only when listed in E2E_HOSTED, e.g.
-// E2E_HOSTED=crm,invoices,projects,helpdesk. Locally the app and the services must share a site (e.g.
+// E2E_HOSTED=crm,invoices,projects,helpdesk,e-signatures. Locally the app and the services must share a site (e.g.
 // mewemarket.test, *.crm.mewemarket.test, invoices.mewemarket.test) so the sign-in cookies work in the frame.
 const EMAIL = process.env.E2E_EMAIL ?? "owner@example.com";
 const PASSWORD = process.env.E2E_PASSWORD ?? "supersecret123";
@@ -14,6 +14,7 @@ const APPS = [
   ["invoices", "Invoices", "Recurring Invoices", /InvoiceShelf\/InvoiceShelf/],
   ["projects", "Projects", "Projects", /makeplane\/plane/],
   ["helpdesk", "Helpdesk", "Conversations", /chatwoot\/chatwoot/],
+  ["e-signatures", "E-Signatures", "Documents", /documenso\/documenso/],
 ] as const;
 
 for (const [slug, name, signedInText, source] of APPS) {

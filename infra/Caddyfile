@@ -82,3 +82,12 @@ plane.mewemarket.com {
 	reverse_proxy /plane-uploads/* 127.0.0.1:9000
 	reverse_proxy 127.0.0.1:3231
 }
+
+# Documenso's CSP has a per-request nonce, so only its frame-ancestors directive is rewritten.
+sign.mewemarket.com {
+	header >Content-Security-Policy "frame-ancestors 'self'" "frame-ancestors 'self' https://mewemarket.com"
+	header -Server
+	reverse_proxy /api/hosted-sso 127.0.0.1:3000
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:3250
+}

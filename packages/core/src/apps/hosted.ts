@@ -30,4 +30,11 @@ export const HOSTED_APPS = [
     description: "A full customer support desk for your company, powered by the open-source Chatwoot. Bring email, website live chat and other channels into one shared inbox, assign conversations to your team, reply with canned responses, keep a contact list and see support reports. Your team signs in once to MeweMarket.",
     features: ["Shared inbox for email, live chat and more", "Website chat widget", "Assign, label and prioritise conversations", "Canned responses and private notes", "Contacts and conversation history", "Support reports", "Each company's data kept separate", "One sign-in through MeweMarket"],
   }),
+  app({
+    slug: "e-signatures", name: "E-Signatures", category: "legal", kind: "hosted", entities: [],
+    hosted: { provider: "documenso", poweredBy: "Documenso", license: "AGPL-3.0", sourceUrl: "https://github.com/documenso/documenso" },
+    tagline: "Send documents for signature and track who has signed.",
+    description: "Electronic signatures for your company, powered by the open-source Documenso. Upload a PDF, place signature, date and text fields, send it to one or more signers by email, and follow its progress until everyone has signed. Signed documents are sealed with a digital certificate. Your team signs in once to MeweMarket.",
+    features: ["Upload PDFs and place signature fields", "Several signers, in order or all at once", "Email requests, reminders and completion notices", "Templates for documents you send often", "Signed PDFs sealed with a certificate, with an audit log", "Each company's documents kept separate", "One sign-in through MeweMarket"],
+  }),
 ];

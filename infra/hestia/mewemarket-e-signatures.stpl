@@ -1,0 +1,62 @@
+#=========================================================================#
+# MeweMarket E-Signatures (Documenso) — HestiaCP nginx PROXY template, HTTPS (443)
+# sign.mewemarket.com -> the Documenso container. /api/hosted-sso goes to MeweMarket
+# (127.0.0.1:35300): it signs people in by setting Documenso's session
+# cookie on this host. Documenso forbids framing, so its frame header is
+# replaced with one that lets mewemarket.com embed it.
+# Setup: docs/DEPLOY.md, "Hosted apps".
+#   (needs infra/hestia/mewemarket-maps.conf in /etc/nginx/conf.d/)
+#   v-add-web-domain saasthemes sign.mewemarket.com
+#   v-change-web-domain-proxy-tpl saasthemes sign.mewemarket.com mewemarket-e-signatures
+#=========================================================================#
+
+server {
+    listen      %ip%:%proxy_ssl_port% ssl;
+    http2       on;
+    server_name %domain_idn% %alias_idn%;
+    error_log   /var/log/%web_system%/domains/%domain%.error.log error;
+
+    ssl_certificate      %ssl_pem%;
+    ssl_certificate_key  %ssl_key%;
+
+    include %home%/%user%/conf/web/%domain%/nginx.hsts.conf*;
+    client_max_body_size 50m;
+
+    location ~ /\.(?!well-known\/) {
+        deny all;
+        return 404;
+    }
+
+    # Sign-in bridge: served by MeweMarket on this host.
+    location = /api/hosted-sso {
+        proxy_pass         http://127.0.0.1:35300;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Forwarded-Host  $host;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+
+    location / {
+        proxy_pass         http://127.0.0.1:3250;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_set_header   X-Forwarded-Host  $host;
+        proxy_set_header   Upgrade           $http_upgrade;
+        proxy_set_header   Connection        "upgrade";
+        proxy_read_timeout 1h;
+        # Let mewemarket.com (only) show this app in a frame.
+        # Its CSP has a per-request nonce: keep it and change only frame-ancestors (map in mewemarket-maps.conf).
+        proxy_hide_header  Content-Security-Policy;
+        add_header         Content-Security-Policy $mewe_documenso_csp always;
+    }
+
+    location /error/ {
+        alias %home%/%user%/web/%domain%/document_errors/;
+    }
+
+    include %home%/%user%/conf/web/%domain%/nginx.ssl.conf_*;
+}

@@ -2,11 +2,12 @@
 # One-time setup of the hosted apps' platform accounts (safe to run again). Run from the repo root after
 # `docker compose up -d`, with .env filled in (see docs/DEPLOY.md, "Hosted apps"). Twenty needs nothing
 # here: MeweMarket creates its platform account on first use.
-#   bash infra/hosted-setup.sh [invoiceshelf] [chatwoot] [plane]
+#   bash infra/hosted-setup.sh [invoiceshelf] [chatwoot] [plane] [documenso]
 set -euo pipefail
 cd "$(dirname "$0")/.."
 set -a; . ./.env; set +a
-apps=("$@"); [ ${#apps[@]} -eq 0 ] && apps=(invoiceshelf chatwoot plane)
+apps=("$@"); [ ${#apps[@]} -eq 0 ] && apps=(invoiceshelf chatwoot plane documenso)
+psql_doc() { docker compose exec -T postgres psql -v ON_ERROR_STOP=1 -U mewe -d documenso -tAc "$1"; }
 
 for app in "${apps[@]}"; do case "$app" in
 
@@ -49,6 +50,26 @@ plane)
   ctok=$(awk '$6=="csrftoken"{print $7}' "$jar" | tail -1)
   curl -sf "${hdr[@]}" -c "$jar" -b "$jar" -X PATCH "$base/api/instances/configurations/" -H "X-CSRFToken: $ctok" -H 'Content-Type: application/json' \
     -d '{"ENABLE_SIGNUP":"0"}' >/dev/null && echo "public sign-up: off"
+  ;;
+
+documenso)
+  echo "== Documenso: platform account (an instance admin), then sign-up off again, then MeweMarket's read-only role"
+  base="${DOCUMENSO_INTERNAL_URL:-http://127.0.0.1:3250}"
+  [ -f infra/documenso/cert.p12 ] || { echo "Put the signing certificate at infra/documenso/cert.p12 first (docs/DEPLOY.md)." >&2; exit 1; }
+  wait_up() { for _ in $(seq 1 60); do curl -sf -o /dev/null "$base/api/health" && return 0; sleep 5; done; echo "Documenso did not start" >&2; exit 1; }
+  if [ -z "$(psql_doc "SELECT 1 FROM \"User\" WHERE email = '$DOCUMENSO_PLATFORM_EMAIL'" 2>/dev/null)" ]; then
+    DOCUMENSO_DISABLE_SIGNUP=false docker compose up -d documenso >/dev/null; wait_up
+    curl -sf -o /dev/null -X POST "$base/api/auth/email-password/signup" -H "Origin: $DOCUMENSO_URL" -H 'Content-Type: application/json' \
+      -d "$(python3 -c 'import json,os; print(json.dumps({"name":"MeweMarket","email":os.environ["DOCUMENSO_PLATFORM_EMAIL"],"password":os.environ["DOCUMENSO_PLATFORM_PASSWORD"]}))')"
+  fi
+  psql_doc "UPDATE \"User\" SET roles = '{USER,ADMIN}', \"emailVerified\" = COALESCE(\"emailVerified\", now()) WHERE email = '$DOCUMENSO_PLATFORM_EMAIL'" >/dev/null
+  docker compose up -d documenso >/dev/null; wait_up   # sign-up off again (the default)
+  echo "admin: $(psql_doc "SELECT email || ' ' || roles::text FROM \"User\" WHERE email = '$DOCUMENSO_PLATFORM_EMAIL'")"
+  reader_pw=$(python3 -c 'import os,urllib.parse as u; print(u.unquote(u.urlparse(os.environ["DOCUMENSO_DATABASE_URL"]).password or ""))')
+  psql_doc "DO \$\$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'documenso_reader') THEN CREATE ROLE documenso_reader LOGIN; END IF; END \$\$;
+    ALTER ROLE documenso_reader PASSWORD '$reader_pw'; GRANT CONNECT ON DATABASE documenso TO documenso_reader;
+    GRANT USAGE ON SCHEMA public TO documenso_reader; GRANT SELECT ON \"PasswordResetToken\" TO documenso_reader;" >/dev/null
+  echo "read-only role: documenso_reader (SELECT on PasswordResetToken only)"
   ;;
 
 *) echo "unknown app: $app" >&2; exit 1 ;;

@@ -63,7 +63,7 @@ export async function seedCatalog() {
 export const RENAMED_APPS: Record<string, string> = {
   kanboard: "kanban-board", jorani: "leave-management", kimai: "time-tracking", "cal-com": "bookings", chatwoot: "helpdesk",
   "jitsi-meet": "video-meeting", excalidraw: "whiteboard", "snipe-it": "asset-register", bookstack: "wiki",
-  documenso: "contracts", listmonk: "mailing-lists", "uptime-kuma": "projects",
+  documenso: "e-signatures", listmonk: "mailing-lists", "uptime-kuma": "projects",
 };
 
 // Old hosted demo folders (mewemarket.com/apps/<dir>/...) → new app slug.

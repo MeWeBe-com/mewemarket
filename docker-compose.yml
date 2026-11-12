@@ -224,6 +224,41 @@ services:
     environment: *plane-env
     ports: ["127.0.0.1:3234:3000"]
 
+  # --- Documenso (hosted "e-signatures" app): AGPL-3.0, billing off (no plan limits). One server, one
+  # Documenso organisation per MeweMarket workspace, at sign.mewemarket.com. Needs SMTP (signing requests go
+  # to outside signers) and a signing certificate (.p12) mounted at /opt/documenso/cert.p12.
+  documenso:
+    image: ghcr.io/documenso/documenso:v2.21.1
+    restart: unless-stopped
+    environment:
+      PORT: "3000"
+      NEXTAUTH_SECRET: ${DOCUMENSO_NEXTAUTH_SECRET}
+      NEXT_PRIVATE_ENCRYPTION_KEY: ${DOCUMENSO_ENCRYPTION_KEY}
+      NEXT_PRIVATE_ENCRYPTION_SECONDARY_KEY: ${DOCUMENSO_ENCRYPTION_SECONDARY_KEY}
+      NEXT_PUBLIC_WEBAPP_URL: ${DOCUMENSO_URL}
+      NEXT_PRIVATE_INTERNAL_WEBAPP_URL: http://localhost:3000
+      NEXT_PRIVATE_DATABASE_URL: postgres://mewe:${POSTGRES_PASSWORD}@postgres:5432/documenso
+      NEXT_PRIVATE_DIRECT_DATABASE_URL: postgres://mewe:${POSTGRES_PASSWORD}@postgres:5432/documenso
+      NEXT_PRIVATE_SIGNING_TRANSPORT: local
+      NEXT_PRIVATE_SIGNING_LOCAL_FILE_PATH: /opt/documenso/cert.p12
+      NEXT_PRIVATE_SIGNING_PASSPHRASE: ${DOCUMENSO_SIGNING_PASSPHRASE}
+      NEXT_PUBLIC_UPLOAD_TRANSPORT: database
+      NEXT_PRIVATE_SMTP_TRANSPORT: smtp-auth
+      NEXT_PRIVATE_SMTP_HOST: ${SMTP_HOST:-}
+      NEXT_PRIVATE_SMTP_PORT: ${SMTP_PORT:-587}
+      NEXT_PRIVATE_SMTP_USERNAME: ${SMTP_USER:-}
+      NEXT_PRIVATE_SMTP_PASSWORD: ${SMTP_PASS:-}
+      NEXT_PRIVATE_SMTP_FROM_NAME: MeweMarket E-Signatures
+      NEXT_PRIVATE_SMTP_FROM_ADDRESS: ${EMAIL_FROM:-}
+      NEXT_PRIVATE_JOBS_PROVIDER: local
+      DOCUMENSO_DISABLE_TELEMETRY: "true"
+      # Only infra/hosted-setup.sh turns this off, briefly, to create the platform account.
+      NEXT_PUBLIC_DISABLE_SIGNUP: ${DOCUMENSO_DISABLE_SIGNUP:-true}
+    ports: ["127.0.0.1:3250:3000"]
+    volumes: ["./infra/documenso/cert.p12:/opt/documenso/cert.p12:ro"]
+    depends_on:
+      postgres: { condition: service_healthy }
+
 volumes:
   invoiceshelfdata:
   chatwootdata:

@@ -1,10 +1,11 @@
 import * as cw from "./chatwoot";
+import * as doc from "./documenso";
 import * as inv from "./invoiceshelf";
 import * as plane from "./plane";
 import * as twenty from "./twenty";
 import type { HostedProvider } from "./types";
 
-export type ProviderName = "twenty" | "invoiceshelf" | "chatwoot" | "plane";
+export type ProviderName = "twenty" | "invoiceshelf" | "chatwoot" | "plane" | "documenso";
 
 export const PROVIDERS: Record<ProviderName, HostedProvider> = {
   twenty: {
@@ -49,5 +50,15 @@ export const PROVIDERS: Record<ProviderName, HostedProvider> = {
       await plane.removePlaneMember(t, id, account.login, account.password);
     },
     signIn: plane.planeSignIn,
+  },
+  documenso: {
+    configured: () => doc.documensoConfig() !== null,
+    accountScope: "tenant",
+    createTenant: (ws) => doc.createDocumensoOrganisation(ws.slug, ws.name),
+    deleteTenant: doc.deleteDocumensoOrganisation,
+    addMember: doc.addDocumensoMember,
+    setRole: doc.setDocumensoRole,
+    removeMember: (t, id) => doc.removeDocumensoMember(t, id),
+    signIn: doc.documensoSignIn,
   },
 };
