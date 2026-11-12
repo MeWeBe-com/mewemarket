@@ -1,11 +1,12 @@
 import * as cw from "./chatwoot";
 import * as doc from "./documenso";
+import { easyAppointments } from "./easyappointments";
 import * as inv from "./invoiceshelf";
 import * as plane from "./plane";
 import * as twenty from "./twenty";
 import type { HostedProvider } from "./types";
 
-export type ProviderName = "twenty" | "invoiceshelf" | "chatwoot" | "plane" | "documenso";
+export type ProviderName = "twenty" | "invoiceshelf" | "chatwoot" | "plane" | "documenso" | "easyappointments";
 
 export const PROVIDERS: Record<ProviderName, HostedProvider> = {
   twenty: {
@@ -61,4 +62,5 @@ export const PROVIDERS: Record<ProviderName, HostedProvider> = {
     removeMember: (t, id) => doc.removeDocumensoMember(t, id),
     signIn: doc.documensoSignIn,
   },
+  easyappointments: easyAppointments,
 };

@@ -259,7 +259,41 @@ services:
     depends_on:
       postgres: { condition: service_healthy }
 
+  # --- Easy!Appointments (hosted "bookings" app): GPL-3.0, single-company software made multi-company by our
+  # router (infra/easyappointments/config.php): one container, one database per company, served on the main
+  # site at mewemarket.com/{company}/book/ (the proxy strips the prefix and names the company).
+  easyappointments-db:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${EA_DB_ROOT_PASSWORD}
+    volumes: [easyappointmentsdb:/var/lib/mysql]
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+
+  easyappointments:
+    image: alextselegidis/easyappointments:1.6.1
+    restart: unless-stopped
+    entrypoint: ["/start.sh"]
+    environment:
+      DB_HOST: easyappointments-db
+      DB_USERNAME: root
+      DB_PASSWORD: ${EA_DB_ROOT_PASSWORD}
+      EA_PUBLIC_BASE: ${APP_URL}
+      EA_PLATFORM_KEY: ${EA_PLATFORM_KEY}
+      EA_PROXY_KEY: ${EA_PROXY_KEY}
+    ports: ["127.0.0.1:3260:80"]
+    volumes:
+      - ./infra/easyappointments/config.php:/var/www/html/config.php:ro
+      - ./infra/easyappointments/start.sh:/start.sh:ro
+      - easyappointmentsdata:/var/www/html/storage
+    depends_on:
+      easyappointments-db: { condition: service_healthy }
+
 volumes:
+  easyappointmentsdb:
+  easyappointmentsdata:
   invoiceshelfdata:
   chatwootdata:
   twentydata:

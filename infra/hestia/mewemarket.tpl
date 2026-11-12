@@ -21,6 +21,24 @@ server {
         return 404;
     }
 
+    # Bookings: each company's public booking page and staff screens live at /{company}/book/, served by the
+    # Easy!Appointments container with the prefix stripped and the company named (needs mewemarket-maps.conf).
+    # Site sections with sub-pages are skipped (companies can't use those names: RESERVED_SLUGS).
+    location ~ "^/(?!(?:apps|tools|insights|api|w|account|products|category|users|invite|_next)/)[a-z0-9][a-z0-9-]{0,40}/book$" {
+        absolute_redirect off;
+        return 301 $uri/$is_args$args;
+    }
+    location ~ "^/(?!(?:apps|tools|insights|api|w|account|products|category|users|invite|_next)/)(?<ea_tenant>[a-z0-9][a-z0-9-]{0,40})/book(?<ea_rest>/.*)$" {
+        proxy_pass         http://127.0.0.1:3260$ea_rest$is_args$args;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Ea-Tenant       $ea_tenant;
+        proxy_set_header   X-Ea-Proxy-Key    $mewe_ea_proxy_key;
+        proxy_set_header   X-Platform-Key    "";
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        client_max_body_size 20m;
+    }
+
     location /_next/static/ {
         proxy_pass         http://127.0.0.1:35300;
         proxy_http_version 1.1;

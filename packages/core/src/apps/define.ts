@@ -6,7 +6,7 @@
 // Entity option calc: { field: "expression" } makes a number/money field computed on save (see calc.ts).
 
 import { calcInputs } from "./calc";
-import { WORKSPACE_PAGES } from "../urls";
+import { PUBLIC_COMPANY_PATHS, WORKSPACE_PAGES } from "../urls";
 
 export type FieldType =
   | "text" | "long" | "number" | "money" | "percent" | "date" | "datetime" | "time"
@@ -25,7 +25,7 @@ export type EntityDef = {
   totals?: string[]; // number/money fields summed in the list footer and on the app home
 };
 
-export type HostedDef = { provider: "twenty" | "invoiceshelf" | "chatwoot" | "plane" | "documenso"; poweredBy: string; license: string; sourceUrl: string };
+export type HostedDef = { provider: "twenty" | "invoiceshelf" | "chatwoot" | "plane" | "documenso" | "easyappointments"; poweredBy: string; license: string; sourceUrl: string };
 
 export type AppDef = {
   slug: string;
@@ -85,6 +85,7 @@ export function validateApps(apps: AppDef[]) {
   const slugs = new Set<string>();
   for (const a of apps) {
     if (!/^[a-z0-9-]+$/.test(a.slug)) throw new Error(`Bad slug ${a.slug}`);
+    if ((PUBLIC_COMPANY_PATHS as readonly string[]).includes(a.slug)) throw new Error(`App slug ${a.slug} is a public company page`);
     if ((WORKSPACE_PAGES as readonly string[]).includes(a.slug)) throw new Error(`App slug ${a.slug} clashes with a workspace page`);
     if (slugs.has(a.slug)) throw new Error(`Duplicate app slug ${a.slug}`);
     slugs.add(a.slug);

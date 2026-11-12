@@ -62,8 +62,8 @@ export const CORE_SUITE = [
     ],
   }),
   app({
-    slug: "bookings", name: "Bookings & Scheduling", category: "customer-service",
-    tagline: "Appointments, services and staff calendars.",
+    slug: "simple-bookings", name: "Simple Bookings", category: "customer-service",
+    tagline: "Simple appointments, services and staff calendars.",
     description: "Manage your services, staff and customer appointments on a shared calendar, and track bookings from request to completion.",
     features: ["Services with prices and durations", "Appointment calendar", "Booking status board", "Customer list", "Staff assignments"],
     entities: [

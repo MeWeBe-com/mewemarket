@@ -27,7 +27,7 @@ export async function frameUrl(signIn: SignIn) {
   if (signIn.kind === "url") return signIn.url;
   const id = randomBytes(24).toString("base64url");
   await put(`hosted-sso:${id}`, encryptSecret(JSON.stringify(signIn)));
-  return `${signIn.base}/api/hosted-sso?t=${id}`;
+  return `${new URL(signIn.base).origin}/api/hosted-sso?t=${id}`;
 }
 
 export async function redeem(id: string): Promise<Ticket | null> {

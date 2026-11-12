@@ -15,7 +15,7 @@ export async function GET(req: Request) {
   const secure = ticket.base.startsWith("https:");
   // Raw headers: the values are already encoded by the product, and the cookie helper would encode them again.
   for (const c of ticket.cookies) {
-    res.headers.append("set-cookie", `${c.name}=${c.value}; Path=/; SameSite=Lax${c.httpOnly ? "; HttpOnly" : ""}${secure ? "; Secure" : ""}`);
+    res.headers.append("set-cookie", `${c.name}=${c.value}; Path=${ticket.cookiePath ?? "/"}; SameSite=Lax${c.httpOnly ? "; HttpOnly" : ""}${secure ? "; Secure" : ""}`);
   }
   return res;
 }

@@ -6,6 +6,12 @@
 export const WORKSPACE_PAGES = ["apps", "tools", "billing", "settings"] as const;
 
 /**
+ * Public pages the reverse proxy serves under a company's address, ahead of MeweMarket: /{company}/book/ is the
+ * company's booking page (the hosted Bookings app). App slugs may not use these names either.
+ */
+export const PUBLIC_COMPANY_PATHS = ["book"] as const;
+
+/**
  * Names a company may not take as its address: every top-level route on the site, legacy URLs that redirect,
  * and words kept back for later use or because they would confuse people.
  */

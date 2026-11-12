@@ -37,4 +37,11 @@ export const HOSTED_APPS = [
     description: "Electronic signatures for your company, powered by the open-source Documenso. Upload a PDF, place signature, date and text fields, send it to one or more signers by email, and follow its progress until everyone has signed. Signed documents are sealed with a digital certificate. Your team signs in once to MeweMarket.",
     features: ["Upload PDFs and place signature fields", "Several signers, in order or all at once", "Email requests, reminders and completion notices", "Templates for documents you send often", "Signed PDFs sealed with a certificate, with an audit log", "Each company's documents kept separate", "One sign-in through MeweMarket"],
   }),
+  app({
+    slug: "bookings", name: "Bookings", category: "customer-service", kind: "hosted", entities: [],
+    hosted: { provider: "easyappointments", poweredBy: "Easy!Appointments", license: "GPL-3.0", sourceUrl: "https://github.com/alextselegidis/easyappointments" },
+    tagline: "Online appointment booking with your own public booking page.",
+    description: "Let customers book appointments online, powered by the open-source Easy!Appointments. Set up your services, staff and working hours, share your booking page at mewemarket.com/your-company/book, and manage every appointment on a shared calendar. Your team signs in once to MeweMarket.",
+    features: ["Public booking page at mewemarket.com/your-company/book", "Services with durations and prices", "Staff working hours, breaks and days off", "Shared appointment calendar", "Customer list", "Email confirmations", "Each company's data kept separate", "One sign-in through MeweMarket"],
+  }),
 ];

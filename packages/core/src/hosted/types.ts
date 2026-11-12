@@ -5,7 +5,16 @@ export type HostedTenant = { id: string; externalId: string; subdomain: string; 
 /** How to put a person into the product, signed in: a one-time URL, or session cookies for the SSO bridge. */
 export type SignIn =
   | { kind: "url"; url: string }
-  | { kind: "cookies"; base: string; path: string; cookies: { name: string; value: string; httpOnly: boolean }[] };
+  | {
+      kind: "cookies";
+      /** The product's address; the bridge runs on its origin. */
+      base: string;
+      /** Where to go after signing in (an absolute path on that origin). */
+      path: string;
+      /** Cookie path, for products under a path on a shared host (default "/"). */
+      cookiePath?: string;
+      cookies: { name: string; value: string; httpOnly: boolean }[];
+    };
 
 export type ProductRole = "admin" | "member";
 

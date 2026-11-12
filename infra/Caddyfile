@@ -16,6 +16,25 @@ mewemarket.com {
 		-Server
 	}
 
+	# Bookings: /{company}/book/ is the company's Easy!Appointments, prefix stripped and company named.
+	@ea_bare {
+		path_regexp ^/[a-z0-9][a-z0-9-]{0,40}/book$
+		not path /apps/* /tools/* /insights/* /api/* /w/* /account/* /products/* /category/* /users/* /invite/* /_next/*
+	}
+	redir @ea_bare {path}/ 301
+	@ea {
+		path_regexp ea ^/([a-z0-9][a-z0-9-]{0,40})/book(/.*)$
+		not path /apps/* /tools/* /insights/* /api/* /w/* /account/* /products/* /category/* /users/* /invite/* /_next/*
+	}
+	handle @ea {
+		rewrite * {re.ea.2}?{query}
+		reverse_proxy 127.0.0.1:3260 {
+			header_up X-Ea-Tenant {re.ea.1}
+			header_up X-Ea-Proxy-Key {env.EA_PROXY_KEY}
+			header_up -X-Platform-Key
+		}
+	}
+
 	# Video meetings keep an event stream open per participant; don't buffer it.
 	handle /api/meet/* {
 		reverse_proxy 127.0.0.1:3000 {

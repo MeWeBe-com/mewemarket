@@ -70,6 +70,7 @@ The source of truth is `MASTERPROMPT_PHASE1.md`. Tick each task when it's done.
 - [ ] Retry queue for hosted sync failures (today a failed removal is logged; MeweMarket stops issuing sign-ins at once, but an open CRM session would last until it expires)
 - [x] E-Signatures (Documenso) at `/{company}/e-signatures`
 - [ ] Legal check: Documenso's self-hosted limits code lives in its commercial `packages/ee`
-- [ ] Team chat (Zulip) and Bookings (Easy!Appointments): checks done or in progress, owner decisions pending
-- [ ] Server sizing: the five products add about 3.8 GB RAM idle
+- [x] Bookings (Easy!Appointments) at `/{company}/bookings`, public page at `/{company}/book/`
+- [ ] Team chat: paused (Zulip works but needs per-company subdomains; Mattermost capped at 250 users)
+- [ ] Server sizing: the six products add about 4 GB RAM idle
 - [ ] Next hosted apps (each needs a multi-company check like Twenty's 5-workspace limit before choosing)
