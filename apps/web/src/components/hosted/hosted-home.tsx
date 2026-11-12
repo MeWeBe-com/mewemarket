@@ -1,6 +1,7 @@
 import { type AppDef, canManageWorkspace, HostedError, openHostedApp } from "@mewe/core";
 import { connection } from "next/server";
 import { Alert, Button, Card } from "@/components/ui";
+import { frameUrl } from "@/lib/hosted-sso";
 import { requireWorkspace } from "@/lib/session";
 import { setUpHostedAppAction } from "@/app/w/[slug]/a/actions";
 import { HostedFrame } from "./hosted-frame";
@@ -12,7 +13,8 @@ export async function HostedHome({ slug, app }: { slug: string; app: AppDef }) {
   const canManage = canManageWorkspace(role);
   let src: string | null;
   try {
-    src = await openHostedApp(workspace, app.slug, { id: session.user.id, name: session.user.name }, role);
+    const signIn = await openHostedApp(workspace, app.slug, { id: session.user.id, name: session.user.name }, role);
+    src = signIn && (await frameUrl(signIn));
   } catch (e) {
     if (!(e instanceof HostedError)) console.error("openHostedApp", app.slug, e);
     const message = e instanceof HostedError ? e.message : `${app.name} isn't responding right now. Please try again in a minute.`;

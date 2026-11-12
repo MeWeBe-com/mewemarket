@@ -88,25 +88,35 @@ The AI Assistant app is free to add. Each workspace uses its own Claude or OpenA
 - The server must be able to reach `api.anthropic.com` and `api.openai.com`.
 - The assistant can only read records in apps the workspace has installed. It can't create, change or delete anything.
 
-## Hosted CRM (Twenty)
+## Hosted apps (CRM, Invoices, Projects, Helpdesk)
 
-The **CRM** app is [Twenty](https://github.com/twentyhq/twenty) (AGPL-3.0), run as its own service and shown inside the workspace at `mewemarket.com/{company}/crm`. Each company gets its own Twenty workspace at `{company}.crm.mewemarket.com`; MeweMarket creates it when the app is added, adds each person the first time they open it (owners and admins as Twenty Admins, members as Members, guests not at all), and signs them in with a one-time link, so nobody logs in twice. Removing someone from a workspace removes them from its CRM and ends their open CRM session. Code: `packages/core/src/hosted/`.
+Four apps are full open-source products, run as their own services and shown full-size inside the workspace at `mewemarket.com/{company}/{app}`:
+
+| App | Product (licence) | Public host | Containers | Idle RAM |
+|---|---|---|---|---|
+| CRM | [Twenty](https://github.com/twentyhq/twenty) (AGPL-3.0) | `{company}.crm.mewemarket.com` | `twenty`, `twenty-worker` | ~1 GB |
+| Invoices | [InvoiceShelf](https://github.com/InvoiceShelf/InvoiceShelf) (AGPL-3.0) | `invoices.mewemarket.com` | `invoiceshelf` | ~0.2 GB |
+| Projects | [Plane](https://github.com/makeplane/plane) Community (AGPL-3.0) | `plane.mewemarket.com` | `plane-*` (8) | ~1.2 GB |
+| Helpdesk | [Chatwoot](https://github.com/chatwoot/chatwoot) community image (MIT) | `chat.mewemarket.com` | `chatwoot`, `chatwoot-worker` | ~1 GB |
+
+How it works (code: `packages/core/src/hosted/`): adding the app creates the company's own space in the product (a Twenty workspace, an InvoiceShelf company, a Plane workspace, a Chatwoot account). The first time someone opens it, MeweMarket gives them their own account in that space (owners and admins as admins, members as members, guests not at all) with a random password stored encrypted, and signs them in with no second login: a one-time link for Twenty and Chatwoot, and for InvoiceShelf and Plane a server-side sign-in whose session cookie reaches the browser through `/api/hosted-sso`, a MeweMarket route the proxy serves on the product's host (so the cookie is set there and nowhere else). Role changes follow; removing someone, or them leaving, removes them and ends their open session in the product. Removing the app keeps its data unless "also delete all data" is ticked; deleting a workspace deletes its data in every product. An app appears in the App Store only once its settings are in `.env`.
 
 One-time setup:
 
-1. **DNS**: an `A` record for `crm.mewemarket.com` and a wildcard `*.crm.mewemarket.com`, both to the server. With Cloudflare's proxy on, the free certificate only covers one level (`*.mewemarket.com`), so either turn the proxy off (grey cloud) for these two records or add an Advanced Certificate for `*.crm.mewemarket.com`.
-2. **Certificate**: a wildcard certificate for `crm.mewemarket.com` and `*.crm.mewemarket.com` (Let's Encrypt needs the DNS challenge for wildcards).
-3. **Database**: `CREATE DATABASE twenty OWNER mewe;` (new installs get it from `infra/postgres/init.sql`).
-4. **.env**: set `TWENTY_URL`, `TWENTY_INTERNAL_URL`, `TWENTY_APP_SECRET` (`openssl rand -hex 32`, **never change it afterwards**: it encrypts Twenty's signing keys) and `TWENTY_PLATFORM_EMAIL` / `TWENTY_PLATFORM_PASSWORD` (MeweMarket's own admin account inside Twenty; it is created on first use and must be Twenty's first user, so start from an empty `twenty` database).
-5. **Start it**: `docker compose up -d twenty twenty-worker`. The first start sets up its database and takes a few minutes; `curl -s 127.0.0.1:3200/healthz` answers when it's ready.
-6. **Proxy**: Hestia: add the web domain `crm.mewemarket.com` with the alias `*.crm.mewemarket.com`, copy `infra/hestia/mewemarket-crm.tpl` and `.stpl` to `/usr/local/hestia/data/templates/web/nginx/`, then `v-change-web-domain-proxy-tpl saasthemes crm.mewemarket.com mewemarket-crm`. Caddy: the `crm.mewemarket.com, *.crm.mewemarket.com` block in `infra/Caddyfile`.
-7. **Restart the app** (`pm2 reload ecosystem.config.cjs`). The CRM appears in the App Store only once `TWENTY_URL` and the platform account are set.
+1. **DNS and certificates**: `crm.mewemarket.com` plus wildcard `*.crm.mewemarket.com`, and `invoices.`, `plane.`, `chat.mewemarket.com`, all to the server. With Cloudflare's proxy on, the free certificate covers one level only, so either turn the proxy off (grey cloud) for `crm` and `*.crm` or add an Advanced Certificate for `*.crm.mewemarket.com`; the other three are covered. Let's Encrypt needs the DNS challenge for the wildcard.
+2. **Databases**: `CREATE DATABASE twenty OWNER mewe; CREATE DATABASE invoiceshelf OWNER mewe; CREATE DATABASE chatwoot OWNER mewe; CREATE DATABASE plane OWNER mewe;` (new installs get them from `infra/postgres/init.sql`). Chatwoot needs the `vector` extension, which the `pgvector/pgvector` Postgres image has.
+3. **.env**: fill in the `TWENTY_*`, `INVOICESHELF_*`, `CHATWOOT_*` and `PLANE_*` blocks from `.env.example`. The secrets (`TWENTY_APP_SECRET`, `INVOICESHELF_APP_KEY`, `CHATWOOT_SECRET_KEY_BASE`, `PLANE_SECRET_KEY`) must **never change** once set. Twenty's platform account must be Twenty's first user, so start Twenty on an empty `twenty` database.
+4. **Start them**: `docker compose up -d twenty twenty-worker invoiceshelf chatwoot chatwoot-worker plane-migrator plane-api plane-worker plane-beat plane-web plane-admin plane-space plane-live`. First starts take a few minutes while they set up their databases.
+5. **Platform accounts**: `bash infra/hosted-setup.sh` (InvoiceShelf owner, Chatwoot super admin, Plane instance admin with public sign-up off). It prints `CHATWOOT_PLATFORM_TOKEN`: add it to `.env`. Safe to run again.
+6. **Proxy**: Hestia: for each host add the web domain (`crm.mewemarket.com` with alias `*.crm.mewemarket.com`, then `invoices.`, `plane.`, `chat.`), copy `infra/hestia/mewemarket-{crm,invoices,projects,helpdesk}.tpl` and `.stpl` to `/usr/local/hestia/data/templates/web/nginx/`, and apply each with `v-change-web-domain-proxy-tpl saasthemes <host> mewemarket-<app>`. Caddy: the matching blocks in `infra/Caddyfile`. Twenty sets its own frame permission per workspace (to `APP_URL`); for the other three the proxy replaces their frame header with one allowing `https://mewemarket.com`, and Plane's proxy refuses public `POST /api/workspaces/` so only MeweMarket creates workspaces.
+7. **Restart the app** (`pm2 reload ecosystem.config.cjs`).
 
 Things to know:
 
-- **5 companies on the free version.** Twenty allows 5 workspaces per server without an Enterprise key. The 6th company that adds the CRM sees "The CRM service is full right now"; nothing breaks for the others. To lift it, buy a key from Twenty, set `TWENTY_ENTERPRISE_KEY` in `.env` and `docker compose up -d twenty twenty-worker`.
-- **Embedding** is Twenty's own per-workspace setting (`allowedEmbeddingOrigins`), set to `APP_URL` when each CRM is created; the proxy passes Twenty's headers through untouched. If `APP_URL` ever changes, existing CRMs need the new address added.
-- **Removing the CRM** from a workspace keeps its data (adding it back restores it) unless "also delete all data" is ticked, which deletes the company's Twenty workspace. Deleting a MeweMarket workspace deletes its CRM too.
-- **Upgrades**: the image is pinned (`twentycrm/twenty:v2.57.1`, the version this was tested with). Read Twenty's upgrade notes, back up the `twenty` database, change both image tags, and `docker compose up -d twenty twenty-worker`; it migrates itself on start.
-- **Backups**: the `twenty` database (same Postgres) and the `twentydata` volume (uploaded files).
-- **Source offer (AGPL)**: the CRM toolbar and the public app page link to Twenty's source. If you ever modify Twenty, publish your changes and link to them instead.
+- **Twenty allows 5 companies** without an Enterprise key; the 6th sees "The CRM service is full right now" while everyone else carries on. Buy a key, set `TWENTY_ENTERPRISE_KEY`, `docker compose up -d twenty twenty-worker`. The other three have no company limit.
+- **Paid features not included**: Chatwoot's enterprise features (AI copilot, SLAs, custom roles, audit logs, SSO) and Plane's commercial features are not in these images.
+- **Email**: Chatwoot uses the `SMTP_*` settings for notifications. People's product accounts use generated addresses (`u-…@accounts.mewemarket.com`), so the products never mail customers' real addresses.
+- **Files**: Plane stores uploads in MinIO (bucket `plane-uploads`); InvoiceShelf and Chatwoot in their volumes (`invoiceshelfdata`, `chatwootdata`), Twenty in `twentydata`. Back these up with the databases.
+- **Upgrades**: images are pinned to the versions this was tested with (Twenty v2.57.1, InvoiceShelf 2.4.7, Plane v1.4.3, Chatwoot v4.19.1-ce). Read each project's upgrade notes, back up its database, change the tag, `docker compose up -d <services>`; they migrate themselves on start (Plane through `plane-migrator`).
+- **Source offer (AGPL)**: the app toolbar and the public app pages link to each product's source. If you modify a product, publish your changes and link to them instead.
+- **If a sync fails** (product down when someone is removed), it is logged; MeweMarket stops signing them in at once, but an already-open product session can last until it expires. See the open item in `docs/PLAN.md`.

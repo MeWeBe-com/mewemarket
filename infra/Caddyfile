@@ -39,3 +39,46 @@ crm.mewemarket.com, *.crm.mewemarket.com {
 	header -Server
 	reverse_proxy 127.0.0.1:3200
 }
+
+# Hosted apps on their own hosts. /api/hosted-sso is MeweMarket's sign-in bridge (it sets the app's session
+# cookie on the app's host). The apps forbid framing, so the frame header is replaced to allow mewemarket.com.
+(hosted_frame) {
+	header {
+		-X-Frame-Options
+		Content-Security-Policy "frame-ancestors 'self' https://mewemarket.com"
+		-Server
+		defer
+	}
+	reverse_proxy /api/hosted-sso 127.0.0.1:3000
+}
+
+invoices.mewemarket.com {
+	import hosted_frame
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:3210
+}
+
+chat.mewemarket.com {
+	import hosted_frame
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:3240
+}
+
+plane.mewemarket.com {
+	import hosted_frame
+	encode zstd gzip
+	# Only MeweMarket creates workspaces (it calls Plane's API directly, not through here).
+	@createWorkspace {
+		method POST
+		path /api/workspaces/
+	}
+	respond @createWorkspace 403
+	reverse_proxy /god-mode/* 127.0.0.1:3232
+	reverse_proxy /spaces/* 127.0.0.1:3233
+	reverse_proxy /live/* 127.0.0.1:3234
+	reverse_proxy /api/* 127.0.0.1:3230
+	reverse_proxy /auth/* 127.0.0.1:3230
+	reverse_proxy /static/* 127.0.0.1:3230
+	reverse_proxy /plane-uploads/* 127.0.0.1:9000
+	reverse_proxy 127.0.0.1:3231
+}

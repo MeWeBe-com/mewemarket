@@ -25,7 +25,7 @@ export type EntityDef = {
   totals?: string[]; // number/money fields summed in the list footer and on the app home
 };
 
-export type HostedDef = { provider: "twenty"; poweredBy: string; license: string; sourceUrl: string };
+export type HostedDef = { provider: "twenty" | "invoiceshelf" | "chatwoot" | "plane"; poweredBy: string; license: string; sourceUrl: string };
 
 export type AppDef = {
   slug: string;

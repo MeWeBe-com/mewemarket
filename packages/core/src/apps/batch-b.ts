@@ -334,8 +334,8 @@ export const BATCH_B = [
 
   // ───────────── Customer service ─────────────
   app({
-    slug: "helpdesk", name: "Helpdesk", category: "customer-service",
-    tagline: "Support tickets, customers and a knowledge base.",
+    slug: "simple-helpdesk", name: "Simple Helpdesk", category: "customer-service",
+    tagline: "Simple support tickets, customers and a knowledge base.",
     description: "Log every customer request as a ticket, work them on a board by status and priority, and write help articles for common questions.",
     features: ["Ticket board by status", "Priorities, channels and assignees", "Customer list", "Knowledge base articles", "Ticket replies log", "Due date calendar"],
     entities: [

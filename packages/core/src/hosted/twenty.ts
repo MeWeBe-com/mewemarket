@@ -8,7 +8,10 @@
 // Free Twenty allows 5 workspaces per server; more needs an Enterprise key, set as ENTERPRISE_KEY on the
 // Twenty server (not here). Until then the 6th company gets HostedCapacityError.
 
+/** A problem the person can be told about as it is (its message is written for them). */
 export class HostedError extends Error {}
+/** A product's API failed; logged, and the person sees a general "try again" message. */
+export class HostedServiceError extends Error {}
 /** The hosted product cannot take another company (Twenty's 5-workspace limit without an Enterprise key). */
 export class HostedCapacityError extends HostedError {}
 
@@ -28,7 +31,7 @@ function cfg() {
 
 type GqlError = { message: string; extensions?: { subCode?: string; code?: string; userFriendlyMessage?: string } };
 
-class TwentyCallError extends HostedError {
+class TwentyCallError extends HostedServiceError {
   constructor(public op: string, public errors: GqlError[]) {
     super(`Twenty ${op}: ${errors.map((e) => e.extensions?.subCode ?? e.message).join(", ")}`);
   }
@@ -43,7 +46,7 @@ async function call<T>(path: "/metadata", op: string, query: string, variables: 
     signal: AbortSignal.timeout(60_000),
   });
   const body = (await res.json().catch(() => null)) as { data?: T; errors?: GqlError[] } | null;
-  if (!body) throw new HostedError(`Twenty ${op}: HTTP ${res.status}`);
+  if (!body) throw new HostedServiceError(`Twenty ${op}: HTTP ${res.status}`);
   if (body.errors?.length) {
     if (body.errors.some((e) => /enterprise key|Workspace limit reached/i.test(e.message + (e.extensions?.userFriendlyMessage ?? "")))) {
       throw new HostedCapacityError("The CRM service is full right now. We've been told and will make room soon.");
@@ -177,7 +180,7 @@ async function roleId(origin: string, role: "admin" | "member") {
   const d = await meta<{ getRoles: { id: string; label: string }[] }>("getRoles", `{getRoles{id label}}`, {}, await adminToken(origin));
   const label = role === "admin" ? "Admin" : "Member";
   const r = d.getRoles.find((x) => x.label === label);
-  if (!r) throw new HostedError(`Twenty has no ${label} role`);
+  if (!r) throw new HostedServiceError(`Twenty has no ${label} role`);
   return r.id;
 }
 

@@ -15,8 +15,8 @@ export const CORE_SUITE = [
     ],
   }),
   app({
-    slug: "invoices", name: "Invoices & Quotes", category: "finance", legacyProductIds: [23],
-    tagline: "Professional quotes and invoices with line items and totals.",
+    slug: "quick-invoices", name: "Quick Invoices", category: "finance",
+    tagline: "Simple quotes and invoices with line items and totals.",
     description: "Create quotes and invoices with line items, taxes and due dates, track what's paid and what's overdue, and print or save them as PDF.",
     features: ["Quotes and invoices with line items", "Paid, sent and overdue tracking", "Client list", "Printable invoice view", "Totals per status", "CSV export"],
     entities: [
@@ -27,8 +27,8 @@ export const CORE_SUITE = [
     ],
   }),
   app({
-    slug: "projects", name: "Projects & Tasks", category: "business", legacyProductIds: [36, 45],
-    tagline: "Boards, lists and time tracking for every project.",
+    slug: "simple-projects", name: "Simple Projects", category: "business",
+    tagline: "Simple boards, lists and time tracking for projects.",
     description: "Plan projects, assign tasks on a kanban board, set due dates and priorities, and log time against each task.",
     features: ["Projects with status and deadlines", "Kanban task board", "Priorities and due dates", "Task calendar", "Time log with hour totals"],
     entities: [
@@ -57,7 +57,7 @@ export const CORE_SUITE = [
     entities: [
       entity("employee", "Employee", "Employees", ["name*", "email:email", "phone:phone", "job_title", "department:select=Management|Sales|Operations|Finance|Engineering|Support|Other", "start_date:date", "status:select=Active|On leave|Left", "salary:money"]),
       entity("leave", "Leave request", "Leave requests", ["employee*:ref=employee", "type*:select=Annual|Sick|Unpaid|Parental|Other", "start*:date", "end*:date", "days:number", "status*:select=Requested|Approved|Rejected", "reason:long"], { title: "employee", board: "status", calendar: "start", totals: ["days"], calc: { days: "days(start, end)" } }),
-      entity("timesheet", "Timesheet", "Timesheets", ["employee*:ref=employee", "date*:date", "hours*:number", "project:ref=projects.project", "notes"], { title: "employee", calendar: "date", totals: ["hours"] }),
+      entity("timesheet", "Timesheet", "Timesheets", ["employee*:ref=employee", "date*:date", "hours*:number", "project:ref=simple-projects.project", "notes"], { title: "employee", calendar: "date", totals: ["hours"] }),
       entity("holiday", "Holiday", "Holidays", ["name*", "date*:date"], { calendar: "date" }),
     ],
   }),

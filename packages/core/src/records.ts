@@ -389,7 +389,7 @@ export async function installApp(workspaceId: string, app: string, userId: strin
   if (def.kind === "hosted") {
     // Set up the company's own tenant in the product. If that fails the app isn't added, so trying again starts clean.
     try {
-      const [ws] = await db.select({ id: schema.workspaces.id, slug: schema.workspaces.slug, name: schema.workspaces.name })
+      const [ws] = await db.select({ id: schema.workspaces.id, slug: schema.workspaces.slug, name: schema.workspaces.name, currency: schema.workspaces.currency })
         .from(schema.workspaces).where(eq(schema.workspaces.id, workspaceId)).limit(1);
       await provisionHostedApp(ws!, app);
     } catch (e) {

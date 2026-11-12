@@ -20,18 +20,23 @@ export const hostedTenants = pgTable(
   (t) => [uniqueIndex("hosted_tenant_ws_provider_uq").on(t.workspaceId, t.provider)],
 );
 
-/** A person's sign-in for a hosted product (one per product, shared by all their workspaces' tenants). */
+/**
+ * A person's sign-in for a hosted product. Products that keep each company apart per user (Twenty) share one
+ * account across the person's workspaces (scope ""); products where one account would see every company it
+ * belongs to (InvoiceShelf) get one account per tenant (scope = tenant id).
+ */
 export const hostedAccounts = pgTable(
   "hosted_accounts",
   {
     id: text("id").primaryKey(),
     provider: text("provider").notNull(),
     userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    scope: text("scope").notNull().default(""),
     login: text("login").notNull(),
     passwordEnc: text("password_enc").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [uniqueIndex("hosted_account_provider_user_uq").on(t.provider, t.userId)],
+  (t) => [uniqueIndex("hosted_account_provider_user_uq").on(t.provider, t.userId, t.scope)],
 );
 
 /** A person's membership in a tenant, so it can be removed or re-roled when the workspace changes. */

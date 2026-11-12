@@ -63,8 +63,10 @@ The source of truth is `MASTERPROMPT_PHASE1.md`. Tick each task when it's done.
 ## Hosted apps (full open-source products inside the workspace)
 - [x] Company/product URLs: `mewemarket.com/{company}/{product}`, reserved names, redirects from `/w/...`
 - [x] Twenty CRM at `/{company}/crm`: per-company Twenty workspace, one-time sign-in (no second login), Twenty onboarding skipped, roles mirrored, removal ends access, delete-with-data, Powered-by/source credit
-- [x] docker-compose services, Hestia and Caddy proxy configs, DEPLOY.md section, e2e (`e2e/hosted-crm.spec.ts`, runs with `E2E_HOSTED_CRM=1`)
-- [ ] Production: wildcard DNS and certificate for `*.crm.mewemarket.com`, then the steps in DEPLOY.md
+- [x] Invoices (InvoiceShelf), Projects (Plane) and Helpdesk (Chatwoot) on the same provider interface; `/api/hosted-sso` sign-in bridge for products without a login-link API
+- [x] docker-compose services, Hestia and Caddy proxy configs, `infra/hosted-setup.sh`, DEPLOY.md "Hosted apps", e2e (`e2e/hosted-apps.spec.ts`, runs with `E2E_HOSTED=crm,invoices,projects,helpdesk`)
+- [ ] Production: DNS and certificates (`*.crm`, `invoices`, `plane`, `chat`), then the steps in DEPLOY.md "Hosted apps"
 - [ ] Twenty Enterprise key once a 6th company adds the CRM
 - [ ] Retry queue for hosted sync failures (today a failed removal is logged; MeweMarket stops issuing sign-ins at once, but an open CRM session would last until it expires)
+- [ ] Server sizing: the four products add about 3.5 GB RAM idle
 - [ ] Next hosted apps (each needs a multi-company check like Twenty's 5-workspace limit before choosing)

@@ -1,5 +1,5 @@
 {
-  "id": "f8f93372-7ef0-4baf-8d8c-c1848f24eece",
+  "id": "6b1029b6-35f6-41f9-aa5c-753947fe8c47",
   "prevId": "83aaf4ad-7501-4a6b-bc90-6621ac6653fc",
   "version": "7",
   "dialect": "postgresql",
@@ -1605,6 +1605,13 @@
           "primaryKey": false,
           "notNull": true
         },
+        "scope": {
+          "name": "scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
         "login": {
           "name": "login",
           "type": "text",
@@ -1637,6 +1644,12 @@
             },
             {
               "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "scope",
               "isExpression": false,
               "asc": true,
               "nulls": "last"

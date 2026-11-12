@@ -1,0 +1,177 @@
+#=========================================================================#
+# MeweMarket Projects (Plane) — HestiaCP nginx PROXY template, HTTPS (443)
+# plane.mewemarket.com -> the Plane container. /api/hosted-sso goes to MeweMarket
+# (127.0.0.1:35300): it signs people in by setting Plane's session
+# cookie on this host. Plane forbids framing, so its frame header is
+# replaced with one that lets mewemarket.com embed it.
+# Setup: docs/DEPLOY.md, "Hosted apps".
+#   v-add-web-domain saasthemes plane.mewemarket.com
+#   v-change-web-domain-proxy-tpl saasthemes plane.mewemarket.com mewemarket-projects
+#=========================================================================#
+
+server {
+    listen      %ip%:%proxy_ssl_port% ssl;
+    http2       on;
+    server_name %domain_idn% %alias_idn%;
+    error_log   /var/log/%web_system%/domains/%domain%.error.log error;
+
+    ssl_certificate      %ssl_pem%;
+    ssl_certificate_key  %ssl_key%;
+
+    include %home%/%user%/conf/web/%domain%/nginx.hsts.conf*;
+    client_max_body_size 10m;
+
+    location ~ /\.(?!well-known\/) {
+        deny all;
+        return 404;
+    }
+
+    # Sign-in bridge: served by MeweMarket on this host.
+    location = /api/hosted-sso {
+        proxy_pass         http://127.0.0.1:35300;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Forwarded-Host  $host;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+
+    # Only MeweMarket creates workspaces (it calls Plane's API directly, not through here).
+    location = /api/workspaces/ {
+        if ($request_method = POST) { return 403; }
+        proxy_pass         http://127.0.0.1:3230;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+
+    location /api/ {
+        proxy_pass         http://127.0.0.1:3230;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_set_header   X-Forwarded-Host  $host;
+        proxy_set_header   Upgrade           $http_upgrade;
+        proxy_set_header   Connection        "upgrade";
+        proxy_read_timeout 1h;
+        # Let mewemarket.com (only) show this app in a frame.
+        proxy_hide_header  X-Frame-Options;
+        proxy_hide_header  Content-Security-Policy;
+        add_header         Content-Security-Policy "frame-ancestors 'self' https://mewemarket.com" always;
+    }
+
+    location /auth/ {
+        proxy_pass         http://127.0.0.1:3230;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_set_header   X-Forwarded-Host  $host;
+        proxy_set_header   Upgrade           $http_upgrade;
+        proxy_set_header   Connection        "upgrade";
+        proxy_read_timeout 1h;
+        # Let mewemarket.com (only) show this app in a frame.
+        proxy_hide_header  X-Frame-Options;
+        proxy_hide_header  Content-Security-Policy;
+        add_header         Content-Security-Policy "frame-ancestors 'self' https://mewemarket.com" always;
+    }
+
+    location /static/ {
+        proxy_pass         http://127.0.0.1:3230;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_set_header   X-Forwarded-Host  $host;
+        proxy_set_header   Upgrade           $http_upgrade;
+        proxy_set_header   Connection        "upgrade";
+        proxy_read_timeout 1h;
+        # Let mewemarket.com (only) show this app in a frame.
+        proxy_hide_header  X-Frame-Options;
+        proxy_hide_header  Content-Security-Policy;
+        add_header         Content-Security-Policy "frame-ancestors 'self' https://mewemarket.com" always;
+    }
+
+    location /god-mode/ {
+        proxy_pass         http://127.0.0.1:3232;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_set_header   X-Forwarded-Host  $host;
+        proxy_set_header   Upgrade           $http_upgrade;
+        proxy_set_header   Connection        "upgrade";
+        proxy_read_timeout 1h;
+        # Let mewemarket.com (only) show this app in a frame.
+        proxy_hide_header  X-Frame-Options;
+        proxy_hide_header  Content-Security-Policy;
+        add_header         Content-Security-Policy "frame-ancestors 'self' https://mewemarket.com" always;
+    }
+
+    location /spaces/ {
+        proxy_pass         http://127.0.0.1:3233;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_set_header   X-Forwarded-Host  $host;
+        proxy_set_header   Upgrade           $http_upgrade;
+        proxy_set_header   Connection        "upgrade";
+        proxy_read_timeout 1h;
+        # Let mewemarket.com (only) show this app in a frame.
+        proxy_hide_header  X-Frame-Options;
+        proxy_hide_header  Content-Security-Policy;
+        add_header         Content-Security-Policy "frame-ancestors 'self' https://mewemarket.com" always;
+    }
+
+    location /live/ {
+        proxy_pass         http://127.0.0.1:3234;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_set_header   X-Forwarded-Host  $host;
+        proxy_set_header   Upgrade           $http_upgrade;
+        proxy_set_header   Connection        "upgrade";
+        proxy_read_timeout 1h;
+        # Let mewemarket.com (only) show this app in a frame.
+        proxy_hide_header  X-Frame-Options;
+        proxy_hide_header  Content-Security-Policy;
+        add_header         Content-Security-Policy "frame-ancestors 'self' https://mewemarket.com" always;
+    }
+
+    location /plane-uploads/ {
+        proxy_pass         http://127.0.0.1:9000;
+        proxy_set_header   Host $http_host;
+    }
+
+    location / {
+        proxy_pass         http://127.0.0.1:3231;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_set_header   X-Forwarded-Host  $host;
+        proxy_set_header   Upgrade           $http_upgrade;
+        proxy_set_header   Connection        "upgrade";
+        proxy_read_timeout 1h;
+        # Let mewemarket.com (only) show this app in a frame.
+        proxy_hide_header  X-Frame-Options;
+        proxy_hide_header  Content-Security-Policy;
+        add_header         Content-Security-Policy "frame-ancestors 'self' https://mewemarket.com" always;
+    }
+
+    location /error/ {
+        alias %home%/%user%/web/%domain%/document_errors/;
+    }
+
+    include %home%/%user%/conf/web/%domain%/nginx.ssl.conf_*;
+}

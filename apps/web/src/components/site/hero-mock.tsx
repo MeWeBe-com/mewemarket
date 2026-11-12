@@ -3,7 +3,7 @@ import { AppIcon } from "@/components/app-icon";
 
 // A static picture of the workspace, drawn in HTML so it stays sharp and themes with the site.
 const SIDEBAR = [
-  ["crm", "CRM & Pipeline", "sales"], ["invoices", "Invoices & Quotes", "finance"], ["projects", "Projects & Tasks", "business"],
+  ["crm", "CRM", "sales"], ["invoices", "Invoices", "finance"], ["projects", "Projects", "business"],
   ["inventory", "Inventory & Orders", "logistics"], ["team-hr", "Team & HR", "hr"], ["bookings", "Bookings", "customer-service"],
 ] as const;
 

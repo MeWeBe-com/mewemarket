@@ -105,7 +105,7 @@ test("invoice line items total and print view", async ({ page }) => {
   await page.locator("input[name=password]").fill(PASSWORD);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await page.waitForURL(/\/acme(\/|$)/);
-  await page.goto("/acme/invoices/invoice/new");
+  await page.goto("/acme/quick-invoices/invoice/new");
   await page.getByLabel("Number").fill("INV-E2E");
   await page.getByLabel("Client").selectOption({ index: 1 });
   await page.getByLabel("Issue date").fill("2026-10-29");
@@ -122,11 +122,11 @@ test("invoice line items total and print view", async ({ page }) => {
   await page.getByRole("link", { name: "INV-E2E" }).first().click();
   await page.waitForURL(/\/invoice\/[0-9a-f-]{36}$/);
   const id = page.url().split("/").pop();
-  await page.goto(`/acme/invoices/invoice/${id}/print`);
+  await page.goto(`/acme/quick-invoices/invoice/${id}/print`);
   await expect(page.getByText("$385.00")).toBeVisible();
   await expect(page.getByText("Tax (10%)")).toBeVisible();
   page.on("dialog", (d) => d.accept());
-  await page.goto(`/acme/invoices/invoice/${id}`);
+  await page.goto(`/acme/quick-invoices/invoice/${id}`);
   await page.getByRole("button", { name: "Delete" }).click();
   await page.waitForURL(/\/invoice$/);
 });
@@ -137,10 +137,10 @@ test("links between apps: a project's client is a Contacts & Deals company", asy
   await page.locator("input[name=password]").fill(PASSWORD);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await page.waitForURL(/\/acme(\/|$)/);
-  // acme has Contacts & Deals and Projects but not Team & HR.
-  await page.goto("/acme/projects/task/new");
+  // acme has Contacts & Deals and Simple Projects but not Team & HR.
+  await page.goto("/acme/simple-projects/task/new");
   await expect(page.getByRole("link", { name: "Add the app" })).toHaveAttribute("href", /app=team-hr/);
-  await page.goto("/acme/projects/project/new");
+  await page.goto("/acme/simple-projects/project/new");
   await page.getByLabel("Name").fill("E2E linked project");
   const client = page.getByLabel("Client");
   await client.selectOption({ index: 1 });
@@ -151,9 +151,9 @@ test("links between apps: a project's client is a Contacts & Deals company", asy
   // The company page lists the project from the other app.
   await page.goto("/acme/contacts/company");
   await page.getByRole("link", { name: company, exact: true }).first().click();
-  await expect(page.getByText(/Projects in Projects & Tasks/)).toBeVisible();
+  await expect(page.getByText(/Projects in Simple Projects/)).toBeVisible();
   await page.getByRole("link", { name: "E2E linked project" }).click();
-  await page.waitForURL(/\/acme\/projects\/project\/[0-9a-f-]{36}$/);
+  await page.waitForURL(/\/acme\/simple-projects\/project\/[0-9a-f-]{36}$/);
   page.on("dialog", (d) => d.accept());
   await page.getByRole("button", { name: "Delete" }).click();
   await page.waitForURL(/\/project$/);

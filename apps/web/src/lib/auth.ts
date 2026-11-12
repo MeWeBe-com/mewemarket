@@ -5,12 +5,13 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { magicLink, organization, twoFactor } from "better-auth/plugins";
-import Redis from "ioredis";
 import { sendMail } from "./email";
 import { ac, roles } from "./permissions";
 
 const appUrl = process.env.APP_URL ?? "http://localhost:3000";
-const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL, { lazyConnect: true }) : null;
+import { redis as sharedRedis } from "./redis";
+
+const redis = sharedRedis;
 
 const social: Parameters<typeof betterAuth>[0]["socialProviders"] = {};
 if (process.env.GOOGLE_CLIENT_ID)

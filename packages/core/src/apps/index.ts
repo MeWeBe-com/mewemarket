@@ -14,4 +14,4 @@ const bySlug = new Map(APPS.map((a) => [a.slug, a]));
 export const getAppDef = (slug: string) => bySlug.get(slug) ?? null;
 export const getEntityDef = (app: string, entity: string) => getAppDef(app)?.entities.find((e) => e.key === entity) ?? null;
 // The featured six: the hosted CRM leads, and the simple Contacts & Deals app stays in the catalogue.
-export const CORE_SUITE_SLUGS = [...HOSTED_APPS, ...CORE_SUITE].map((a) => a.slug).filter((s) => s !== "contacts");
+export const CORE_SUITE_SLUGS = [...HOSTED_APPS, ...CORE_SUITE].map((a) => a.slug).filter((s) => !["contacts", "quick-invoices", "simple-projects"].includes(s));
