@@ -48,7 +48,9 @@ async function findTenant(workspaceId: string, provider: Provider) {
 /** Creates the workspace's tenant in the product, once. Safe to call again (e.g. after a failed first try). */
 export async function provisionHostedApp(workspace: { id: string; slug: string; name: string; currency?: string }, app: string) {
   const provider = providerOf(app);
-  return locked(`hosted:${provider}:${workspace.id}`, async () => {
+  // One at a time per product: some products are opened up briefly while a company is created (Plane's
+  // workspace creation, Twenty's invite link), so creations mustn't overlap.
+  return locked(`hosted:${provider}:provision`, async () => {
     const existing = await findTenant(workspace.id, provider);
     if (existing) return existing;
     const created = await PROVIDERS[provider].createTenant({ slug: workspace.slug, name: workspace.name, currency: workspace.currency ?? "USD" });

@@ -52,7 +52,7 @@ class Session {
     this.take(res);
     // Plane reports auth failures as a redirect carrying error_code.
     const location = res.headers.get("location") ?? "";
-    if (res.status >= 400 || /error_code=/.test(location) || !this.jar.get("session-id")) {
+    if (res.status >= 400 || /error_code=/.test(location) || ![...this.jar.keys()].some((k) => k.includes("session-id"))) {
       throw new HostedServiceError(`Plane ${path}: ${res.status} ${location.slice(0, 200)}`);
     }
   }
@@ -86,6 +86,18 @@ async function admin() {
 }
 
 // --- Workspaces --------------------------------------------------------------
+//
+// Workspace creation is switched off in Plane itself (instance setting DISABLE_WORKSPACE_CREATION, set by
+// infra/hosted-setup.sh) as well as at the proxy, so ordinary users can't create workspaces even if a request
+// got past the proxy. MeweMarket switches it on only while it creates one (provisioning runs one at a time).
+
+async function instanceAdmin() {
+  const s = new Session();
+  await s.form("/api/instances/admins/sign-in/", { email: cfg().email, password: cfg().password });
+  return s;
+}
+const setWorkspaceCreation = (s: Session, on: boolean) =>
+  s.api("PATCH", "/api/instances/configurations/", { DISABLE_WORKSPACE_CREATION: on ? "0" : "1" });
 
 /** Plane slugs: lowercase letters, digits and hyphens; varied if taken. */
 const slugFor = (slug: string, attempt: number) =>
@@ -93,6 +105,16 @@ const slugFor = (slug: string, attempt: number) =>
 
 export async function createPlaneWorkspace(slug: string, name: string): Promise<Omit<HostedTenant, "id">> {
   const s = await admin();
+  const inst = await instanceAdmin();
+  await setWorkspaceCreation(inst, true);
+  try {
+    return await createWorkspace(s, slug, name);
+  } finally {
+    await setWorkspaceCreation(inst, false);
+  }
+}
+
+async function createWorkspace(s: Session, slug: string, name: string): Promise<Omit<HostedTenant, "id">> {
   for (let attempt = 0; ; attempt++) {
     const want = slugFor(slug, attempt);
     try {

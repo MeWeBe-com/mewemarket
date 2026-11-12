@@ -49,7 +49,7 @@ plane)
   echo "admin: ${loc:-ok}"
   ctok=$(awk '$6=="csrftoken"{print $7}' "$jar" | tail -1)
   curl -sf "${hdr[@]}" -c "$jar" -b "$jar" -X PATCH "$base/api/instances/configurations/" -H "X-CSRFToken: $ctok" -H 'Content-Type: application/json' \
-    -d '{"ENABLE_SIGNUP":"0"}' >/dev/null && echo "public sign-up: off"
+    -d '{"ENABLE_SIGNUP":"0","DISABLE_WORKSPACE_CREATION":"1"}' >/dev/null && echo "public sign-up and workspace creation: off (MeweMarket opens creation only while it creates a company)"
   ;;
 
 documenso)
