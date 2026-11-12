@@ -173,6 +173,10 @@ services:
       POSTGRES_DATABASE: chatwoot
       REDIS_URL: redis://redis:6379/2
       ENABLE_ACCOUNT_SIGNUP: "false"
+      # Chatwoot's own per-IP throttling (Rack::Attack), incl. the public chat-widget and contact APIs.
+      ENABLE_RACK_ATTACK: "true"
+      ENABLE_RACK_ATTACK_WIDGET_API: "true"
+      RACK_ATTACK_LIMIT: "600" # requests per IP per minute (default 3000)
       ACTIVE_STORAGE_SERVICE: local
       SMTP_ADDRESS: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
@@ -338,8 +342,9 @@ services:
       postgres: { condition: service_healthy }
 
   # --- Easy!Appointments (hosted "bookings" app): GPL-3.0, single-company software made multi-company by our
-  # router (infra/easyappointments/config.php): one container, one database per company, served on the main
-  # site at mewemarket.com/{company}/book/ (the proxy strips the prefix and names the company).
+  # router (infra/easyappointments/config.php): one container, one database per company, on its own origin at
+  # book.mewemarket.com/{company}/ (the proxy strips the prefix and names the company). MeweMarket shows it at
+  # mewemarket.com/{company}/book.
   easyappointments-db:
     mem_limit: 512m
     cpus: 0.5
@@ -366,7 +371,7 @@ services:
       DB_HOST: easyappointments-db
       DB_USERNAME: root
       DB_PASSWORD: ${EA_DB_ROOT_PASSWORD}
-      EA_PUBLIC_BASE: ${APP_URL}
+      EA_PUBLIC_BASE: ${EA_URL}
       EA_PLATFORM_KEY: ${EA_PLATFORM_KEY}
       EA_PROXY_KEY: ${EA_PROXY_KEY}
     ports: ["127.0.0.1:3260:80"]
@@ -376,6 +381,18 @@ services:
       - easyappointmentsdata:/var/www/html/storage
     depends_on:
       easyappointments-db: { condition: service_healthy }
+
+# One fixed network for everything above, so infra/egress-firewall.sh can stop the containers reaching the
+# host and private addresses (SSRF through product webhooks or URL fetches) while they still reach each other
+# and the internet.
+networks:
+  default:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: mewe-br
+    ipam:
+      config:
+        - subnet: 172.30.0.0/16
 
 volumes:
   easyappointmentsdb:

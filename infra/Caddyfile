@@ -16,25 +16,6 @@ mewemarket.com {
 		-Server
 	}
 
-	# Bookings: /{company}/book/ is the company's Easy!Appointments, prefix stripped and company named.
-	@ea_bare {
-		path_regexp ^/[a-z0-9][a-z0-9-]{0,40}/book$
-		not path /apps/* /tools/* /insights/* /api/* /w/* /account/* /products/* /category/* /users/* /invite/* /_next/*
-	}
-	redir @ea_bare {path}/ 301
-	@ea {
-		path_regexp ea ^/([a-z0-9][a-z0-9-]{0,40})/book(/.*)$
-		not path /apps/* /tools/* /insights/* /api/* /w/* /account/* /products/* /category/* /users/* /invite/* /_next/*
-	}
-	handle @ea {
-		rewrite * {re.ea.2}?{query}
-		reverse_proxy 127.0.0.1:3260 {
-			header_up X-Ea-Tenant {re.ea.1}
-			header_up X-Ea-Proxy-Key {env.EA_PROXY_KEY}
-			header_up -X-Platform-Key
-		}
-	}
-
 	# Video meetings keep an event stream open per participant; don't buffer it.
 	handle /api/meet/* {
 		reverse_proxy 127.0.0.1:3000 {
@@ -109,4 +90,21 @@ sign.mewemarket.com {
 	reverse_proxy /api/hosted-sso 127.0.0.1:3000
 	encode zstd gzip
 	reverse_proxy 127.0.0.1:3250
+}
+
+# Bookings (Easy!Appointments) on its own origin: https://book.mewemarket.com/{company}/ (MeweMarket shows it at
+# mewemarket.com/{company}/book). The company is named for the container with the prefix stripped.
+book.mewemarket.com {
+	import hosted_frame
+	encode zstd gzip
+	@ea path_regexp ea ^/([a-z0-9][a-z0-9-]{0,40})(/.*)?$
+	handle @ea {
+		rewrite * {re.ea.2}?{query}
+		reverse_proxy 127.0.0.1:3260 {
+			header_up X-Ea-Tenant {re.ea.1}
+			header_up X-Ea-Proxy-Key {env.EA_PROXY_KEY}
+			header_up -X-Platform-Key
+		}
+	}
+	respond 404
 }

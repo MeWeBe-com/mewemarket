@@ -30,4 +30,6 @@ export interface HostedProvider {
   /** `account` is the person's stored sign-in for this product, when there is one. */
   removeMember(t: HostedTenant, memberId: string, account: { login: string; password: string } | null): Promise<void>;
   signIn(t: HostedTenant, login: string, password: string, memberId: string): Promise<SignIn>;
+  /** Optional: remove people in the tenant that MeweMarket doesn't know about (`keep`: its member ids there). */
+  reconcile?(t: HostedTenant, keep: string[]): Promise<void>;
 }

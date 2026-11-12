@@ -387,6 +387,17 @@ export async function installApp(workspaceId: string, app: string, userId: strin
   });
   if (!added) return;
   if (def.kind === "hosted") {
+    // Scarce capacity (the CRM server's free workspace limit): each person may add it to a couple of companies.
+    const perPerson = def.hosted?.provider === "twenty" ? 2 : 0;
+    if (perPerson) {
+      const [row] = await db.select({ n: count() }).from(schema.hostedTenants)
+        .innerJoin(schema.installedApps, and(eq(schema.installedApps.workspaceId, schema.hostedTenants.workspaceId), eq(schema.installedApps.catalogAppId, app)))
+        .where(and(eq(schema.hostedTenants.provider, def.hosted!.provider), eq(schema.installedApps.installedBy, userId)));
+      if ((row?.n ?? 0) >= perPerson) {
+        await db.delete(schema.installedApps).where(and(eq(schema.installedApps.workspaceId, workspaceId), eq(schema.installedApps.catalogAppId, app)));
+        throw new LimitError(`You can add ${def.name} to up to ${perPerson} companies. Contact us if you need more.`);
+      }
+    }
     // Set up the company's own tenant in the product. If that fails the app isn't added, so trying again starts clean.
     try {
       const [ws] = await db.select({ id: schema.workspaces.id, slug: schema.workspaces.slug, name: schema.workspaces.name, currency: schema.workspaces.currency })

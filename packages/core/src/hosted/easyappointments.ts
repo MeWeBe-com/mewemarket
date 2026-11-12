@@ -1,8 +1,10 @@
 // Easy!Appointments (https://github.com/alextselegidis/easyappointments, GPL-3.0): online appointment booking.
 // Easy!Appointments is single-company, so ONE container serves every company through a small router file mounted
-// as its config.php (spike: /tmp/claude-0/spike-booking/ea/config.php): company "acme" lives on the main site at
-// ${APP_URL}/acme/book/ (nginx strips the prefix and sends X-Ea-Tenant + the proxy secret), database ea_t_acme,
-// its own session directory, cookies on Path=/acme/book/. The router also takes platform-only calls (header X-Platform-Key)
+// as its config.php: company "acme" lives at ${EA_URL}/acme/ on the booking app's OWN origin (e.g.
+// https://book.mewemarket.com/acme/ — never MeweMarket's origin, so nothing in it can reach MeweMarket's
+// session), database ea_t_acme, its own session directory, cookies on Path=/acme/. The proxy strips the
+// prefix and sends X-Ea-Tenant + its shared secret. Customers see it at mewemarket.com/acme/book, a MeweMarket
+// page that frames ${EA_URL}/acme/. The router also takes platform-only calls (header X-Platform-Key)
 // to create/drop a company database, change a role and end a person's sessions, and lets the platform name the
 // company in X-Ea-Tenant when it calls the internal address. Everything else is Easy!Appointments' own installer,
 // login form and REST API v1 (basic auth as the per-company platform admin).
@@ -14,12 +16,19 @@ import { createHmac } from "node:crypto";
 import { HostedError, HostedServiceError } from "./twenty";
 import type { HostedProvider, HostedTenant, ProductRole, SignIn } from "./types";
 
-type Config = { internal: string; app: string; key: string };
+type Config = { internal: string; public: string; key: string };
 
 export function easyAppointmentsConfig(): Config | null {
-  const { EA_INTERNAL_URL, APP_URL, EA_PLATFORM_KEY } = process.env;
-  if (!EA_INTERNAL_URL || !APP_URL || !EA_PLATFORM_KEY) return null;
-  return { internal: EA_INTERNAL_URL.replace(/\/$/, ""), app: APP_URL.replace(/\/$/, ""), key: EA_PLATFORM_KEY };
+  const { EA_INTERNAL_URL, EA_URL, EA_PLATFORM_KEY, APP_URL } = process.env;
+  if (!EA_INTERNAL_URL || !EA_URL || !EA_PLATFORM_KEY) return null;
+  // Its own origin, never MeweMarket's: a script running in the booking app must not be able to use MeweMarket's session.
+  if (APP_URL && new URL(EA_URL).origin === new URL(APP_URL).origin) return null;
+  return { internal: EA_INTERNAL_URL.replace(/\/$/, ""), public: EA_URL.replace(/\/$/, ""), key: EA_PLATFORM_KEY };
+}
+
+/** Where a company's public booking page is served (framed by MeweMarket at /{company}/book). */
+export function easyAppointmentsPublicUrl(slug: string) {
+  return `${cfg().public}/${slug}/`;
 }
 function cfg() {
   const c = easyAppointmentsConfig();
@@ -100,7 +109,9 @@ export const easyAppointments: HostedProvider = {
     for (const p of (await api(slug, "GET", "/providers")) as { id: number }[]) await api(slug, "DELETE", `/providers/${p.id}`);
     for (const c of (await api(slug, "GET", "/customers")) as { id: number }[]) await api(slug, "DELETE", `/customers/${c.id}`);
     await api(slug, "PUT", "/services/1", { currency: ws.currency });
-    const url = `${cfg().app}/${slug}/book`; // public booking page: url + "/"; staff UI: url + "/index.php/calendar"
+    // No CAPTCHA (Easy!Appointments puts it on the staff login too, which MeweMarket signs in to): booking floods
+    // are limited at the proxy instead (infra/hestia/mewemarket-bookings.stpl).
+    const url = `${cfg().public}/${slug}`; // public booking page: url + "/"; staff UI: url + "/index.php/calendar"
     return { externalId: slug, subdomain: slug, url };
   },
 
@@ -128,8 +139,8 @@ export const easyAppointments: HostedProvider = {
     await ok(await call(slug, "GET", `/__platform/end-sessions?user_id=${id}`), "end-sessions"); // belt and braces
   },
 
-  /** Same origin as MeweMarket: the bridge must set these with Path=/{slug}/book/ (the pathname of `base` + "/"),
-   *  exactly the path Easy!Appointments uses, or the browser keeps two ea_session cookies. */
+  /** The bridge sets these on the booking host with Path=/{slug}/ (the pathname of `base` + "/"), exactly the path
+   *  Easy!Appointments uses, or the browser keeps two ea_session cookies. */
   async signIn(t: HostedTenant, login: string, password: string): Promise<SignIn> {
     const j = await formLogin(slugOf(t), login, password);
     const prefix = new URL(t.url).pathname.replace(/\/$/, "");

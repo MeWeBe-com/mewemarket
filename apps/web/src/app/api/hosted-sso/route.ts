@@ -6,9 +6,9 @@ import { redeem } from "@/lib/hosted-sso";
 // host only, then opens the product.
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const ticket = await redeem(url.searchParams.get("t") ?? "");
   const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
-  if (!ticket || new URL(ticket.base).host !== host) {
+  const ticket = await redeem(url.searchParams.get("t") ?? "", host);
+  if (!ticket) {
     return new NextResponse("This sign-in link has expired. Open the app again from MeweMarket.", { status: 410, headers: { "Cache-Control": "no-store" } });
   }
   const res = new NextResponse(null, { status: 302, headers: { location: ticket.path, "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" } });

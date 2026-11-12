@@ -1,9 +1,10 @@
 <?php
 // MeweMarket multi-company router for Easy!Appointments, mounted as the app's config.php: one container, one
-// database per company. Company "acme" lives at <EA_PUBLIC_BASE>/acme/book/ in database ea_t_acme; unknown
-// companies get 404. Started by start.sh, which points the app's own config at the constants defined here.
+// database per company. Company "acme" lives at <EA_PUBLIC_BASE>/acme/ (its own origin, e.g.
+// https://book.mewemarket.com/acme/, never MeweMarket's origin) in database ea_t_acme; unknown companies get
+// 404. Started by start.sh, which points the app's own config at the constants defined here.
 // Platform-only operations (header X-Platform-Key == EA_PLATFORM_KEY) are handled here before the app boots.
-// Path-based companies: the reverse proxy maps https://<site>/<slug>/book/* to this container with the prefix
+// Path-based companies: the reverse proxy maps https://<booking host>/<slug>/* to this container with the prefix
 // stripped, and names the company in X-Ea-Tenant. That header is trusted only with the proxy's shared secret
 // (X-Ea-Proxy-Key) or the platform key; a request without them is refused, so the container must not be public.
 $isPlatform = isset($_SERVER['HTTP_X_PLATFORM_KEY']) && hash_equals((string) getenv('EA_PLATFORM_KEY'), $_SERVER['HTTP_X_PLATFORM_KEY']);
@@ -11,7 +12,7 @@ $isProxy = isset($_SERVER['HTTP_X_EA_PROXY_KEY']) && hash_equals((string) getenv
 if (PHP_SAPI === 'cli') { $slug = getenv('EA_TENANT') ?: 'none'; }
 elseif (!($isPlatform || $isProxy) || !preg_match('/^[a-z0-9][a-z0-9-]{0,40}$/', $_SERVER['HTTP_X_EA_TENANT'] ?? '')) { http_response_code(404); exit('Unknown company'); }
 else { $slug = $_SERVER['HTTP_X_EA_TENANT']; }
-define('EA_PREFIX', '/' . $slug . '/book');
+define('EA_PREFIX', '/' . $slug);
 define('EA_BASE_URL', rtrim((string) getenv('EA_PUBLIC_BASE'), '/') . EA_PREFIX . '/');
 $db = 'ea_t_' . str_replace('-', '_', $slug);
 $sessDir = '/var/www/html/storage/sessions/' . $db;

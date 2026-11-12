@@ -69,6 +69,21 @@ server {
         proxy_hide_header  X-Frame-Options;
     }
 
+    location ~ "^/(invoices|estimates|payments)/pdf/" {
+        limit_req          zone=mewe_hosted burst=60 nodelay;
+        limit_conn         mewe_conn 30;
+        proxy_pass         http://127.0.0.1:3210;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_hide_header  X-Frame-Options;
+        # Documents are shown, never run: no scripts on PDF and preview pages (their HTML preview echoes user text).
+        proxy_hide_header  Content-Security-Policy;
+        add_header         Content-Security-Policy "default-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; frame-ancestors 'self' https://mewemarket.com; sandbox" always;
+    }
+
     location /error/ {
         alias %home%/%user%/web/%domain%/document_errors/;
     }

@@ -1,7 +1,7 @@
 import { type AppDef, canManageWorkspace, HostedError, openHostedApp } from "@mewe/core";
 import { connection } from "next/server";
 import { Alert, Button, Card } from "@/components/ui";
-import { frameUrl } from "@/lib/hosted-sso";
+import { frameUrl, signInAllowed } from "@/lib/hosted-sso";
 import { requireWorkspace } from "@/lib/session";
 import { setUpHostedAppAction } from "@/app/w/[slug]/a/actions";
 import { HostedFrame } from "./hosted-frame";
@@ -12,6 +12,9 @@ export async function HostedHome({ slug, app }: { slug: string; app: AppDef }) {
   const { workspace, role, session } = await requireWorkspace(slug);
   const canManage = canManageWorkspace(role);
   let src: string | null;
+  if (!(await signInAllowed(session.user.id))) {
+    return <Card className="max-w-xl"><Alert>You&apos;ve opened apps a lot in the last minute. Please wait a moment and try again.</Alert></Card>;
+  }
   try {
     const signIn = await openHostedApp(workspace, app.slug, { id: session.user.id, name: session.user.name }, role);
     src = signIn && (await frameUrl(signIn));

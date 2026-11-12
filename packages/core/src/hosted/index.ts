@@ -11,6 +11,7 @@ import type { SignIn } from "./types";
 
 export { HostedCapacityError, HostedError, HostedServiceError } from "./twenty";
 export type { SignIn } from "./types";
+export { easyAppointmentsPublicUrl } from "./easyappointments";
 
 type Provider = ProviderName;
 type Tenant = typeof schema.hostedTenants.$inferSelect;
@@ -70,6 +71,20 @@ async function accountFor(provider: Provider, tenant: Tenant, user: { id: string
   return { login, password };
 }
 
+// Tenants checked for strangers recently (per process).
+const reconciledAt = new Map<string, number>();
+async function reconcile(tenant: Tenant, force = false) {
+  const p = PROVIDERS[tenant.provider as Provider];
+  if (!p.reconcile) return;
+  if (!force && (reconciledAt.get(tenant.id) ?? 0) > Date.now() - 10 * 60_000) return;
+  const keep = await db.select({ id: M.externalMemberId, role: M.role }).from(M).where(eq(M.tenantId, tenant.id));
+  await p.reconcile(tenant, keep.map((k) => k.id));
+  // First check in this process: re-apply roles, so tenants made before a role change (e.g. Twenty admins
+  // moving to the restricted "Company admin") catch up.
+  if (!reconciledAt.has(tenant.id)) for (const k of keep) await p.setRole(tenant, k.id, k.role as "admin" | "member");
+  reconciledAt.set(tenant.id, Date.now());
+}
+
 const productRole = (role: Role): "admin" | "member" => (role === "owner" || role === "admin" ? "admin" : "member");
 
 /**
@@ -90,12 +105,14 @@ export async function openHostedApp(workspace: { id: string }, app: string, user
     if (!m) {
       const memberId = await p.addMember(tenant, account.login, account.password, user.name, want);
       await db.insert(M).values({ tenantId: tenant.id, userId: user.id, externalMemberId: memberId, role: want });
+      await reconcile(tenant, true);
       return { ...account, memberId };
     }
     if (m.role !== want) {
       await p.setRole(tenant, m.externalMemberId, want);
       await db.update(M).set({ role: want }).where(and(eq(M.tenantId, tenant.id), eq(M.userId, user.id)));
     }
+    await reconcile(tenant);
     return { ...account, memberId: m.externalMemberId };
   });
   return p.signIn(tenant, login, password, memberId);

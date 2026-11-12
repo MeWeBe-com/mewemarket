@@ -18,6 +18,7 @@ export const PROVIDERS: Record<ProviderName, HostedProvider> = {
     setRole: (t, id, role) => twenty.setTwentyRole(t, id, role),
     removeMember: (t, id) => twenty.removeTwentyMember(t, id),
     signIn: async (t, login, password) => ({ kind: "url", url: await twenty.twentyLoginUrl(t, login, password) }),
+    reconcile: (t, keep) => twenty.reconcileTwentyMembers(t, keep),
   },
   invoiceshelf: {
     configured: () => inv.invoiceShelfConfig() !== null,

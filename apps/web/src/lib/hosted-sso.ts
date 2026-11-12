@@ -15,6 +15,11 @@ async function put(key: string, value: string) {
   if (redis) await redis.set(key, value, "EX", TTL);
   else memory.set(key, { value, until: Date.now() + TTL * 1000 });
 }
+async function peek(key: string) {
+  if (redis) return redis.get(key);
+  const hit = memory.get(key);
+  return hit && hit.until > Date.now() ? hit.value : null;
+}
 async function take(key: string) {
   if (redis) return redis.getdel(key);
   const hit = memory.get(key);
@@ -30,8 +35,26 @@ export async function frameUrl(signIn: SignIn) {
   return `${new URL(signIn.base).origin}/api/hosted-sso?t=${id}`;
 }
 
-export async function redeem(id: string): Promise<Ticket | null> {
+/** Uses up a ticket, but only on the host it was made for (a ticket sent to another host isn't burnt). */
+export async function redeem(id: string, host: string | null): Promise<Ticket | null> {
   if (!/^[A-Za-z0-9_-]{20,64}$/.test(id)) return null;
-  const blob = await take(`hosted-sso:${id}`);
+  const key = `hosted-sso:${id}`;
+  const seen = await peek(key);
+  if (!seen || new URL((JSON.parse(decryptSecret(seen)) as Ticket).base).host !== host) return null;
+  const blob = await take(key);
   return blob ? (JSON.parse(decryptSecret(blob)) as Ticket) : null;
+}
+
+/** At most `limit` hosted-app sign-ins per person per minute (each one is a real sign-in to the product). */
+export async function signInAllowed(userId: string, limit = 20) {
+  const key = `hosted-open:${userId}:${Math.floor(Date.now() / 60_000)}`;
+  if (redis) {
+    const n = await redis.incr(key);
+    if (n === 1) await redis.expire(key, 120);
+    return n <= limit;
+  }
+  const hit = memory.get(key);
+  const n = (hit ? Number(hit.value) : 0) + 1;
+  memory.set(key, { value: String(n), until: Date.now() + 120_000 });
+  return n <= limit;
 }

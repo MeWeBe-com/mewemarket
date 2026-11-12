@@ -1,6 +1,6 @@
 import { getSessionCookie } from "better-auth/cookies";
 import { type NextRequest, NextResponse } from "next/server";
-import { internalWorkspacePath, publicWorkspacePath } from "@mewe/core/urls";
+import { internalWorkspacePath, publicCompanyPath, publicWorkspacePath } from "@mewe/core/urls";
 
 // Fast cookie-presence check only; pages still verify the session server-side.
 const PROTECTED = ["/dashboard", "/onboarding", "/account", "/invite/"];
@@ -18,6 +18,13 @@ export function middleware(req: NextRequest) {
   // Old /w/acme/a/crm links → /acme/crm.
   const moved = publicWorkspacePath(pathname);
   if (moved) return NextResponse.redirect(new URL(moved + search, origin(req)), 308);
+  // Public company pages (e.g. /acme/book, the booking page) need no sign-in.
+  const publicPage = publicCompanyPath(pathname);
+  if (publicPage) {
+    const url = req.nextUrl.clone();
+    url.pathname = publicPage;
+    return NextResponse.rewrite(url);
+  }
   // Workspace URLs are mewemarket.com/{company}/{product}; the pages live under /w/[slug].
   const internal = internalWorkspacePath(pathname);
   if ((internal || PROTECTED.some((p) => pathname.startsWith(p))) && !getSessionCookie(req)) {

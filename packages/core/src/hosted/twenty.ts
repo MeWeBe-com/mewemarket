@@ -38,7 +38,7 @@ class TwentyCallError extends HostedServiceError {
   has(sub: string) { return this.errors.some((e) => e.extensions?.subCode === sub || e.message.includes(sub)); }
 }
 
-async function call<T>(path: "/metadata", op: string, query: string, variables: Record<string, unknown> = {}, token?: string): Promise<T> {
+async function call<T>(path: "/metadata" | "/graphql", op: string, query: string, variables: Record<string, unknown> = {}, token?: string): Promise<T> {
   const res = await fetch(cfg().internal + path, {
     method: "POST",
     headers: { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}) },
@@ -56,6 +56,7 @@ async function call<T>(path: "/metadata", op: string, query: string, variables: 
   return body.data as T;
 }
 const meta = <T>(op: string, q: string, v?: Record<string, unknown>, t?: string) => call<T>("/metadata", op, q, v, t);
+const data = <T>(op: string, q: string, v?: Record<string, unknown>, t?: string) => call<T>("/graphql", op, q, v, t);
 
 export function twentyWorkspaceUrl(subdomain: string) {
   const u = new URL(cfg().public.href);
@@ -128,6 +129,7 @@ export async function createTwentyWorkspace(slug: string, name: string): Promise
       try {
         await meta("activateWorkspace", `mutation($i:ActivateWorkspaceInput!){activateWorkspace(data:$i){id}}`, { i: { displayName: name } }, token);
         await allowEmbedding(token);
+        await harden(url, token);
         await finishProfile(token, "MeweMarket", "");
         // Twenty asks a new workspace's creator to invite their team; MeweMarket adds members itself.
         await meta("sendInvitations", `mutation($e:[String!]!){sendInvitations(emails:$e){success}}`, { e: [] }, token);
@@ -143,6 +145,54 @@ export async function createTwentyWorkspace(slug: string, name: string): Promise
       throw e;
     }
   }
+}
+
+// --- Hardening ----------------------------------------------------------------
+//
+// Company owners and admins get "Company admin", not Twenty's Admin role: full use of the CRM (records, fields,
+// views, imports and exports) but no say over roles, members, security, API keys, webhooks or workflows. So
+// they can't demote MeweMarket's platform account, add people behind MeweMarket's back, or point webhooks and
+// workflow HTTP steps at internal addresses. The public invite link stays off: it's switched on only for the
+// moment MeweMarket adds someone (inside the per-company lock).
+
+const COMPANY_ADMIN = "Company admin";
+const COMPANY_ADMIN_FLAGS = ["WORKSPACE", "DATA_MODEL", "VIEWS", "LAYOUTS", "IMPORT_CSV", "EXPORT_CSV", "UPLOAD_FILE", "DOWNLOAD_FILE", "PROFILE_INFORMATION"];
+
+const hardened = new Set<string>();
+async function harden(origin: string, token: string) {
+  if (hardened.has(origin)) return;
+  const roles = (await meta<{ getRoles: { id: string; label: string }[] }>("getRoles", `{getRoles{id label}}`, {}, token)).getRoles;
+  if (!roles.some((r) => r.label === COMPANY_ADMIN)) {
+    const role = (await meta<{ createOneRole: { id: string } }>("createOneRole", `mutation($i:CreateRoleInput!){createOneRole(createRoleInput:$i){id}}`, {
+      i: {
+        id: crypto.randomUUID(), label: COMPANY_ADMIN, description: "Managed by MeweMarket",
+        canUpdateAllSettings: false, canReadAllObjectRecords: true, canUpdateAllObjectRecords: true,
+        canSoftDeleteAllObjectRecords: true, canDestroyAllObjectRecords: true,
+        canBeAssignedToUsers: true, canBeAssignedToAgents: false, canBeAssignedToApiKeys: false,
+      },
+    }, token)).createOneRole;
+    await meta("upsertPermissionFlags", `mutation($i:UpsertPermissionFlagsInput!){upsertPermissionFlags(upsertPermissionFlagsInput:$i){flag}}`,
+      { i: { roleId: role.id, permissionFlagKeys: COMPANY_ADMIN_FLAGS } }, token);
+  }
+  await setInviteLink(token, false);
+  hardened.add(origin);
+}
+
+const setInviteLink = (token: string, on: boolean) =>
+  meta("updateWorkspace", `mutation($d:UpdateWorkspaceInput!){updateWorkspace(data:$d){id}}`, { d: { isPublicInviteLinkEnabled: on } }, token);
+
+/**
+ * Removes anyone in the workspace MeweMarket doesn't know about (e.g. who got in through an invite link while it
+ * was open). `keep` is MeweMarket's member ids for this workspace; the platform account always stays.
+ */
+export async function reconcileTwentyMembers(t: TwentyTenant, keep: string[]) {
+  const token = await adminToken(t.url);
+  await harden(t.url, token);
+  const me = (await meta<{ currentUser: { workspaceMember: { id: string } } }>("currentUser", `{currentUser{workspaceMember{id}}}`, {}, token)).currentUser.workspaceMember.id;
+  const members = (await data<{ workspaceMembers: { edges: { node: { id: string } }[] } }>("workspaceMembers",
+    `{workspaceMembers(first:1000){edges{node{id}}}}`, {}, token)).workspaceMembers.edges.map((e) => e.node.id);
+  const known = new Set([...keep, me]);
+  for (const id of members) if (!known.has(id)) await removeTwentyMember(t, id);
 }
 
 /** Lets MeweMarket's pages show this workspace in a frame (Twenty's own per-workspace embedding setting). */
@@ -177,8 +227,10 @@ async function finishProfile(memberAccess: string, firstName: string, lastName: 
 }
 
 async function roleId(origin: string, role: "admin" | "member") {
-  const d = await meta<{ getRoles: { id: string; label: string }[] }>("getRoles", `{getRoles{id label}}`, {}, await adminToken(origin));
-  const label = role === "admin" ? "Admin" : "Member";
+  const token = await adminToken(origin);
+  await harden(origin, token);
+  const d = await meta<{ getRoles: { id: string; label: string }[] }>("getRoles", `{getRoles{id label}}`, {}, token);
+  const label = role === "admin" ? COMPANY_ADMIN : "Member";
   const r = d.getRoles.find((x) => x.label === label);
   if (!r) throw new HostedServiceError(`Twenty has no ${label} role`);
   return r.id;
@@ -187,10 +239,13 @@ async function roleId(origin: string, role: "admin" | "member") {
 /** Adds the person to the workspace (creating their Twenty user on first use) and returns their member id. */
 export async function addTwentyMember(t: TwentyTenant, login: string, password: string, name: string, role: "admin" | "member") {
   const admin = await adminToken(t.url);
+  await harden(t.url, admin);
   const hash = (await meta<{ currentWorkspace: { inviteHash: string } }>("currentWorkspace", `{currentWorkspace{inviteHash}}`, {}, admin)).currentWorkspace.inviteHash;
+  // The invite link is open only for this one sign-up.
+  await setInviteLink(admin, true);
   const d = await meta<{ signUpInWorkspace: { loginToken: { token: string } } }>("signUpInWorkspace",
     `mutation($email:String!,$password:String!,$h:String,$w:UUID){signUpInWorkspace(email:$email,password:$password,workspaceInviteHash:$h,workspaceId:$w){loginToken{token}}}`,
-    { email: login, password, h: hash, w: t.externalId });
+    { email: login, password, h: hash, w: t.externalId }).finally(() => setInviteLink(admin, false));
   const member = await exchange(d.signUpInWorkspace.loginToken.token, t.url);
   const [first = "", ...rest] = name.trim().split(/\s+/);
   const memberId = await finishProfile(member, first, rest.join(" "));

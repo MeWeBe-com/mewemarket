@@ -6,10 +6,16 @@
 export const WORKSPACE_PAGES = ["apps", "tools", "billing", "settings"] as const;
 
 /**
- * Public pages the reverse proxy serves under a company's address, ahead of MeweMarket: /{company}/book/ is the
- * company's booking page (the hosted Bookings app). App slugs may not use these names either.
+ * Public pages under a company's address that need no sign-in: /{company}/book is the company's booking page
+ * (the hosted Bookings app, framed from its own origin). App slugs may not use these names either.
  */
 export const PUBLIC_COMPANY_PATHS = ["book"] as const;
+
+/** /acme/book → /book/acme (the public page's route), or null. */
+export function publicCompanyPath(pathname: string): string | null {
+  const m = /^\/([^/]+)\/(book)\/?$/.exec(pathname);
+  return m && isUsableWorkspaceSlug(m[1]!) ? `/${m[2]}/${m[1]}` : null;
+}
 
 /**
  * Names a company may not take as its address: every top-level route on the site, legacy URLs that redirect,
@@ -17,7 +23,7 @@ export const PUBLIC_COMPANY_PATHS = ["book"] as const;
  */
 export const RESERVED_SLUGS = new Set([
   // routes
-  "about", "account", "api", "apps", "check-email", "contact", "cookies", "dashboard", "forgot-password",
+  "about", "account", "api", "apps", "book", "check-email", "contact", "cookies", "dashboard", "forgot-password",
   "insights", "invite", "llms.txt", "llms-full.txt", "onboarding", "pricing", "privacy", "products",
   "reset-password", "robots.txt", "sign-in", "sign-up", "sitemap.xml", "terms", "tools", "two-factor", "w",
   "_next", "favicon.ico", "icon.svg",
