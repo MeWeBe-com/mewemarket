@@ -18,6 +18,9 @@ export function HostedFrame({ slug, app, src, canManage }: { slug: string; app: 
           Powered by {h.poweredBy} ({h.license})
         </a>
         <span className="flex-1" />
+        {canManage && h.provider === "openwebui" && (
+          <a href={`/${slug}/${app.slug}/ai-settings`} className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-[var(--muted)] hover:bg-[var(--bg-subtle)] hover:text-[var(--fg)]">AI key</a>
+        )}
         <a href={`/${slug}/${app.slug}/open`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-[var(--muted)] hover:bg-[var(--bg-subtle)] hover:text-[var(--fg)]">
           <ExternalLink className="size-3.5" /><span className="hidden sm:inline">Open in new tab</span>
         </a>

@@ -34,5 +34,6 @@ export async function saveAiSettingsAction(slug: string, _prev: AiFormState, for
     throw e;
   }
   revalidatePath(`/w/${slug}/a/ai-assistant`);
+  revalidatePath(`/w/${slug}/a/ai-chat`, "layout");
   return { ok: true };
 }

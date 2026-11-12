@@ -41,6 +41,14 @@ export async function getAiSettings(workspaceId: string): Promise<AiSettings> {
   };
 }
 
+/** The workspace's provider, model and (decrypted) key, for server-side calls only. */
+export async function getAiCredentials(workspaceId: string) {
+  const s = await readStored(workspaceId);
+  if (!s.key) return null;
+  const provider = s.provider ?? "anthropic";
+  return { provider, model: s.model || AI_PROVIDERS[provider].defaultModel, key: decrypt(s.key), name: s.name || "Assistant", instructions: s.instructions ?? "" };
+}
+
 /** Checks a new key against the provider (listing models costs nothing) before saving it. */
 export async function saveAiSettings(
   workspaceId: string,
@@ -66,8 +74,8 @@ export async function saveAiSettings(
 
 async function checkKey(provider: AiProvider, key: string) {
   const res = provider === "anthropic"
-    ? await fetch("https://api.anthropic.com/v1/models?limit=1", { headers: { "x-api-key": key, "anthropic-version": "2023-06-01" } })
-    : await fetch("https://api.openai.com/v1/models", { headers: { authorization: `Bearer ${key}` } });
+    ? await fetch(`${process.env.AI_ANTHROPIC_BASE_URL || "https://api.anthropic.com"}/v1/models?limit=1`, { headers: { "x-api-key": key, "anthropic-version": "2023-06-01" } })
+    : await fetch(`${process.env.AI_OPENAI_BASE_URL || "https://api.openai.com"}/v1/models`, { headers: { authorization: `Bearer ${key}` } });
   if (res.status === 401 || res.status === 403) throw new AiError(`${AI_PROVIDERS[provider].name} rejected this API key.`);
   if (!res.ok) throw new AiError(`Couldn't check the key (${AI_PROVIDERS[provider].name} answered ${res.status}). Try again.`);
 }

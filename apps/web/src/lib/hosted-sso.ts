@@ -46,8 +46,11 @@ export async function redeem(id: string, host: string | null): Promise<Ticket | 
 }
 
 /** At most `limit` hosted-app sign-ins per person per minute (each one is a real sign-in to the product). */
-export async function signInAllowed(userId: string, limit = 20) {
-  const key = `hosted-open:${userId}:${Math.floor(Date.now() / 60_000)}`;
+export const signInAllowed = (userId: string, limit = 20) => perMinute(`hosted-open:${userId}`, limit);
+
+/** A per-minute counter: true while `name` has been used at most `limit` times this minute. */
+export async function perMinute(name: string, limit: number) {
+  const key = `${name}:${Math.floor(Date.now() / 60_000)}`;
   if (redis) {
     const n = await redis.incr(key);
     if (n === 1) await redis.expire(key, 120);

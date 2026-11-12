@@ -2,11 +2,11 @@
 # One-time setup of the hosted apps' platform accounts (safe to run again). Run from the repo root after
 # `docker compose up -d`, with .env filled in (see docs/DEPLOY.md, "Hosted apps"). Twenty needs nothing
 # here: MeweMarket creates its platform account on first use.
-#   bash infra/hosted-setup.sh [invoiceshelf] [chatwoot] [plane] [documenso]
+#   bash infra/hosted-setup.sh [invoiceshelf] [chatwoot] [plane] [documenso] [openwebui]
 set -euo pipefail
 cd "$(dirname "$0")/.."
 set -a; . ./.env; set +a
-apps=("$@"); [ ${#apps[@]} -eq 0 ] && apps=(invoiceshelf chatwoot plane documenso)
+apps=("$@"); [ ${#apps[@]} -eq 0 ] && apps=(invoiceshelf chatwoot plane documenso openwebui)
 psql_doc() { docker compose exec -T postgres psql -v ON_ERROR_STOP=1 -U mewe -d documenso -tAc "$1"; }
 
 for app in "${apps[@]}"; do case "$app" in
@@ -70,6 +70,19 @@ documenso)
     ALTER ROLE documenso_reader PASSWORD '$reader_pw'; GRANT CONNECT ON DATABASE documenso TO documenso_reader;
     GRANT USAGE ON SCHEMA public TO documenso_reader; GRANT SELECT ON \"PasswordResetToken\" TO documenso_reader;" >/dev/null
   echo "read-only role: documenso_reader (SELECT on PasswordResetToken only)"
+  ;;
+
+openwebui)
+  echo "== Open WebUI: platform account (its first user becomes its only admin; later sign-ups are refused)"
+  base="${OPENWEBUI_INTERNAL_URL:-http://127.0.0.1:3270}"
+  code=$(curl -s -o /tmp/owui-setup.json -w '%{http_code}' -X POST "$base/api/v1/auths/signup" -H 'Content-Type: application/json' \
+    -d "$(python3 -c 'import json,os; print(json.dumps({"name":"MeweMarket","email":os.environ["OPENWEBUI_PLATFORM_EMAIL"],"password":os.environ["OPENWEBUI_PLATFORM_PASSWORD"]}))')")
+  if [ "$code" = 200 ]; then echo "admin created"; else
+    curl -sf -o /dev/null -X POST "$base/api/v1/auths/signin" -H 'Content-Type: application/json' \
+      -d "$(python3 -c 'import json,os; print(json.dumps({"email":os.environ["OPENWEBUI_PLATFORM_EMAIL"],"password":os.environ["OPENWEBUI_PLATFORM_PASSWORD"]}))')" \
+      && echo "admin exists" || { echo "Open WebUI already has a different first user: start from an empty openwebui database" >&2; exit 1; }
+  fi
+  rm -f /tmp/owui-setup.json
   ;;
 
 *) echo "unknown app: $app" >&2; exit 1 ;;

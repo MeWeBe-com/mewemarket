@@ -108,3 +108,12 @@ book.mewemarket.com {
 	}
 	respond 404
 }
+
+# AI Chat (Open WebUI). Its user directory endpoints list every user on the server, so they're refused.
+ai.mewemarket.com {
+	import hosted_frame
+	encode zstd gzip
+	@directory path_regexp ^/api/v1/users/(search|[^/]+/info)
+	respond @directory 403
+	reverse_proxy 127.0.0.1:3270
+}

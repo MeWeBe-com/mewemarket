@@ -11,3 +11,4 @@ export * from "./ai";
 export * from "./urls";
 export * from "./hosted";
 export * from "./crypto";
+export * from "./ai-gateway";

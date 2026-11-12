@@ -71,6 +71,8 @@ The source of truth is `MASTERPROMPT_PHASE1.md`. Tick each task when it's done.
 - [x] E-Signatures (Documenso) at `/{company}/e-signatures`
 - [ ] Legal check: Documenso's self-hosted limits code lives in its commercial `packages/ee`
 - [x] Bookings (Easy!Appointments) at `/{company}/bookings`, public page at `/{company}/book/`
+- [x] AI Chat (Open WebUI) at `/{company}/ai-chat` via MeweMarket's AI gateway (company keys, monthly allowance, per-person rate); "AI" category
+- [ ] More AI apps: AnythingLLM (container per company) parked by the owner
 - [ ] Team chat: paused (Zulip works but needs per-company subdomains; Mattermost capped at 250 users)
 - [ ] Server sizing: the six products add about 4 GB RAM idle
 - [ ] Next hosted apps (each needs a multi-company check like Twenty's 5-workspace limit before choosing)

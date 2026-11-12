@@ -1,4 +1,6 @@
-import { type AppDef, canManageWorkspace, HostedError, openHostedApp } from "@mewe/core";
+import { type AppDef, canManageWorkspace, getAiSettings, HostedError, openHostedApp } from "@mewe/core";
+import Link from "next/link";
+import { BUTTON_BASE, BUTTON_PRIMARY } from "@/components/ui";
 import { connection } from "next/server";
 import { Alert, Button, Card } from "@/components/ui";
 import { frameUrl, signInAllowed } from "@/lib/hosted-sso";
@@ -11,6 +13,17 @@ export async function HostedHome({ slug, app }: { slug: string; app: AppDef }) {
   await connection(); // a fresh one-time sign-in link on every visit
   const { workspace, role, session } = await requireWorkspace(slug);
   const canManage = canManageWorkspace(role);
+  // AI Chat needs the company's own AI key first.
+  if (app.hosted?.provider === "openwebui" && !(await getAiSettings(workspace.id)).hasKey) {
+    return (
+      <Card className="max-w-xl space-y-3">
+        <p className="font-semibold">{app.name} needs your company&apos;s Claude or OpenAI key.</p>
+        <p className="text-sm text-[var(--muted)]">It&apos;s saved encrypted in MeweMarket and used only for your company&apos;s chats.</p>
+        {canManage ? <Link href={`/${slug}/${app.slug}/ai-settings`} className={`${BUTTON_BASE} ${BUTTON_PRIMARY} h-10 px-5`}>Add your AI key</Link>
+          : <p className="text-sm">Ask an owner or admin to add it.</p>}
+      </Card>
+    );
+  }
   let src: string | null;
   if (!(await signInAllowed(session.user.id))) {
     return <Card className="max-w-xl"><Alert>You&apos;ve opened apps a lot in the last minute. Please wait a moment and try again.</Alert></Card>;

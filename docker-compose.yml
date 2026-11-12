@@ -382,6 +382,47 @@ services:
     depends_on:
       easyappointments-db: { condition: service_healthy }
 
+  # --- Open WebUI (hosted "ai-chat" app; Open WebUI License: BSD-3 plus a branding clause, so its name and logo
+  # stay). One server; each company is a pair of groups. It has ONE AI connection: MeweMarket's AI gateway
+  # (APP_URL/api/ai-gateway/v1), which uses each company's own key and plan allowance; no company key is stored
+  # here. Code execution, local models, web search, image generation and direct connections are all off.
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:v0.13.3-slim
+    restart: unless-stopped
+    mem_limit: 1g
+    cpus: 1
+    pids_limit: 256
+    logging: *logging
+    environment:
+      WEBUI_URL: ${OPENWEBUI_URL}
+      WEBUI_SECRET_KEY: ${OPENWEBUI_SECRET_KEY}
+      DATABASE_URL: postgresql://mewe:${POSTGRES_PASSWORD}@postgres:5432/openwebui
+      ENABLE_SIGNUP: "false"
+      ENABLE_OLLAMA_API: "false"
+      ENABLE_OPENAI_API: "true"
+      OPENAI_API_BASE_URL: ${APP_URL}/api/ai-gateway/v1
+      OPENAI_API_KEY: ${AI_GATEWAY_KEY}
+      ENABLE_FORWARD_USER_INFO_HEADERS: "true"
+      BYPASS_MODEL_ACCESS_CONTROL: "true"
+      ENABLE_DIRECT_CONNECTIONS: "false"
+      ENABLE_CODE_INTERPRETER: "false"
+      ENABLE_CODE_EXECUTION: "false"
+      ENABLE_WEB_SEARCH: "false"
+      ENABLE_IMAGE_GENERATION: "false"
+      ENABLE_EVALUATION_ARENA_MODELS: "false"
+      ENABLE_COMMUNITY_SHARING: "false"
+      ENABLE_CHANNELS: "false"
+      BYPASS_EMBEDDING_AND_RETRIEVAL: "true" # documents go to the model as text; no embeddings on the server's key
+      OFFLINE_MODE: "true"                   # never downloads models
+      CONTENT_SECURITY_POLICY: "frame-ancestors 'self' ${APP_URL}"
+      SCARF_NO_ANALYTICS: "true"
+      DO_NOT_TRACK: "true"
+      ANONYMIZED_TELEMETRY: "false"
+    ports: ["127.0.0.1:3270:8080"]
+    volumes: [openwebuidata:/app/backend/data]
+    depends_on:
+      postgres: { condition: service_healthy }
+
 # One fixed network for everything above, so infra/egress-firewall.sh can stop the containers reaching the
 # host and private addresses (SSRF through product webhooks or URL fetches) while they still reach each other
 # and the internet.
@@ -395,6 +436,7 @@ networks:
         - subnet: 172.30.0.0/16
 
 volumes:
+  openwebuidata:
   easyappointmentsdb:
   easyappointmentsdata:
   invoiceshelfdata:

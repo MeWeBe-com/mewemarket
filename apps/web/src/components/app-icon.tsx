@@ -25,6 +25,7 @@ export const CATEGORY_TONE: Record<string, { from: string; to: string; soft: str
   property: { from: "#84cc16", to: "#22c55e", soft: "#f7fee7", text: "#4d7c0f" },
   community: { from: "#f43f5e", to: "#ec4899", soft: "#fff1f2", text: "#be123c" },
   developer: { from: "#3b82f6", to: "#1d4ed8", soft: "#eff6ff", text: "#1d4ed8" },
+  ai: { from: "#8b5cf6", to: "#d946ef", soft: "#faf5ff", text: "#7e22ce" },
 };
 export const tone = (category?: string | null) => CATEGORY_TONE[category ?? ""] ?? CATEGORY_TONE.business!;
 
@@ -57,12 +58,12 @@ const MATCH: [RegExp, LucideIcon][] = [
 const CATEGORY_ICON: Record<string, LucideIcon> = {
   business: Briefcase, application: AppWindow, "customer-service": Headset, education: GraduationCap, finance: ChartLine, legal: Scale,
   logistics: Truck, marketing: Megaphone, sales: Handshake, hr: Users, healthcare: Stethoscope, hospitality: Bed, property: Building2,
-  community: HeartHandshake, developer: Code,
+  community: HeartHandshake, developer: Code, ai: Sparkles,
 };
 
 // Where keywords guess wrong.
 const OVERRIDE: Record<string, LucideIcon> = {
-  "ai-assistant": Sparkles, "receipt-maker": Receipt, "business-name-generator": Sparkles, "break-even-calculator": Scale,
+  "ai-assistant": Sparkles, "ai-chat": MessageSquare, "receipt-maker": Receipt, "business-name-generator": Sparkles, "break-even-calculator": Scale,
   "salary-converter": Banknote, "discount-calculator": Percent, "meeting-cost-calculator": Clock, "email-signature-generator": Mail,
   "image-resizer": ImageIcon, stopwatch: Timer, "countdown-timer": Hourglass, "random-picker": Shuffle, "text-to-speech": Volume2,
   "coin-dice": Dices, "pdf-tools": FileStack, "bulk-image-compressor": Images, "bulk-qr-codes": QrCode, "csv-cleaner": Sheet,

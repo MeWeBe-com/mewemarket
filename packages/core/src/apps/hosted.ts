@@ -44,4 +44,11 @@ export const HOSTED_APPS = [
     description: "Let customers book appointments online, powered by the open-source Easy!Appointments. Set up your services, staff and working hours, share your booking page at mewemarket.com/your-company/book, and manage every appointment on a shared calendar. Your team signs in once to MeweMarket.",
     features: ["Public booking page at mewemarket.com/your-company/book", "Services with durations and prices", "Staff working hours, breaks and days off", "Shared appointment calendar", "Customer list", "Email confirmations", "Each company's data kept separate", "One sign-in through MeweMarket"],
   }),
+  app({
+    slug: "ai-chat", name: "AI Chat", category: "ai", kind: "hosted", entities: [],
+    hosted: { provider: "openwebui", poweredBy: "Open WebUI", license: "Open WebUI License (BSD-3 based)", sourceUrl: "https://github.com/open-webui/open-webui" },
+    tagline: "A private ChatGPT-style assistant for your team, using your own Claude or OpenAI key.",
+    description: "A private AI chat for your whole team, powered by the open-source Open WebUI. Ask questions, draft and rewrite text, summarise documents and images you upload, save prompts your team reuses, and build custom assistants with your own instructions. It uses your company's own Claude or OpenAI key, which stays in MeweMarket, and your plan's monthly AI messages. Your team signs in once to MeweMarket.",
+    features: ["ChatGPT-style chat with history and search", "Uses your company's own Claude or OpenAI key", "Upload documents and images to discuss", "Shared prompts and custom assistants for your team", "Each person's chats are private", "Monthly AI messages from your plan", "One sign-in through MeweMarket"],
+  }),
 ];
