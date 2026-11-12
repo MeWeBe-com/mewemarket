@@ -4,6 +4,7 @@ import { and, asc, count, desc, eq, ilike, inArray, notInArray, sql } from "driz
 import { APPS, getAppDef, getEntityDef, refKey, refTarget, type EntityDef, type FieldDef } from "./apps";
 import { evalCalc } from "./apps/calc";
 import { currentPlan } from "./billing";
+import { deleteHostedApp, provisionHostedApp } from "./hosted";
 
 export type Line = { description: string; qty: number; price: number };
 export type RecordRow = typeof schema.records.$inferSelect;
@@ -373,9 +374,9 @@ export async function installApp(workspaceId: string, app: string, userId: strin
     const [dup] = await tx.select({ id: schema.installedApps.id }).from(schema.installedApps)
       .where(and(eq(schema.installedApps.workspaceId, workspaceId), eq(schema.installedApps.catalogAppId, app))).limit(1);
     if (dup) return false;
-    if (max >= 0 && !def.kind) {
+    if (max >= 0 && def.kind !== "assistant") {
       // Assistant-type apps hold no records and don't count towards the plan's app limit.
-      const free = APPS.filter((a) => a.kind).map((a) => a.slug);
+      const free = APPS.filter((a) => a.kind === "assistant").map((a) => a.slug);
       const [row] = await tx.select({ n: count() }).from(schema.installedApps)
         .where(and(eq(schema.installedApps.workspaceId, workspaceId), notInArray(schema.installedApps.catalogAppId, free)));
       if ((row?.n ?? 0) >= max) throw new LimitError(`Your ${plan.name} plan includes ${max} apps. Upgrade to add more.`);
@@ -385,6 +386,19 @@ export async function installApp(workspaceId: string, app: string, userId: strin
     return true;
   });
   if (!added) return;
+  if (def.kind === "hosted") {
+    // Set up the company's own tenant in the product. If that fails the app isn't added, so trying again starts clean.
+    try {
+      const [ws] = await db.select({ id: schema.workspaces.id, slug: schema.workspaces.slug, name: schema.workspaces.name })
+        .from(schema.workspaces).where(eq(schema.workspaces.id, workspaceId)).limit(1);
+      await provisionHostedApp(ws!, app);
+    } catch (e) {
+      await db.delete(schema.installedApps)
+        .where(and(eq(schema.installedApps.workspaceId, workspaceId), eq(schema.installedApps.catalogAppId, app)));
+      throw e;
+    }
+    return;
+  }
   if (withSamples) await addSampleData(workspaceId, app, userId);
 }
 
@@ -393,6 +407,8 @@ export async function uninstallApp(workspaceId: string, app: string, deleteData 
   await db.delete(schema.installedApps)
     .where(and(eq(schema.installedApps.workspaceId, workspaceId), eq(schema.installedApps.catalogAppId, app)));
   if (deleteData) await db.delete(r).where(and(eq(r.workspaceId, workspaceId), eq(r.app, app)));
+  // Hosted apps keep their tenant unless asked, so adding the app back brings the data back.
+  if (deleteData && getAppDef(app)?.kind === "hosted") await deleteHostedApp(workspaceId, app);
 }
 
 // --- Sample data -------------------------------------------------------------

@@ -1,4 +1,4 @@
-import { APPS, CATEGORIES, canManageWorkspace, getSubscription, listInstalledApps } from "@mewe/core";
+import { APPS as ALL_APPS, CATEGORIES, canManageWorkspace, getSubscription, hostedAvailable, listInstalledApps } from "@mewe/core";
 import { Check, Search } from "lucide-react";
 import Link from "next/link";
 import { AppIcon, tone } from "@/components/app-icon";
@@ -12,6 +12,8 @@ export default async function WorkspaceApps({ params, searchParams }: { params: 
   const { slug } = await params;
   const sp = await searchParams;
   const { workspace, role } = await requireWorkspace(slug);
+  // Hosted apps only show on servers where their service is configured.
+  const APPS = ALL_APPS.filter((a) => a.kind !== "hosted" || hostedAvailable(a.slug));
   const [installed, sub] = await Promise.all([listInstalledApps(workspace.id), getSubscription(workspace.id)]);
   const have = new Set(installed.map((a) => a.slug));
   const manage = canManageWorkspace(role);
@@ -26,7 +28,7 @@ export default async function WorkspaceApps({ params, searchParams }: { params: 
         <div>
           <h1 className="text-3xl font-extrabold">App Store</h1>
           <p className="mt-1 text-sm text-[var(--muted)]">
-            {APPS.length} apps. {installed.filter((a) => !a.kind).length} added to {workspace.name}{max >= 0 ? ` (your ${sub?.plan.name ?? "Free"} plan includes ${max})` : ""}.
+            {APPS.length} apps. {installed.filter((a) => a.kind !== "assistant").length} added to {workspace.name}{max >= 0 ? ` (your ${sub?.plan.name ?? "Free"} plan includes ${max})` : ""}.
           </p>
         </div>
         <form className="flex gap-2">
@@ -62,7 +64,8 @@ export default async function WorkspaceApps({ params, searchParams }: { params: 
               <div className="flex items-center gap-3">
                 <AppIcon slug={a.slug} name={a.name} category={a.category} />
                 <div className="min-w-0 flex-1"><p className="truncate font-bold">{a.name}</p><p className="text-xs font-medium" style={{ color: tone(a.category).text }}>{cat?.name}</p></div>
-                {a.kind && !added && <span className="rounded-full bg-gradient-to-r from-accent to-fuchsia-500 px-2 py-0.5 text-[11px] font-bold text-white">AI</span>}
+                {a.kind === "assistant" && !added && <span className="rounded-full bg-gradient-to-r from-accent to-fuchsia-500 px-2 py-0.5 text-[11px] font-bold text-white">AI</span>}
+                {a.kind === "hosted" && !added && <span className="rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 px-2 py-0.5 text-[11px] font-bold text-white">Full app</span>}
                 {added && <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-bold text-emerald-600"><Check className="size-3" strokeWidth={3} />Added</span>}
               </div>
               <p className="mt-3 flex-1 text-sm leading-relaxed text-[var(--muted)]">{a.tagline}</p>
@@ -72,7 +75,9 @@ export default async function WorkspaceApps({ params, searchParams }: { params: 
                 ) : manage ? (
                   <form action={installAppAction.bind(null, slug, a.slug)} className="flex flex-wrap items-center gap-3">
                     <button className={`${BUTTON_BASE} ${BUTTON_PRIMARY} h-9`}>Add app</button>
-                    {a.kind ? <span className="text-xs text-[var(--muted)]">Free, uses your own AI key</span> : (
+                    {a.kind === "assistant" ? <span className="text-xs text-[var(--muted)]">Free, uses your own AI key</span> : a.hosted ? (
+                      <span className="text-xs text-[var(--muted)]">Powered by {a.hosted.poweredBy}, open source</span>
+                    ) : (
                       <label className="flex items-center gap-1.5 text-xs text-[var(--muted)]"><input type="checkbox" name="samples" defaultChecked className="accent-[var(--color-accent)]" /> with sample data</label>
                     )}
                   </form>

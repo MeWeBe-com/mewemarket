@@ -47,7 +47,7 @@ export async function seedCatalog() {
   for (const a of CATALOG) {
     const row = {
       id: a.slug, slug: a.slug, name: a.name, tagline: a.tagline, description: a.description, tier: a.tier,
-      category: a.category, license: null, sourceUrl: null, poweredBy: null, status: "published",
+      category: a.category, license: a.hosted?.license ?? null, sourceUrl: a.hosted?.sourceUrl ?? null, poweredBy: a.hosted?.poweredBy ?? null, status: "published",
       definition: { features: a.features, legacyProductIds: a.legacyProductIds ?? [], ...(a.pro ? { pro: true } : {}) },
     };
     const { id, ...update } = row;

@@ -25,6 +25,8 @@ export type EntityDef = {
   totals?: string[]; // number/money fields summed in the list footer and on the app home
 };
 
+export type HostedDef = { provider: "twenty"; poweredBy: string; license: string; sourceUrl: string };
+
 export type AppDef = {
   slug: string;
   name: string;
@@ -34,8 +36,10 @@ export type AppDef = {
   features: string[];
   entities: EntityDef[];
   legacyProductIds?: number[];
-  /** Apps with their own screen instead of records (e.g. the AI assistant). */
-  kind?: "assistant";
+  /** Apps with their own screen instead of records: the AI assistant, or a hosted open-source product. */
+  kind?: "assistant" | "hosted";
+  /** For kind "hosted": which product runs it and whose work it is (shown on the app page). */
+  hosted?: HostedDef;
 };
 
 const TYPES = new Set<FieldType>(["text", "long", "number", "money", "percent", "date", "datetime", "time", "select", "bool", "email", "phone", "url", "rating", "ref", "lines"]);
@@ -85,6 +89,7 @@ export function validateApps(apps: AppDef[]) {
     if (slugs.has(a.slug)) throw new Error(`Duplicate app slug ${a.slug}`);
     slugs.add(a.slug);
     if (!a.entities.length && !a.kind) throw new Error(`${a.slug}: no entities`);
+    if ((a.kind === "hosted") !== !!a.hosted) throw new Error(`${a.slug}: kind hosted needs a hosted definition`);
     const ents = new Map(a.entities.map((e) => [e.key, e]));
     if (ents.size !== a.entities.length) throw new Error(`${a.slug}: duplicate entity key`);
     for (const e of a.entities) {

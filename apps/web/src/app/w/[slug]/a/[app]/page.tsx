@@ -3,6 +3,7 @@ import { ArrowRight, Plus } from "lucide-react";
 import Link from "next/link";
 import { tone } from "@/components/app-icon";
 import { AssistantHome } from "@/components/assistant/home";
+import { HostedHome } from "@/components/hosted/hosted-home";
 import { Card } from "@/components/ui";
 import { formatValue } from "@/lib/format";
 import { uninstallAppAction } from "../actions";
@@ -12,6 +13,7 @@ export default async function AppHome({ params }: { params: Promise<{ slug: stri
   const { slug, app: appSlug } = await params;
   const { app, workspace, role, fmt, canEdit } = await appContext(slug, appSlug);
   if (app.kind === "assistant") return <AssistantHome slug={slug} workspaceId={workspace.id} role={role} />;
+  if (app.kind === "hosted") return <HostedHome slug={slug} app={app} />;
   const counts = await entityCounts(workspace.id, app.slug);
   const totals = await Promise.all(app.entities.map((e) => entityTotals(workspace.id, app.slug, e)));
   const base = `/${slug}/${app.slug}`;

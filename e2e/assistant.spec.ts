@@ -15,7 +15,7 @@ test("add the AI Assistant in one click and set it up", async ({ page }) => {
 
   // Start clean.
   await page.goto("/acme/ai-assistant");
-  if (page.url().includes("/a/ai-assistant")) {
+  if (new URL(page.url()).pathname === "/acme/ai-assistant") {
     await page.getByText("Remove app").click();
     await page.getByRole("button", { name: "Remove AI Assistant" }).click();
     await page.waitForURL(/\/apps/);

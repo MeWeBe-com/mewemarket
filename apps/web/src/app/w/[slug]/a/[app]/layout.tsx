@@ -7,6 +7,8 @@ import { appContext } from "../context";
 export default async function AppLayout({ children, params }: { children: React.ReactNode; params: Promise<{ slug: string; app: string }> }) {
   const { slug, app: appSlug } = await params;
   const { app } = await appContext(slug, appSlug);
+  // Hosted products bring their own navigation and fill the page.
+  if (app.kind === "hosted") return children;
   const cat = CATEGORIES.find((c) => c.slug === app.category);
   const base = `/${slug}/${app.slug}`;
   return (

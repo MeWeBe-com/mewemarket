@@ -2,8 +2,9 @@
 // through the tools below, and only for apps the workspace has installed.
 import { db, schema } from "@mewe/db";
 import { eq, sql } from "drizzle-orm";
-import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 import { getEntityDef } from "./apps";
+import { decryptSecret, encryptSecret, SecretKeyMissing } from "./crypto";
+import { wsUrl } from "./urls";
 import { displayTitle, entityCounts, getRecord, listInstalledApps, listRecords, recordTitles, type RecordRow } from "./records";
 
 export type AiProvider = "anthropic" | "openai";
@@ -17,24 +18,13 @@ export type AiSettings = Omit<Stored, "key"> & { hasKey: boolean };
 
 export class AiError extends Error {}
 
-// --- Key storage (AES-256-GCM with ENCRYPTION_KEY) --------------------------
+// --- Key storage (see crypto.ts) -------------------------------------------
 
-function cipherKey() {
-  const k = process.env.ENCRYPTION_KEY;
-  if (!k) throw new AiError("ENCRYPTION_KEY is not set on the server.");
-  return createHash("sha256").update(k).digest();
-}
 function encrypt(text: string) {
-  const iv = randomBytes(12);
-  const c = createCipheriv("aes-256-gcm", cipherKey(), iv);
-  const body = Buffer.concat([c.update(text, "utf8"), c.final()]);
-  return [iv, c.getAuthTag(), body].map((b) => b.toString("base64")).join(".");
+  try { return encryptSecret(text); } catch (e) { throw e instanceof SecretKeyMissing ? new AiError(e.message) : e; }
 }
 function decrypt(blob: string) {
-  const [iv, tag, body] = blob.split(".").map((p) => Buffer.from(p, "base64"));
-  const d = createDecipheriv("aes-256-gcm", cipherKey(), iv!);
-  d.setAuthTag(tag!);
-  return Buffer.concat([d.update(body!), d.final()]).toString("utf8");
+  try { return decryptSecret(blob); } catch (e) { throw e instanceof SecretKeyMissing ? new AiError(e.message) : e; }
 }
 
 async function readStored(workspaceId: string): Promise<Partial<Stored>> {
@@ -91,7 +81,7 @@ const TOOLS = [
     schema: {
       type: "object",
       properties: {
-        app: { type: "string", description: "App slug, e.g. crm" },
+        app: { type: "string", description: "App slug, e.g. contacts" },
         entity: { type: "string", description: "Entity key, e.g. deal" },
         query: { type: "string", description: "Words to search for" },
         filter: { type: "object", description: "Field key to exact value, e.g. {\"stage\":\"Won\"}", additionalProperties: { type: "string" } },
@@ -122,7 +112,7 @@ async function present(ctx: Ctx, app: string, entity: string, rows: RecordRow[])
       if (v === undefined || v === null || v === "") continue;
       data[f.key] = f.type === "ref" && typeof v === "string" ? titles[v] ?? v : v;
     }
-    return { id: row.id, title: displayTitle(e, row.data, titles), link: `/w/${ctx.slug}/a/${app}/${entity}/${row.id}`, updated: row.updatedAt, ...data };
+    return { id: row.id, title: displayTitle(e, row.data, titles), link: wsUrl(ctx.slug, app, entity, row.id), updated: row.updatedAt, ...data };
   });
 }
 
@@ -163,7 +153,7 @@ async function systemPrompt(ctx: Ctx, ws: { name: string; currency: string; time
     `Today is ${new Date().toISOString().slice(0, 10)}. Workspace currency: ${ws.currency}. Time zone: ${ws.timezone}.`,
     "Answer from the workspace's records: use the tools to look things up rather than guessing, and say so when the data doesn't contain the answer.",
     "You can read records but not change them. If asked to create or edit something, explain where in the app to do it.",
-    "When you mention a record, link it with Markdown using its `link` value, e.g. [Harbor Dental](/w/acme/a/crm/deal/123). Keep answers short. For several items use a bullet list (no tables).",
+    "When you mention a record, link it with Markdown using its `link` value, e.g. [Harbor Dental](/acme/contacts/deal/123). Keep answers short. For several items use a bullet list (no tables).",
     "Money values are plain numbers in the workspace currency. A `lines` field is a list of {description, qty, price}; its total is the sum of qty × price.",
     apps.length ? `Installed apps and their fields:\n${lines.join("\n")}` : "No apps with records are installed yet; suggest adding some from the App Store.",
     s.instructions ? `Instructions from the workspace owner (follow these):\n${s.instructions}` : "",

@@ -16,7 +16,7 @@ test("add an app, create, edit, move, search, import and delete records", async 
 
   // Start clean: remove the app if a previous run left it.
   await page.goto("/acme/bug-tracker");
-  if (page.url().includes("/a/bug-tracker")) {
+  if (new URL(page.url()).pathname === "/acme/bug-tracker") {
     await page.getByText("Remove app").click();
     await page.getByLabel(/also delete all/i).check();
     await page.getByRole("button", { name: /^Remove /i }).click();
@@ -131,13 +131,13 @@ test("invoice line items total and print view", async ({ page }) => {
   await page.waitForURL(/\/invoice$/);
 });
 
-test("links between apps: a project's client is a CRM company", async ({ page }) => {
+test("links between apps: a project's client is a Contacts & Deals company", async ({ page }) => {
   await page.goto("/sign-in");
   await page.getByLabel("Email").fill(EMAIL);
   await page.locator("input[name=password]").fill(PASSWORD);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await page.waitForURL(/\/acme(\/|$)/);
-  // acme has CRM and Projects but not Team & HR.
+  // acme has Contacts & Deals and Projects but not Team & HR.
   await page.goto("/acme/projects/task/new");
   await expect(page.getByRole("link", { name: "Add the app" })).toHaveAttribute("href", /app=team-hr/);
   await page.goto("/acme/projects/project/new");
@@ -149,7 +149,7 @@ test("links between apps: a project's client is a CRM company", async ({ page })
   await page.waitForURL(/\/project$/);
   await expect(page.getByRole("row", { name: /E2E linked project/ })).toContainText(company);
   // The company page lists the project from the other app.
-  await page.goto("/acme/crm/company");
+  await page.goto("/acme/contacts/company");
   await page.getByRole("link", { name: company, exact: true }).first().click();
   await expect(page.getByText(/Projects in Projects & Tasks/)).toBeVisible();
   await page.getByRole("link", { name: "E2E linked project" }).click();

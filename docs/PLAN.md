@@ -59,3 +59,12 @@ The source of truth is `MASTERPROMPT_PHASE1.md`. Tick each task when it's done.
 - [x] Limits enforced: apps, records, members (seat limit), expired trial falls back to Free
 - [ ] Add Stripe keys to .env and test with Stripe CLI (`stripe listen --forward-to localhost:3000/api/stripe/webhook`)
 
+
+## Hosted apps (full open-source products inside the workspace)
+- [x] Company/product URLs: `mewemarket.com/{company}/{product}`, reserved names, redirects from `/w/...`
+- [x] Twenty CRM at `/{company}/crm`: per-company Twenty workspace, one-time sign-in (no second login), Twenty onboarding skipped, roles mirrored, removal ends access, delete-with-data, Powered-by/source credit
+- [x] docker-compose services, Hestia and Caddy proxy configs, DEPLOY.md section, e2e (`e2e/hosted-crm.spec.ts`, runs with `E2E_HOSTED_CRM=1`)
+- [ ] Production: wildcard DNS and certificate for `*.crm.mewemarket.com`, then the steps in DEPLOY.md
+- [ ] Twenty Enterprise key once a 6th company adds the CRM
+- [ ] Retry queue for hosted sync failures (today a failed removal is logged; MeweMarket stops issuing sign-ins at once, but an open CRM session would last until it expires)
+- [ ] Next hosted apps (each needs a multi-company check like Twenty's 5-workspace limit before choosing)

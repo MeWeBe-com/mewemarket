@@ -1,0 +1,33 @@
+import { type AppDef, canManageWorkspace, HostedError, openHostedApp } from "@mewe/core";
+import { connection } from "next/server";
+import { Alert, Button, Card } from "@/components/ui";
+import { requireWorkspace } from "@/lib/session";
+import { setUpHostedAppAction } from "@/app/w/[slug]/a/actions";
+import { HostedFrame } from "./hosted-frame";
+
+/** The page for a hosted app: signs the person in to their company's tenant and shows it. */
+export async function HostedHome({ slug, app }: { slug: string; app: AppDef }) {
+  await connection(); // a fresh one-time sign-in link on every visit
+  const { workspace, role, session } = await requireWorkspace(slug);
+  const canManage = canManageWorkspace(role);
+  let src: string | null;
+  try {
+    src = await openHostedApp(workspace, app.slug, { id: session.user.id, name: session.user.name }, role);
+  } catch (e) {
+    if (!(e instanceof HostedError)) console.error("openHostedApp", app.slug, e);
+    const message = e instanceof HostedError ? e.message : `${app.name} isn't responding right now. Please try again in a minute.`;
+    return <Card className="max-w-xl"><Alert>{message}</Alert></Card>;
+  }
+  if (!src) {
+    // Installed but its tenant was never created (e.g. the service was down when it was added).
+    return (
+      <Card className="max-w-xl space-y-3">
+        <p className="font-semibold">{app.name} isn&apos;t set up for {workspace.name} yet.</p>
+        {canManage ? (
+          <form action={setUpHostedAppAction.bind(null, slug, app.slug)}><Button type="submit">Set up {app.name}</Button></form>
+        ) : <p className="text-sm text-[var(--muted)]">Ask an owner or admin to open it once to finish setting it up.</p>}
+      </Card>
+    );
+  }
+  return <HostedFrame slug={slug} app={app} src={src} canManage={canManage} />;
+}

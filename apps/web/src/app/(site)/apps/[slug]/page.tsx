@@ -65,7 +65,14 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
             </li>
           ))}
         </ul>
-        {def && (
+        {def?.hosted && (
+          <div className="surface mt-14 flex flex-wrap items-center gap-x-6 gap-y-2 p-5 text-sm">
+            <p className="font-semibold">Powered by {def.hosted.poweredBy}, open source under {def.hosted.license}.</p>
+            <a href={def.hosted.sourceUrl} target="_blank" rel="noreferrer" className="font-semibold text-accent hover:underline">Source code</a>
+            <p className="w-full text-[var(--muted)]">MeweMarket runs it for you: every company gets its own private space, and your team signs in once through MeweMarket.</p>
+          </div>
+        )}
+        {def && def.entities.length > 0 && (
           <>
             <h2 className="mt-14 text-2xl font-bold">What's inside</h2>
             <p className="mt-2 text-[var(--muted)]">Each section is a list you can view as a table, and where it fits, a board or a calendar.</p>

@@ -9,3 +9,5 @@ export * from "./records";
 export * from "./billing";
 export * from "./ai";
 export * from "./urls";
+export * from "./hosted";
+export * from "./crypto";

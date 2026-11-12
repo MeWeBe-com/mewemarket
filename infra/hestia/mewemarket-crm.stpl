@@ -1,0 +1,54 @@
+#=========================================================================#
+# MeweMarket CRM (Twenty) — HestiaCP nginx PROXY template, HTTPS (443)    #
+# Every company's CRM is <company>.crm.mewemarket.com; all of them go to  #
+# the Twenty container on 127.0.0.1:3200, which picks the company from   #
+# the Host header. Twenty sets its own frame headers (it allows           #
+# mewemarket.com to embed each workspace), so nothing is rewritten here.  #
+#                                                                         #
+# Setup (see docs/DEPLOY.md, "Hosted CRM"):                               #
+#   v-add-web-domain saasthemes crm.mewemarket.com                         #
+#   v-add-web-domain-alias saasthemes crm.mewemarket.com '*.crm.mewemarket.com'
+#   (install a wildcard certificate for *.crm.mewemarket.com)              #
+#   v-change-web-domain-proxy-tpl saasthemes crm.mewemarket.com mewemarket-crm
+#=========================================================================#
+
+server {
+    listen      %ip%:%proxy_ssl_port% ssl;
+    http2       on;
+    server_name %domain_idn% %alias_idn%;
+    error_log   /var/log/%web_system%/domains/%domain%.error.log error;
+
+    ssl_certificate      %ssl_pem%;
+    ssl_certificate_key  %ssl_key%;
+
+    include %home%/%user%/conf/web/%domain%/nginx.hsts.conf*;
+
+    # CSV imports and file attachments.
+    client_max_body_size 50m;
+
+    location ~ /\.(?!well-known\/) {
+        deny all;
+        return 404;
+    }
+
+    location / {
+        proxy_pass         http://127.0.0.1:3200;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_set_header   X-Forwarded-Host  $host;
+        # Twenty's live updates use WebSockets.
+        proxy_set_header   Upgrade           $http_upgrade;
+        proxy_set_header   Connection        "upgrade";
+        proxy_read_timeout 1h;
+        proxy_send_timeout 120s;
+    }
+
+    location /error/ {
+        alias %home%/%user%/web/%domain%/document_errors/;
+    }
+
+    include %home%/%user%/conf/web/%domain%/nginx.ssl.conf_*;
+}

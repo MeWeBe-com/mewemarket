@@ -36,6 +36,7 @@ export type CatalogEntry = {
   features: string[];
   legacyProductIds?: number[];
   pro?: boolean;
+  hosted?: { poweredBy: string; license: string; sourceUrl: string };
 };
 
 export const CATALOG: CatalogEntry[] = [

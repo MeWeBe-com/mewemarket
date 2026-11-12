@@ -74,7 +74,7 @@ export default async function WorkspaceHome({ params }: { params: Promise<{ slug
                   <AppIcon slug={a.slug} name={a.name} category={a.category} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-bold group-hover:text-accent">{a.name}</span>
-                    <span className="block text-xs text-[var(--muted)]">{a.kind ? "Ask questions about your data" : `${perApp[i]} records · ${a.entities.length} sections`}</span>
+                    <span className="block text-xs text-[var(--muted)]">{a.kind === "assistant" ? "Ask questions about your data" : a.hosted ? `Full app, powered by ${a.hosted.poweredBy}` : `${perApp[i]} records · ${a.entities.length} sections`}</span>
                   </span>
                   <ArrowRight className="size-4 text-[var(--muted)] transition group-hover:translate-x-0.5 group-hover:text-accent" />
                 </Link>

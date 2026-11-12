@@ -3,8 +3,8 @@ import { app, entity } from "./define";
 // The six flagship apps (formerly "native"), now on the records engine.
 export const CORE_SUITE = [
   app({
-    slug: "crm", name: "CRM & Pipeline", category: "sales", legacyProductIds: [20, 39],
-    tagline: "Contacts, companies and deals in one visual pipeline.",
+    slug: "contacts", name: "Contacts & Deals", category: "sales",
+    tagline: "A simple list of contacts, companies and deals with a pipeline board.",
     description: "Track every customer and deal. Drag deals between stages, log calls and meetings, and see the value of your pipeline at a glance.",
     features: ["Contacts and companies", "Deal pipeline board", "Activity log for calls, meetings and emails", "Follow-up dates on a calendar", "Pipeline value totals", "CSV import and export"],
     entities: [
@@ -33,7 +33,7 @@ export const CORE_SUITE = [
     features: ["Projects with status and deadlines", "Kanban task board", "Priorities and due dates", "Task calendar", "Time log with hour totals"],
     entities: [
       entity("task", "Task", "Tasks", ["title*", "project:ref=project", "status*:select=To do|In progress|Review|Done", "priority:select=Low|Medium|High|Urgent", "assignee:ref=team-hr.employee", "due:date", "description:long"], { board: "status", calendar: "due" }),
-      entity("project", "Project", "Projects", ["name*", "client:ref=crm.company", "status*:select=Planned|Active|On hold|Completed", "start:date", "deadline:date", "budget:money", "description:long"], { board: "status", totals: ["budget"] }),
+      entity("project", "Project", "Projects", ["name*", "client:ref=contacts.company", "status*:select=Planned|Active|On hold|Completed", "start:date", "deadline:date", "budget:money", "description:long"], { board: "status", totals: ["budget"] }),
       entity("time_entry", "Time entry", "Time log", ["description*", "task:ref=task", "date*:date", "hours*:number", "billable:bool"], { totals: ["hours"], calendar: "date" }),
     ],
   }),

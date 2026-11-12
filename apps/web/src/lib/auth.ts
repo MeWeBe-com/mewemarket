@@ -1,6 +1,6 @@
 import { db, schema } from "@mewe/db";
-import { currentPlan, isUsableWorkspaceSlug, startTrial } from "@mewe/core";
-import { APIError } from "better-auth/api";
+import { currentPlan, deleteHostedTenants, isUsableWorkspaceSlug, removeHostedMember, type Role, startTrial, syncHostedRole } from "@mewe/core";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
@@ -20,7 +20,21 @@ if (process.env.FACEBOOK_CLIENT_ID)
 if (process.env.GITHUB_CLIENT_ID)
   social.github = { clientId: process.env.GITHUB_CLIENT_ID, clientSecret: process.env.GITHUB_CLIENT_SECRET! };
 
+/** Hosted-app sync must not block the workspace change itself; failures are logged for follow-up. */
+async function hostedSync(what: string, fn: () => Promise<unknown>) {
+  try { await fn(); } catch (e) { console.error(`hosted ${what} sync failed`, e); }
+}
+
 export const auth = betterAuth({
+  hooks: {
+    // Leaving a workspace fires no organization hook, so catch the endpoint.
+    after: createAuthMiddleware(async (ctx) => {
+      if (ctx.path !== "/organization/leave") return;
+      // The endpoint returns the member that left.
+      const left = ctx.context.returned as { userId?: string; organizationId?: string } | undefined;
+      if (left?.userId && left.organizationId) await hostedSync("leave", () => removeHostedMember(left.organizationId!, left.userId!));
+    }),
+  },
   appName: "MeweMarket",
   baseURL: appUrl,
   secret: process.env.AUTH_SECRET,
@@ -114,6 +128,11 @@ export const auth = betterAuth({
           if (ws.slug !== undefined && !isUsableWorkspaceSlug(String(ws.slug))) throw new APIError("BAD_REQUEST", { message: "That address is not available. Try another." });
         },
         afterCreateOrganization: async ({ organization: ws }) => startTrial(ws.id),
+        // Hosted apps (e.g. the CRM) have their own member lists; keep them in step so access ends when it should.
+        afterRemoveMember: async ({ member }) => hostedSync("remove", () => removeHostedMember(member.organizationId, member.userId)),
+        afterUpdateMemberRole: async ({ member }) => hostedSync("role", () => syncHostedRole(member.organizationId, member.userId, member.role as Role)),
+        // Before, so a failure leaves the workspace in place to try again rather than orphaning its CRM data.
+        beforeDeleteOrganization: async ({ organization: ws }) => deleteHostedTenants(ws.id),
       },
     }),
     twoFactor({ issuer: "MeweMarket" }),

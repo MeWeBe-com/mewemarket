@@ -50,7 +50,50 @@ services:
     depends_on:
       postgres: { condition: service_healthy }
 
+  # Twenty CRM (hosted "crm" app). One server, one Twenty workspace per MeweMarket workspace at
+  # <company>.crm.mewemarket.com. Pinned to the version the integration was tested against; read the Twenty
+  # upgrade notes before changing it. TWENTY_APP_SECRET must never change once set (it encrypts Twenty's keys).
+  twenty:
+    image: twentycrm/twenty:v2.57.1
+    restart: unless-stopped
+    environment: &twenty-env
+      NODE_PORT: "3000"
+      SERVER_URL: ${TWENTY_URL}
+      APP_SECRET: ${TWENTY_APP_SECRET}
+      PG_DATABASE_URL: postgres://mewe:${POSTGRES_PASSWORD}@postgres:5432/twenty
+      REDIS_URL: redis://redis:6379/1 # its own Redis database, apart from MeweMarket's queues
+      IS_MULTIWORKSPACE_ENABLED: "true"
+      DEFAULT_SUBDOMAIN: app
+      IS_WORKSPACE_CREATION_LIMITED_TO_SERVER_ADMINS: "true"
+      IS_EMAIL_VERIFICATION_REQUIRED: "false"
+      STORAGE_TYPE: local
+      TELEMETRY_ENABLED: "false"
+      # Free Twenty allows 5 workspaces; set this once a 6th company needs the CRM.
+      ENTERPRISE_KEY: ${TWENTY_ENTERPRISE_KEY:-}
+    ports: ["127.0.0.1:3200:3000"]
+    volumes: [twentydata:/app/packages/twenty-server/.local-storage]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:3000/healthz || exit 1"]
+      interval: 15s
+      start_period: 180s
+
+  twenty-worker:
+    image: twentycrm/twenty:v2.57.1
+    restart: unless-stopped
+    command: ["yarn", "worker:prod"]
+    environment:
+      <<: *twenty-env
+      DISABLE_DB_MIGRATIONS: "true"
+      DISABLE_CRON_JOBS_REGISTRATION: "true"
+    volumes: [twentydata:/app/packages/twenty-server/.local-storage]
+    depends_on:
+      twenty: { condition: service_healthy }
+
 volumes:
+  twentydata:
   pgdata:
   redisdata:
   miniodata:

@@ -27,3 +27,15 @@ mewemarket.com {
 		reverse_proxy 127.0.0.1:3000
 	}
 }
+
+# Hosted CRM (Twenty): every company's CRM is <company>.crm.mewemarket.com. A wildcard certificate needs
+# the DNS challenge, so Caddy must be built with your DNS provider's module (e.g. caddy-dns/cloudflare)
+# and given its API token. Twenty sets its own frame headers, so nothing is rewritten here.
+crm.mewemarket.com, *.crm.mewemarket.com {
+	tls {
+		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+	}
+	encode zstd gzip
+	header -Server
+	reverse_proxy 127.0.0.1:3200
+}

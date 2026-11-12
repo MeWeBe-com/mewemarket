@@ -87,3 +87,26 @@ The AI Assistant app is free to add. Each workspace uses its own Claude or OpenA
 - Saved keys are encrypted with `ENCRYPTION_KEY`. Set it once and keep it: if it changes, saved keys can't be read and workspaces must enter them again.
 - The server must be able to reach `api.anthropic.com` and `api.openai.com`.
 - The assistant can only read records in apps the workspace has installed. It can't create, change or delete anything.
+
+## Hosted CRM (Twenty)
+
+The **CRM** app is [Twenty](https://github.com/twentyhq/twenty) (AGPL-3.0), run as its own service and shown inside the workspace at `mewemarket.com/{company}/crm`. Each company gets its own Twenty workspace at `{company}.crm.mewemarket.com`; MeweMarket creates it when the app is added, adds each person the first time they open it (owners and admins as Twenty Admins, members as Members, guests not at all), and signs them in with a one-time link, so nobody logs in twice. Removing someone from a workspace removes them from its CRM and ends their open CRM session. Code: `packages/core/src/hosted/`.
+
+One-time setup:
+
+1. **DNS**: an `A` record for `crm.mewemarket.com` and a wildcard `*.crm.mewemarket.com`, both to the server. With Cloudflare's proxy on, the free certificate only covers one level (`*.mewemarket.com`), so either turn the proxy off (grey cloud) for these two records or add an Advanced Certificate for `*.crm.mewemarket.com`.
+2. **Certificate**: a wildcard certificate for `crm.mewemarket.com` and `*.crm.mewemarket.com` (Let's Encrypt needs the DNS challenge for wildcards).
+3. **Database**: `CREATE DATABASE twenty OWNER mewe;` (new installs get it from `infra/postgres/init.sql`).
+4. **.env**: set `TWENTY_URL`, `TWENTY_INTERNAL_URL`, `TWENTY_APP_SECRET` (`openssl rand -hex 32`, **never change it afterwards**: it encrypts Twenty's signing keys) and `TWENTY_PLATFORM_EMAIL` / `TWENTY_PLATFORM_PASSWORD` (MeweMarket's own admin account inside Twenty; it is created on first use and must be Twenty's first user, so start from an empty `twenty` database).
+5. **Start it**: `docker compose up -d twenty twenty-worker`. The first start sets up its database and takes a few minutes; `curl -s 127.0.0.1:3200/healthz` answers when it's ready.
+6. **Proxy**: Hestia: add the web domain `crm.mewemarket.com` with the alias `*.crm.mewemarket.com`, copy `infra/hestia/mewemarket-crm.tpl` and `.stpl` to `/usr/local/hestia/data/templates/web/nginx/`, then `v-change-web-domain-proxy-tpl saasthemes crm.mewemarket.com mewemarket-crm`. Caddy: the `crm.mewemarket.com, *.crm.mewemarket.com` block in `infra/Caddyfile`.
+7. **Restart the app** (`pm2 reload ecosystem.config.cjs`). The CRM appears in the App Store only once `TWENTY_URL` and the platform account are set.
+
+Things to know:
+
+- **5 companies on the free version.** Twenty allows 5 workspaces per server without an Enterprise key. The 6th company that adds the CRM sees "The CRM service is full right now"; nothing breaks for the others. To lift it, buy a key from Twenty, set `TWENTY_ENTERPRISE_KEY` in `.env` and `docker compose up -d twenty twenty-worker`.
+- **Embedding** is Twenty's own per-workspace setting (`allowedEmbeddingOrigins`), set to `APP_URL` when each CRM is created; the proxy passes Twenty's headers through untouched. If `APP_URL` ever changes, existing CRMs need the new address added.
+- **Removing the CRM** from a workspace keeps its data (adding it back restores it) unless "also delete all data" is ticked, which deletes the company's Twenty workspace. Deleting a MeweMarket workspace deletes its CRM too.
+- **Upgrades**: the image is pinned (`twentycrm/twenty:v2.57.1`, the version this was tested with). Read Twenty's upgrade notes, back up the `twenty` database, change both image tags, and `docker compose up -d twenty twenty-worker`; it migrates itself on start.
+- **Backups**: the `twenty` database (same Postgres) and the `twentydata` volume (uploaded files).
+- **Source offer (AGPL)**: the CRM toolbar and the public app page link to Twenty's source. If you ever modify Twenty, publish your changes and link to them instead.

@@ -1,7 +1,7 @@
 "use server";
 import {
-  canManageWorkspace, createRecord, deleteRecords, getEntityDef, importRecords, installApp, LimitError,
-  setRecordField, uninstallApp, updateRecord,
+  canManageWorkspace, createRecord, deleteRecords, getEntityDef, HostedError, importRecords, installApp, LimitError,
+  provisionHostedApp, setRecordField, uninstallApp, updateRecord,
 } from "@mewe/core";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -22,8 +22,9 @@ export async function installAppAction(slug: string, app: string, form: FormData
   try {
     await installApp(workspace.id, app, session.user.id, form.get("samples") === "on");
   } catch (e) {
-    if (e instanceof LimitError) redirect(`/${slug}/apps?error=${encodeURIComponent(e.message)}`);
-    throw e;
+    if (e instanceof LimitError || e instanceof HostedError) redirect(`/${slug}/apps?error=${encodeURIComponent(e.message)}`);
+    console.error("installApp", app, e);
+    redirect(`/${slug}/apps?error=${encodeURIComponent(`${app} couldn't be added just now. Please try again in a minute.`)}`);
   }
   revalidatePath(`/w/${slug}`, "layout");
   redirect(`/${slug}/${app}`);
@@ -94,4 +95,17 @@ export async function importCsvAction(slug: string, app: string, entity: string,
     if (e instanceof LimitError) return { message: e.message };
     throw e;
   }
+}
+
+/** Finishes setting up a hosted app whose tenant wasn't created when it was added. */
+export async function setUpHostedAppAction(slug: string, app: string) {
+  const { workspace, role } = await requireWorkspace(slug);
+  if (!canManageWorkspace(role)) return;
+  try {
+    await provisionHostedApp(workspace, app);
+  } catch (e) {
+    if (!(e instanceof HostedError)) console.error("provisionHostedApp", app, e);
+    redirect(`/${slug}/apps?error=${encodeURIComponent(e instanceof HostedError ? e.message : "Setup didn't finish. Please try again in a minute.")}`);
+  }
+  redirect(`/${slug}/${app}`);
 }

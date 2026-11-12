@@ -57,7 +57,7 @@ export default async function BillingPage({ params, searchParams }: { params: Pr
           {plan.status === "trialing" && plan.sub?.trialEndsAt && <p className="mb-4 text-sm text-[var(--muted)]">Trial ends <strong className="text-[var(--fg)]">{plan.sub.trialEndsAt.toLocaleDateString("en-US", { dateStyle: "long" })}</strong>. Choose a plan to keep all features.</p>}
           {plan.status === "trial_expired" && <p className="mb-4 text-sm text-[var(--muted)]">Your trial has ended, so Free plan limits apply. Your data is safe.</p>}
           <div className="grid gap-3 sm:grid-cols-3">
-            <Usage icon={LayoutGrid} label="Apps" used={apps.filter((a) => !a.kind).length} max={plan.limits.apps} color="#5b5bf6" />
+            <Usage icon={LayoutGrid} label="Apps" used={apps.filter((a) => a.kind !== "assistant").length} max={plan.limits.apps} color="#5b5bf6" />
             <Usage icon={Users} label="Members" used={members.length} max={plan.limits.users} color="#0ea5e9" />
             <Usage icon={Database} label="Records" used={records} max={plan.limits.records} color="#10b981" />
           </div>
