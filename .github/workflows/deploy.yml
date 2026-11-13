@@ -1,0 +1,161 @@
+# Deploys MeweMarket to the production server over SSH, from GitHub's own runners (no deploy keys anywhere
+# else). Every push to `updated` deploys automatically; the "Run workflow" button runs one-off server tasks.
+#
+# How a deploy works: this pushes the commit to the bare repo on the server (DEPLOY_GIT_PATH, branch main),
+# whose post-receive hook (infra/post-receive) builds a new release, migrates, switches over, health-checks
+# and rolls back by itself if the check fails. Its output appears in this job's log.
+#
+# One-time setup (docs/DEPLOY.md, "Deploying with GitHub Actions"): repository secrets DEPLOY_HOST,
+# DEPLOY_USER, DEPLOY_SSH_KEY (private key; its public half goes in that user's ~/.ssh/authorized_keys) and
+# DEPLOY_KNOWN_HOSTS (output of `ssh-keyscan -p <port> <host>`); optional DEPLOY_PORT (22) and
+# DEPLOY_GIT_PATH (/srv/git/mewemarket.git). Until they are set, runs stop early without failing.
+name: Deploy
+
+on:
+  push:
+    branches: [updated]
+  workflow_dispatch:
+    inputs:
+      task:
+        description: What to run on the server
+        type: choice
+        default: preflight
+        options:
+          - preflight          # read-only checks of the server (run this first)
+          - deploy             # deploy the selected branch now
+          - status             # services, health, disk, recent logs
+          - hosted-setup       # infra/hosted-setup.sh (platform accounts of the hosted apps; safe to repeat)
+          - egress-firewall    # infra/egress-firewall.sh --install (needs sudo, see docs)
+          - disk-cap-plan      # infra/disk-cap.sh dry run: shows what the 150 GB cap would do
+          - disk-cap-apply     # infra/disk-cap.sh --apply (needs sudo; stops Docker for a few minutes)
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  server:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+    env:
+      TASK: ${{ github.event_name == 'push' && 'deploy' || inputs.task }}
+      HOST: ${{ secrets.DEPLOY_HOST }}
+      USER_: ${{ secrets.DEPLOY_USER }}
+      PORT: ${{ secrets.DEPLOY_PORT || '22' }}
+      GIT_PATH: ${{ secrets.DEPLOY_GIT_PATH || '/srv/git/mewemarket.git' }}
+      APP_ROOT: /srv/mewemarket
+    steps:
+      - name: Check the deploy secrets are set
+        id: ready
+        env:
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          missing=""
+          [ -n "$HOST" ] || missing="$missing DEPLOY_HOST"
+          [ -n "$USER_" ] || missing="$missing DEPLOY_USER"
+          [ -n "$KEY" ] || missing="$missing DEPLOY_SSH_KEY"
+          [ -n "$KNOWN" ] || missing="$missing DEPLOY_KNOWN_HOSTS"
+          if [ -n "$missing" ]; then
+            echo "::notice::Not deploying: repository secrets missing:$missing (see docs/DEPLOY.md)."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up SSH
+        if: steps.ready.outputs.ok == 'true'
+        env:
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/deploy_key && chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN" > ~/.ssh/known_hosts && chmod 644 ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<CFG
+          Host production
+            HostName $HOST
+            Port $PORT
+            User $USER_
+            IdentityFile ~/.ssh/deploy_key
+            IdentitiesOnly yes
+            StrictHostKeyChecking yes
+            ServerAliveInterval 30
+          CFG
+          chmod 600 ~/.ssh/config
+          ssh production true && echo "SSH works."
+
+      - name: Check out the code
+        if: steps.ready.outputs.ok == 'true' && env.TASK == 'deploy'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Deploy (push to the server's deploy repo; its hook builds, switches and health-checks)
+        if: steps.ready.outputs.ok == 'true' && env.TASK == 'deploy'
+        run: |
+          echo "Deploying ${GITHUB_SHA::7} from ${GITHUB_REF_NAME}"
+          git push --force "ssh://production${GIT_PATH}" "HEAD:refs/heads/main"
+
+      - name: Preflight (read-only)
+        if: steps.ready.outputs.ok == 'true' && env.TASK == 'preflight'
+        run: |
+          ssh production 'bash -s' <<'SH'
+          set +e
+          line() { printf '%-26s %s\n' "$1" "$2"; }
+          echo "== Server"
+          line "user / host" "$(id -un) @ $(hostname)"
+          line "OS" "$(. /etc/os-release 2>/dev/null; echo "$PRETTY_NAME")"
+          line "CPUs / RAM" "$(nproc) CPUs, $(free -g | awk '/Mem:/{print $2" GB total, "$7" GB available"}')"
+          line "disk /" "$(df -h / | awk 'NR==2{print $4" free of "$2" ("$5" used)"}')"
+          echo "== Software"
+          for c in git node pnpm pm2 docker caddy nginx psql; do line "$c" "$(command -v $c >/dev/null && ($c --version 2>/dev/null || $c -v 2>/dev/null) | head -1 || echo 'not installed')"; done
+          line "docker compose" "$(docker compose version 2>/dev/null | head -1 || echo 'not available to this user')"
+          line "docker access" "$(docker ps >/dev/null 2>&1 && echo yes || echo 'no (user not in docker group?)')"
+          line "Hestia" "$([ -d /usr/local/hestia ] && echo "installed ($(cat /usr/local/hestia/conf/hestia.conf 2>/dev/null | grep -m1 '^VERSION' | cut -d\' -f2))" || echo 'not found')"
+          line "sudo (no password)" "$(sudo -n true 2>/dev/null && echo yes || echo no)"
+          echo "== MeweMarket paths"
+          for p in /srv/mewemarket /srv/mewemarket/current /srv/mewemarket/shared/.env "$HOME" /srv/git/mewemarket.git /srv/git/mewemarket.git/hooks/post-receive; do line "$p" "$([ -e "$p" ] && echo exists || echo missing)"; done
+          echo "== Running"
+          (pm2 jlist 2>/dev/null | python3 -c 'import json,sys; [print("  pm2:", p["name"], p["pm2_env"]["status"]) for p in json.load(sys.stdin)]') 2>/dev/null || echo "  pm2: none"
+          docker ps --format '  docker: {{.Names}} {{.Status}}' 2>/dev/null | head -30
+          echo "== Listening ports"
+          (ss -ltnH 2>/dev/null || netstat -ltn 2>/dev/null) | awk '{print $4}' | sed 's/.*://' | sort -n | uniq | tr '\n' ' '; echo
+          SH
+
+      - name: Status
+        if: steps.ready.outputs.ok == 'true' && env.TASK == 'status'
+        run: |
+          ssh production "bash -s" <<'SH'
+          set +e
+          cd /srv/mewemarket/current 2>/dev/null && echo "release: $(readlink -f /srv/mewemarket/current)"
+          pm2 status
+          curl -fsS http://127.0.0.1:3000/api/health && echo
+          docker compose ps 2>/dev/null
+          df -h / /srv/mewemarket 2>/dev/null
+          pm2 logs --nostream --lines 40 2>/dev/null | tail -60
+          SH
+
+      - name: Hosted apps setup
+        if: steps.ready.outputs.ok == 'true' && env.TASK == 'hosted-setup'
+        run: ssh production "cd $APP_ROOT/current && bash infra/hosted-setup.sh"
+
+      - name: Container firewall
+        if: steps.ready.outputs.ok == 'true' && env.TASK == 'egress-firewall'
+        run: ssh production "sudo -n $APP_ROOT/current/infra/egress-firewall.sh --install"
+
+      - name: 150 GB storage cap (plan)
+        if: steps.ready.outputs.ok == 'true' && env.TASK == 'disk-cap-plan'
+        run: ssh production "bash $APP_ROOT/current/infra/disk-cap.sh"
+
+      - name: 150 GB storage cap (apply)
+        if: steps.ready.outputs.ok == 'true' && env.TASK == 'disk-cap-apply'
+        run: ssh production "sudo -n $APP_ROOT/current/infra/disk-cap.sh --apply"
+
+      - name: Remove the key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

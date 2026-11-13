@@ -48,6 +48,25 @@ The hook then:
 
 If the health check fails, the hook rolls back to the previous release automatically. It keeps the last 5 releases.
 
+## Deploying with GitHub Actions
+
+`.github/workflows/deploy.yml` deploys from GitHub's own servers over SSH, so nobody needs the deploy key on their computer. **Every push to `updated` deploys automatically**: the workflow pushes the commit to the server's deploy repo, whose hook (above) builds, switches, health-checks and rolls back on failure. The output shows in the run's log under **Actions → Deploy**. **Run workflow** on that page runs one-off tasks: `preflight` (read-only server checks: run it first), `deploy`, `status`, `hosted-setup`, `egress-firewall`, `disk-cap-plan`, `disk-cap-apply`.
+
+One-time setup:
+1. **A key just for deploys.** On your own computer: `ssh-keygen -t ed25519 -f mewemarket_deploy -C github-actions-deploy -N ""`. That gives `mewemarket_deploy` (private) and `mewemarket_deploy.pub` (public).
+2. **On the server**, add the public key to the deploy user's `~/.ssh/authorized_keys` (the user that owns `/srv/git/mewemarket.git` and `/srv/mewemarket`; `deploy` after `infra/server-setup.sh`). The user must be in the `docker` group.
+3. **The server's identity**, so GitHub only ever talks to the real server: `ssh-keyscan -p <port> <server address>`.
+4. **On GitHub**, Settings → Secrets and variables → Actions → New repository secret:
+   - `DEPLOY_HOST`: the server's address
+   - `DEPLOY_USER`: the deploy user
+   - `DEPLOY_SSH_KEY`: the whole private key file
+   - `DEPLOY_KNOWN_HOSTS`: the `ssh-keyscan` output
+   - optional `DEPLOY_PORT` (default 22) and `DEPLOY_GIT_PATH` (default `/srv/git/mewemarket.git`)
+5. **Optional approval gate**: Settings → Environments → `production` → Required reviewers, so each deploy waits for a click.
+6. **For the root tasks** (`egress-firewall`, `disk-cap-apply`), allow exactly those two scripts without a password, nothing else: as root, `echo 'deploy ALL=(root) NOPASSWD: /srv/mewemarket/current/infra/egress-firewall.sh, /srv/mewemarket/current/infra/disk-cap.sh' > /etc/sudoers.d/mewemarket && chmod 440 /etc/sudoers.d/mewemarket` (change `deploy` if your user differs).
+
+Until the secrets are set, runs stop early with a notice instead of failing. Delete the private key from your computer once it's saved in GitHub; to revoke access, remove the public key from the server.
+
 ## Operate
 | Task | Command (as `deploy`) |
 |---|---|
