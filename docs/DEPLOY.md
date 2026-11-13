@@ -61,7 +61,8 @@ One-time setup:
    - `DEPLOY_USER`: the deploy user
    - `DEPLOY_SSH_KEY`: the whole private key file
    - `DEPLOY_KNOWN_HOSTS`: the `ssh-keyscan` output
-   - optional `DEPLOY_PORT` (default 22) and `DEPLOY_GIT_PATH` (default `/srv/git/mewemarket.git`)
+   - `DEPLOY_APP_DIR`: **for a server installed from an upload** (no git deploy repo), the folder the app lives in (the one with `.env` and `ecosystem.config.cjs`). Deploys then copy the code there with rsync (its `.env`, uploads, `node_modules`, backups and logs are kept), run install, migrations, seed and build, reload PM2, check health, and restore the previous version if anything fails. Leave it out for the git-hook setup above.
+   - optional `DEPLOY_PORT` (default 22), `DEPLOY_HEALTH_URL` (default `http://127.0.0.1:$PORT/api/health`, `PORT` from the server's `.env`) and `DEPLOY_GIT_PATH` (git-hook setup only, default `/srv/git/mewemarket.git`)
 5. **Optional approval gate**: Settings → Environments → `production` → Required reviewers, so each deploy waits for a click.
 6. **For the root tasks** (`egress-firewall`, `disk-cap-apply`), allow exactly those two scripts without a password, nothing else: as root, `echo 'deploy ALL=(root) NOPASSWD: /srv/mewemarket/current/infra/egress-firewall.sh, /srv/mewemarket/current/infra/disk-cap.sh' > /etc/sudoers.d/mewemarket && chmod 440 /etc/sudoers.d/mewemarket` (change `deploy` if your user differs).
 

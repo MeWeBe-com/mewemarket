@@ -1,14 +1,18 @@
 # Deploys MeweMarket to the production server over SSH, from GitHub's own runners (no deploy keys anywhere
 # else). Every push to `updated` deploys automatically; the "Run workflow" button runs one-off server tasks.
 #
-# How a deploy works: this pushes the commit to the bare repo on the server (DEPLOY_GIT_PATH, branch main),
-# whose post-receive hook (infra/post-receive) builds a new release, migrates, switches over, health-checks
-# and rolls back by itself if the check fails. Its output appears in this job's log.
+# How a deploy works (two setups):
+#   * Folder (DEPLOY_APP_DIR set; for a server installed from an upload): the code is copied into that folder
+#     with rsync (its .env, uploads and node_modules are left alone), then pnpm install, migrations, seed and
+#     build run there and PM2 reloads the app; if the health check fails, the previous build is restored.
+#   * Git hook (default): the commit is pushed to the bare repo on the server (DEPLOY_GIT_PATH, branch main),
+#     whose post-receive hook (infra/post-receive) builds a release, switches, health-checks and rolls back.
 #
 # One-time setup (docs/DEPLOY.md, "Deploying with GitHub Actions"): repository secrets DEPLOY_HOST,
 # DEPLOY_USER, DEPLOY_SSH_KEY (private key; its public half goes in that user's ~/.ssh/authorized_keys) and
-# DEPLOY_KNOWN_HOSTS (output of `ssh-keyscan -p <port> <host>`); optional DEPLOY_PORT (22) and
-# DEPLOY_GIT_PATH (/srv/git/mewemarket.git). Until they are set, runs stop early without failing.
+# DEPLOY_KNOWN_HOSTS (output of `ssh-keyscan -p <port> <host>`); optional DEPLOY_PORT (22), DEPLOY_APP_DIR
+# (folder setup), DEPLOY_HEALTH_URL (default: http://127.0.0.1:$PORT/api/health with PORT from the server's
+# .env) and DEPLOY_GIT_PATH (git hook setup). Until they are set, runs stop early without failing.
 name: Deploy
 
 on:
@@ -47,7 +51,9 @@ jobs:
       USER_: ${{ secrets.DEPLOY_USER }}
       PORT: ${{ secrets.DEPLOY_PORT || '22' }}
       GIT_PATH: ${{ secrets.DEPLOY_GIT_PATH || '/srv/git/mewemarket.git' }}
-      APP_ROOT: /srv/mewemarket
+      APP_DIR: ${{ secrets.DEPLOY_APP_DIR }}
+      HEALTH_URL: ${{ secrets.DEPLOY_HEALTH_URL }}
+      APP_ROOT: ${{ secrets.DEPLOY_APP_DIR || '/srv/mewemarket/current' }}
     steps:
       - name: Check the deploy secrets are set
         id: ready
@@ -95,8 +101,44 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Deploy into the app folder (rsync, build, PM2 reload, health check, roll back on failure)
+        if: steps.ready.outputs.ok == 'true' && env.TASK == 'deploy' && env.APP_DIR != ''
+        run: |
+          echo "Deploying ${GITHUB_SHA::7} from ${GITHUB_REF_NAME} into $APP_DIR"
+          ssh production "test -d '$APP_DIR' && test -f '$APP_DIR/.env'" || { echo "::error::$APP_DIR or its .env is missing on the server"; exit 1; }
+          # Keep the current code and build so a failed deploy can be put back.
+          ssh production "cd '$APP_DIR' && rm -rf .deploy-previous && mkdir .deploy-previous && tar --exclude=./node_modules --exclude=./.deploy-previous --exclude=./uploads -cf .deploy-previous/app.tar ."
+          rsync -az --delete -e "ssh" \
+            --exclude '.git/' --exclude '.env' --exclude '.env.*' --exclude 'node_modules/' --exclude 'uploads/' \
+            --exclude '.deploy-previous/' --exclude 'infra/documenso/cert.p12' --exclude '.next*/' \
+            --exclude 'backups/' --exclude 'storage/' --exclude 'logs/' --exclude '*.log' --exclude '.turbo/' \
+            ./ "production:$APP_DIR/"
+          ssh production "APP_DIR='$APP_DIR' HEALTH_URL='$HEALTH_URL' bash -s" <<'SH'
+          set -euo pipefail
+          cd "$APP_DIR"
+          set -a; . ./.env; set +a
+          export NODE_ENV=production
+          HEALTH_URL="${HEALTH_URL:-http://127.0.0.1:${PORT:-3000}/api/health}"
+          rollback() {
+            echo "!! Deploy failed: restoring the previous version"
+            cd "$APP_DIR" && tar -xf .deploy-previous/app.tar && pnpm install --frozen-lockfile --prod=false >/dev/null && pnpm build >/dev/null \
+              && pm2 startOrReload ecosystem.config.cjs --update-env >/dev/null && echo "!! Previous version restored"
+            exit 1
+          }
+          trap rollback ERR
+          pnpm install --frozen-lockfile --prod=false
+          pnpm db:migrate
+          pnpm --filter @mewe/core seed
+          pnpm build
+          pm2 startOrReload ecosystem.config.cjs --update-env
+          pm2 save >/dev/null
+          echo "==> Health check: $HEALTH_URL"
+          for i in $(seq 1 30); do curl -fsS "$HEALTH_URL" >/dev/null && { echo "==> Deployed and healthy"; exit 0; }; sleep 3; done
+          false
+          SH
+
       - name: Deploy (push to the server's deploy repo; its hook builds, switches and health-checks)
-        if: steps.ready.outputs.ok == 'true' && env.TASK == 'deploy'
+        if: steps.ready.outputs.ok == 'true' && env.TASK == 'deploy' && env.APP_DIR == ''
         run: |
           echo "Deploying ${GITHUB_SHA::7} from ${GITHUB_REF_NAME}"
           git push --force "ssh://production${GIT_PATH}" "HEAD:refs/heads/main"
@@ -118,10 +160,14 @@ jobs:
           line "docker access" "$(docker ps >/dev/null 2>&1 && echo yes || echo 'no (user not in docker group?)')"
           line "Hestia" "$([ -d /usr/local/hestia ] && echo "installed ($(cat /usr/local/hestia/conf/hestia.conf 2>/dev/null | grep -m1 '^VERSION' | cut -d\' -f2))" || echo 'not found')"
           line "sudo (no password)" "$(sudo -n true 2>/dev/null && echo yes || echo no)"
+          echo "== Where MeweMarket might be installed (folders with its ecosystem.config.cjs)"
+          (find / -xdev -maxdepth 6 -name ecosystem.config.cjs -path '*' 2>/dev/null | xargs -r grep -l '"web"' 2>/dev/null | sed 's#/ecosystem.config.cjs##' | head -10 | while read d; do
+             line "  $d" "$( [ -f "$d/.env" ] && echo '.env present' || echo 'no .env'), $( [ -d "$d/node_modules" ] && echo 'deps installed' || echo 'no node_modules'), owner $(stat -c %U "$d")"; done) || true
+          echo "== PM2 apps (name, status, folder)"
+          pm2 jlist 2>/dev/null | python3 -c 'import json,sys; [print("  ", p["name"], p["pm2_env"]["status"], p["pm2_env"].get("pm_cwd")) for p in json.load(sys.stdin)]' 2>/dev/null || echo "  none for this user"
           echo "== MeweMarket paths"
           for p in /srv/mewemarket /srv/mewemarket/current /srv/mewemarket/shared/.env "$HOME" /srv/git/mewemarket.git /srv/git/mewemarket.git/hooks/post-receive; do line "$p" "$([ -e "$p" ] && echo exists || echo missing)"; done
           echo "== Running"
-          (pm2 jlist 2>/dev/null | python3 -c 'import json,sys; [print("  pm2:", p["name"], p["pm2_env"]["status"]) for p in json.load(sys.stdin)]') 2>/dev/null || echo "  pm2: none"
           docker ps --format '  docker: {{.Names}} {{.Status}}' 2>/dev/null | head -30
           echo "== Listening ports"
           (ss -ltnH 2>/dev/null || netstat -ltn 2>/dev/null) | awk '{print $4}' | sed 's/.*://' | sort -n | uniq | tr '\n' ' '; echo
@@ -130,11 +176,12 @@ jobs:
       - name: Status
         if: steps.ready.outputs.ok == 'true' && env.TASK == 'status'
         run: |
-          ssh production "bash -s" <<'SH'
+          ssh production "APP_DIR='$APP_DIR' bash -s" <<'SH'
           set +e
-          cd /srv/mewemarket/current 2>/dev/null && echo "release: $(readlink -f /srv/mewemarket/current)"
+          cd "${APP_DIR:-/srv/mewemarket/current}" 2>/dev/null && echo "app folder: $PWD"
           pm2 status
-          curl -fsS http://127.0.0.1:3000/api/health && echo
+          [ -f "$PWD/.env" ] && set -a && . ./.env && set +a
+          curl -fsS "http://127.0.0.1:${PORT:-3000}/api/health" && echo
           docker compose ps 2>/dev/null
           df -h / /srv/mewemarket 2>/dev/null
           pm2 logs --nostream --lines 40 2>/dev/null | tail -60
