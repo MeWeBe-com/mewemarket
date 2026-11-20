@@ -4,7 +4,8 @@ module.exports = {
       name: "web",
       cwd: "./apps/web",
       script: "node_modules/next/dist/bin/next",
-      args: "start -p 3000",
+      // WEB_PORT (or PORT) must match the port nginx proxies the site to.
+      args: `start -p ${process.env.WEB_PORT || process.env.PORT || 3000}`,
       exec_mode: "cluster",
       instances: 2,
       env: { NODE_ENV: "production" },

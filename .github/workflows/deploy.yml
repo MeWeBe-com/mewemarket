@@ -118,7 +118,13 @@ jobs:
           cd "$APP_DIR"
           set -a; . ./.env; set +a
           export NODE_ENV=production
-          HEALTH_URL="${HEALTH_URL:-http://127.0.0.1:${PORT:-3000}/api/health}"
+          # Serve on the port nginx already proxies mewemarket.com to (Hestia config), unless .env sets WEB_PORT.
+          if [ -z "${WEB_PORT:-}" ]; then
+            WEB_PORT=$(grep -rhsoE 'proxy_pass +http://127\.0\.0\.1:[0-9]+' "$HOME"/conf/web/mewemarket.com/ 2>/dev/null | grep -oE '[0-9]+$' | sort -u | head -1)
+          fi
+          export WEB_PORT="${WEB_PORT:-${PORT:-3000}}"
+          echo "==> Web port: $WEB_PORT"
+          HEALTH_URL="${HEALTH_URL:-http://127.0.0.1:$WEB_PORT/api/health}"
           rollback() {
             echo "!! Deploy failed: restoring the previous version"
             cd "$APP_DIR" && tar -xf .deploy-previous/app.tar && pnpm install --frozen-lockfile --prod=false >/dev/null && pnpm build >/dev/null \
@@ -136,11 +142,15 @@ jobs:
             echo "==> Retiring the old 'mewemarket' PM2 app"; pm2 delete mewemarket >/dev/null
             pm2 delete web worker >/dev/null 2>&1 || true
           fi
+          # A crashed web (e.g. started on a wrong port) is replaced rather than reloaded, so new args apply.
+          if pm2 jlist 2>/dev/null | python3 -c 'import json,sys; sys.exit(0 if any(p["name"]=="web" and p["pm2_env"]["status"]!="online" for p in json.load(sys.stdin)) else 1)'; then
+            pm2 delete web >/dev/null
+          fi
           pm2 startOrReload ecosystem.config.cjs --update-env
           pm2 save >/dev/null
           echo "==> Who serves the port:"; pm2 list | grep -E 'web|worker|mewemarket' || true
           echo "==> Health check: $HEALTH_URL"
-          for i in $(seq 1 30); do curl -fsS "$HEALTH_URL" >/dev/null && { echo "==> Deployed and healthy"; exit 0; }; sleep 3; done
+          for i in $(seq 1 30); do curl -fsS "$HEALTH_URL" 2>/dev/null | grep -q '"db":"ok"' && { echo "==> Deployed and healthy"; exit 0; }; sleep 3; done
           false
           SH
 
@@ -188,7 +198,8 @@ jobs:
           cd "${APP_DIR:-/srv/mewemarket/current}" 2>/dev/null && echo "app folder: $PWD"
           pm2 status
           [ -f "$PWD/.env" ] && set -a && . ./.env && set +a
-          curl -fsS "http://127.0.0.1:${PORT:-3000}/api/health" && echo
+          WEB_PORT=${WEB_PORT:-$(grep -rhsoE 'proxy_pass +http://127\.0\.0\.1:[0-9]+' "$HOME"/conf/web/mewemarket.com/ | grep -oE '[0-9]+$' | head -1)}
+          echo "web port $WEB_PORT:"; curl -sS "http://127.0.0.1:${WEB_PORT:-3000}/api/health"; echo
           docker compose ps 2>/dev/null
           df -h / /srv/mewemarket 2>/dev/null
           echo "== nginx upstream for mewemarket.com (Hestia user configs)"
