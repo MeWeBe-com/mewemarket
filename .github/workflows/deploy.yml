@@ -202,6 +202,13 @@ jobs:
           echo "web port $WEB_PORT:"; curl -sS "http://127.0.0.1:${WEB_PORT:-3000}/api/health"; echo
           docker compose ps 2>/dev/null
           df -h / /srv/mewemarket 2>/dev/null
+          echo "== Mail settings (.env lines, password hidden)"
+          grep -nE '^\s*(export\s+)?(SMTP_HOST|SMTP_PORT|SMTP_USER|EMAIL_FROM)=' .env 2>/dev/null
+          grep -cE '^\s*SMTP_PASS=.+' .env 2>/dev/null | sed 's/^/SMTP_PASS lines set: /'
+          for f in apps/web/.env apps/web/.env.local apps/web/.env.production apps/web/.env.production.local apps/worker/.env; do [ -f "$f" ] && { echo "-- $f"; grep -nE '^(SMTP_HOST|SMTP_USER|EMAIL_FROM)=' "$f"; }; done
+          echo "== Mail settings in the running web process"
+          pm2 jlist 2>/dev/null | python3 -c 'import json,sys; [print("  ", p["name"], {k: p["pm2_env"].get(k) for k in ("SMTP_HOST","SMTP_USER","EMAIL_FROM")}) for p in json.load(sys.stdin) if p["name"] in ("web","worker")]'
+          echo "== Recent mail log lines"; grep -hiE 'smtp|mail|EAUTH|535' ~/.pm2/logs/web-*.log ~/.pm2/logs/worker-*.log 2>/dev/null | tail -15
           echo "== nginx upstream for mewemarket.com (Hestia user configs)"
           grep -rhsE 'proxy_pass|listen|server_name' "$HOME"/conf/web/mewemarket.com/*.conf "$HOME"/conf/web/mewemarket.com/*nginx* /home/*/conf/web/mewemarket.com/* 2>/dev/null | sort -u | head -20
           echo "== via nginx with Host header"
