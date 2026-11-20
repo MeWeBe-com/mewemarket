@@ -130,8 +130,15 @@ jobs:
           pnpm db:migrate
           pnpm --filter @mewe/core seed
           pnpm build
+          # The first install (from the zip) ran as a single PM2 app named "mewemarket"
+          # in this folder; it holds the port, so retire it in favour of web + worker.
+          if pm2 jlist 2>/dev/null | python3 -c 'import json,sys,os; d=os.getcwd(); sys.exit(0 if any(p["name"]=="mewemarket" and (p["pm2_env"].get("pm_cwd") or "").startswith(d) for p in json.load(sys.stdin)) else 1)'; then
+            echo "==> Retiring the old 'mewemarket' PM2 app"; pm2 delete mewemarket >/dev/null
+            pm2 delete web worker >/dev/null 2>&1 || true
+          fi
           pm2 startOrReload ecosystem.config.cjs --update-env
           pm2 save >/dev/null
+          echo "==> Who serves the port:"; pm2 list | grep -E 'web|worker|mewemarket' || true
           echo "==> Health check: $HEALTH_URL"
           for i in $(seq 1 30); do curl -fsS "$HEALTH_URL" >/dev/null && { echo "==> Deployed and healthy"; exit 0; }; sleep 3; done
           false
