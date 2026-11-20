@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 
-export function UserMenu({ name, email }: { name: string; email: string }) {
+export function UserMenu({ name, email, superadmin = false }: { name: string; email: string; superadmin?: boolean }) {
   const router = useRouter();
   return (
     <div className="border-t border-[var(--border)] pt-3 text-sm">
@@ -16,6 +16,9 @@ export function UserMenu({ name, email }: { name: string; email: string }) {
           <span className="block truncate text-xs text-[var(--muted)]">{email}</span>
         </span>
       </Link>
+      {superadmin && (
+        <Link href="/admin" className="mt-1 block rounded-lg px-2 py-1.5 font-semibold text-red-600 hover:bg-black/5 dark:hover:bg-white/5">Super admin</Link>
+      )}
       <button className="mt-1 w-full rounded-lg px-2 py-1.5 text-left text-[var(--muted)] hover:bg-black/5 dark:hover:bg-white/5"
         onClick={async () => { await authClient.signOut(); router.push("/sign-in"); }}>
         Sign out

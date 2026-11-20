@@ -4,6 +4,7 @@ import Link from "next/link";
 import { AppIcon } from "@/components/app-icon";
 import { NavLink } from "@/components/shell/nav-link";
 import { UserMenu } from "@/components/shell/user-menu";
+import { isSuperadmin } from "@/lib/admin";
 import { WorkspaceSwitcher } from "@/components/shell/workspace-switcher";
 import { requireWorkspace } from "@/lib/session";
 
@@ -55,7 +56,7 @@ export default async function WorkspaceLayout({ children, params }: { children: 
             <Link href={`/${slug}/billing`} className="mt-2.5 inline-block rounded-lg bg-white/20 px-2.5 py-1 font-semibold hover:bg-white/30">Choose a plan</Link>
           </div>
         )}
-        <UserMenu name={session.user.name} email={session.user.email} />
+        <UserMenu name={session.user.name} email={session.user.email} superadmin={await isSuperadmin(session.user.id, session.user.email)} />
       </aside>
       <div className="min-w-0 flex-1">
         <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[var(--border)] bg-[var(--bg)]/80 px-4 py-3 backdrop-blur md:hidden print:hidden">
