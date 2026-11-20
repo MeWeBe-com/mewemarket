@@ -191,7 +191,12 @@ jobs:
           curl -fsS "http://127.0.0.1:${PORT:-3000}/api/health" && echo
           docker compose ps 2>/dev/null
           df -h / /srv/mewemarket 2>/dev/null
-          pm2 logs --nostream --lines 40 2>/dev/null | tail -60
+          echo "== nginx upstream for mewemarket.com (Hestia user configs)"
+          grep -rhsE 'proxy_pass|listen|server_name' "$HOME"/conf/web/mewemarket.com/*.conf "$HOME"/conf/web/mewemarket.com/*nginx* /home/*/conf/web/mewemarket.com/* 2>/dev/null | sort -u | head -20
+          echo "== via nginx with Host header"
+          curl -sk -o /dev/null -w "https %{http_code}\n" --resolve mewemarket.com:443:127.0.0.1 https://mewemarket.com/api/health
+          echo "== ports held by node"; ss -ltnp 2>/dev/null | grep -E 'node|PM2' | head
+          pm2 logs web --nostream --lines 60 2>/dev/null | tail -80
           SH
 
       - name: Hosted apps setup
