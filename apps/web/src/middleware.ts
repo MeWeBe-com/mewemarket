@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { internalWorkspacePath, publicCompanyPath, publicWorkspacePath } from "@mewe/core/urls";
 
 // Fast cookie-presence check only; pages still verify the session server-side.
-const PROTECTED = ["/dashboard", "/onboarding", "/account", "/invite/"];
+const PROTECTED = ["/dashboard", "/onboarding", "/account", "/invite/", "/admin"];
 
 // Behind the proxy req.url has the internal host (127.0.0.1:port) and Cloudflare reaches the server over
 // plain HTTP, so redirects are built on the public site address.
