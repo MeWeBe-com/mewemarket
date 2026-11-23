@@ -29,6 +29,7 @@ on:
           - deploy             # deploy the selected branch now
           - status             # services, health, disk, recent logs
           - inspect            # read-only: deploy folder, site folders, backup script and cron
+          - backup-install     # install infra/backup-db.sh next to the app folder and run one test dump
           - hosted-setup       # infra/hosted-setup.sh (platform accounts of the hosted apps; safe to repeat)
           - egress-firewall    # infra/egress-firewall.sh --install (needs sudo, see docs)
           - disk-cap-plan      # infra/disk-cap.sh dry run: shows what the 150 GB cap would do
@@ -190,6 +191,23 @@ jobs:
           f="$site/private/backup-db.sh"; [ -f "$f" ] && { stat -c '%A %U %s bytes, modified %y' "$f"; cat -n "$f" | sed -E 's#(postgres(ql)?://[^:/ ]+:)[^@ ]+@#\1***@#g; s#(PASSWORD=)[^ ]+#\1***#Ig'; } || echo "MISSING: $f"
           echo "== crontab"; crontab -l 2>&1 | sed -E 's#(postgres(ql)?://[^:/ ]+:)[^@ ]+@#\1***@#g'
           echo "== Recent backups"; find "$site/private" "$APP_DIR/backups" -maxdepth 2 -name '*.sql*' -o -maxdepth 2 -name '*.dump' 2>/dev/null | xargs -r ls -la --time-style=+%F_%T 2>/dev/null | tail -6 | awk '{print $5, $6, $7}'
+          SH
+
+      - name: Install the database backup script and run a test dump
+        if: steps.ready.outputs.ok == 'true' && env.TASK == 'backup-install'
+        run: |
+          ssh production "APP_DIR='$APP_DIR' bash -s" <<'SH'
+          set -euo pipefail
+          target="$(dirname "$APP_DIR")/backup-db.sh"
+          [ -f "$target" ] && cp -p "$target" "$target.bak-$(date +%Y%m%d%H%M)"
+          install -m 700 "$APP_DIR/infra/backup-db.sh" "$target"
+          echo "Installed $(basename "$target") ($(stat -c '%A' "$target")); cron entry unchanged:"
+          crontab -l | grep -c backup-db.sh | sed 's/^/  cron lines: /'
+          echo "== Test dump"
+          "$target"
+          echo "== Passwords on command lines during a second run (should be none)"
+          ( "$target" >/dev/null & p=$!; for i in $(seq 1 40); do ps -eo args | grep -E '^(pg_dump|/usr/\S*pg_dump)' | grep -E 'postgres(ql)?://|password=' ; sleep 0.05; done; wait $p ) | sort -u | sed 's/:[^:@]*@/:***@/' || true
+          echo "(end of check)"
           SH
 
       - name: Preflight (read-only)
