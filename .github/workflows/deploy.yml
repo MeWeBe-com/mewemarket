@@ -28,6 +28,7 @@ on:
           - preflight          # read-only checks of the server (run this first)
           - deploy             # deploy the selected branch now
           - status             # services, health, disk, recent logs
+          - inspect            # read-only: deploy folder, site folders, backup script and cron
           - hosted-setup       # infra/hosted-setup.sh (platform accounts of the hosted apps; safe to repeat)
           - egress-firewall    # infra/egress-firewall.sh --install (needs sudo, see docs)
           - disk-cap-plan      # infra/disk-cap.sh dry run: shows what the 150 GB cap would do
@@ -106,9 +107,22 @@ jobs:
         run: |
           echo "Deploying ${GITHUB_SHA::7} from ${GITHUB_REF_NAME} into $APP_DIR"
           ssh production "test -d '$APP_DIR' && test -f '$APP_DIR/.env'" || { echo "::error::$APP_DIR or its .env is missing on the server"; exit 1; }
+          # Guard: only ever deploy into a MeweMarket app folder, never a site/web root or a folder holding one.
+          ssh production "APP_DIR='$APP_DIR' bash -s" <<'SH'
+          set -e
+          d=$(cd "$APP_DIR" && pwd -P)
+          fail() { echo "::error::Refusing to deploy: $1"; exit 1; }
+          case "$d" in /|/home|/home/*/web|/home/*/web/*/public_html*|"$(cd ~ && pwd -P)") fail "deploy folder is a system, home or web root";; esac
+          [ -d "$d/public_html" ] && fail "deploy folder contains public_html"
+          [ -f "$d/ecosystem.config.cjs" ] && grep -q '"web"' "$d/ecosystem.config.cjs" || fail "deploy folder has no MeweMarket ecosystem.config.cjs"
+          [ -f "$d/pnpm-workspace.yaml" ] || fail "deploy folder has no pnpm-workspace.yaml"
+          echo "Deploy folder checks passed"
+          SH
           # Keep the current code and build so a failed deploy can be put back.
           ssh production "cd '$APP_DIR' && rm -rf .deploy-previous && mkdir .deploy-previous && tar --exclude=./node_modules --exclude=./.deploy-previous --exclude=./uploads -cf .deploy-previous/app.tar ."
-          rsync -az --delete -e "ssh" \
+          # --delete only removes files under folders the repo owns: 'P /*' protects every top-level entry
+          # (server-only files such as backup-db.sh) from deletion; nothing outside the app folder is touched.
+          rsync -az --delete -e "ssh" --filter='P /*' \
             --exclude '.git/' --exclude '.env' --exclude '.env.*' --exclude 'node_modules/' --exclude 'uploads/' \
             --exclude '.deploy-previous/' --exclude 'infra/documenso/cert.p12' --exclude '.next*/' \
             --exclude 'backups/' --exclude 'storage/' --exclude 'logs/' --exclude '*.log' --exclude '.turbo/' \
@@ -159,6 +173,24 @@ jobs:
         run: |
           echo "Deploying ${GITHUB_SHA::7} from ${GITHUB_REF_NAME}"
           git push --force "ssh://production${GIT_PATH}" "HEAD:refs/heads/main"
+
+      - name: Inspect (read-only)
+        if: steps.ready.outputs.ok == 'true' && env.TASK == 'inspect'
+        run: |
+          ssh production "APP_DIR='$APP_DIR' bash -s" <<'SH'
+          set +e
+          show() { sed 's#/# / #g'; }   # spaced out so the path isn't masked in the log
+          echo "== Deploy folder"; (cd "$APP_DIR" && pwd -P) | show
+          echo "== Top level of the deploy folder"; ls -la "$APP_DIR" | awk 'NR>1{print $1, $6, $7, $8, $9}'
+          site=/home/$(id -un)/web/mewemarket.com
+          echo "== $site" | show; ls -la "$site" 2>&1 | awk 'NR>1{print $1, $6, $7, $8, $9}'
+          echo "== private/"; ls -la "$site/private" 2>&1 | awk 'NR>1{print $1, $5, $6, $7, $8, $9}'
+          echo "== public_html/insights"; ls -la "$site/public_html/insights" 2>&1 | head -8; find "$site/public_html/insights" -type f 2>/dev/null | wc -l | sed 's/^/files: /'
+          echo "== backup-db.sh (credentials redacted)"
+          f="$site/private/backup-db.sh"; [ -f "$f" ] && { stat -c '%A %U %s bytes, modified %y' "$f"; cat -n "$f" | sed -E 's#(postgres(ql)?://[^:/ ]+:)[^@ ]+@#\1***@#g; s#(PASSWORD=)[^ ]+#\1***#Ig'; } || echo "MISSING: $f"
+          echo "== crontab"; crontab -l 2>&1 | sed -E 's#(postgres(ql)?://[^:/ ]+:)[^@ ]+@#\1***@#g'
+          echo "== Recent backups"; find "$site/private" "$APP_DIR/backups" -maxdepth 2 -name '*.sql*' -o -maxdepth 2 -name '*.dump' 2>/dev/null | xargs -r ls -la --time-style=+%F_%T 2>/dev/null | tail -6 | awk '{print $5, $6, $7}'
+          SH
 
       - name: Preflight (read-only)
         if: steps.ready.outputs.ok == 'true' && env.TASK == 'preflight'
