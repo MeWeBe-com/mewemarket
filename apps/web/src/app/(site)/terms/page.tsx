@@ -1,7 +1,8 @@
+import { canonical } from "@/lib/canonical";
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/site/legal-page";
 
-export const metadata: Metadata = { title: "Terms of service" };
+export const metadata: Metadata = { alternates: canonical("/terms"), title: "Terms of service" };
 
 export default function TermsPage() {
   return (

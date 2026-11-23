@@ -1,7 +1,8 @@
+import { canonical } from "@/lib/canonical";
 import type { Metadata } from "next";
 import { ContactForm } from "./form";
 
-export const metadata: Metadata = { title: "Contact & support", description: "Get help with your MeweMarket workspace, ask about plans, or talk to us about listing your app." };
+export const metadata: Metadata = { alternates: canonical("/contact"), title: "Contact & support", description: "Get help with your MeweMarket workspace, ask about plans, or talk to us about listing your app." };
 
 export default function ContactPage() {
   return (

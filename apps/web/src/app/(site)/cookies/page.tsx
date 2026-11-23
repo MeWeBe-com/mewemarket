@@ -1,7 +1,8 @@
+import { canonical } from "@/lib/canonical";
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/site/legal-page";
 
-export const metadata: Metadata = { title: "Cookie policy" };
+export const metadata: Metadata = { alternates: canonical("/cookies"), title: "Cookie policy" };
 
 export default function CookiesPage() {
   return (

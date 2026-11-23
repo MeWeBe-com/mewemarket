@@ -1,0 +1,46 @@
+# Checks every pull request into `updated` before it can be merged (and so before it deploys).
+# Make "CI / checks" a required status check in the branch rule for `updated`.
+name: CI
+
+on:
+  pull_request:
+    branches: [updated]
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_USER: ci, POSTGRES_PASSWORD: ci, POSTGRES_DB: ci }
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U ci" --health-interval 5s --health-retries 20
+    env:
+      # Throwaway CI values: a disposable database (pages like the sitemap read the catalogue at build time).
+      DATABASE_URL: postgres://ci:ci@127.0.0.1:5432/ci
+      BETTER_AUTH_SECRET: ci-only-not-a-secret-ci-only-not-a-secret
+      APP_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Database schema and catalogue
+        run: pnpm db:migrate && pnpm --filter @mewe/core seed
+      - name: Type check
+        run: pnpm exec turbo run typecheck --env-mode=loose
+      - name: Unit tests
+        run: pnpm test
+      - name: Build
+        run: pnpm exec turbo run build --env-mode=loose

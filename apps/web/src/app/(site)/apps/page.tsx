@@ -1,10 +1,11 @@
+import { canonical } from "@/lib/canonical";
 import { listCatalogApps } from "@mewe/core";
 import type { Metadata } from "next";
 import { CatalogBrowser } from "@/components/site/catalog-browser";
 import { PageHero } from "@/components/site/page-hero";
 
 export const revalidate = 3600;
-export const metadata: Metadata = {
+export const metadata: Metadata = { alternates: canonical("/apps"),
   title: "App catalogue",
   description: "Browse business apps for CRM, invoicing, projects, inventory, HR, bookings, healthcare, hospitality and more. Install any app into your workspace in one click.",
 };

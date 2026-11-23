@@ -1,3 +1,4 @@
+import { canonical } from "@/lib/canonical";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CATEGORIES, FREE_TOOLS, PRO_TOOLS } from "@mewe/core";
@@ -5,7 +6,7 @@ import { Crown, ShieldCheck, Sparkles, UserX } from "lucide-react";
 import { AppIcon } from "@/components/app-icon";
 import { PageHero } from "@/components/site/page-hero";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = { alternates: canonical("/tools"),
   title: "Free online tools",
   description: "Free tools that run in your browser: invoice generator, QR codes, calculators, developer utilities, a whiteboard and video meetings. No sign-up needed.",
 };

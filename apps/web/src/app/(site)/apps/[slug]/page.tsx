@@ -1,3 +1,4 @@
+import { canonical } from "@/lib/canonical";
 import { RENAMED_APPS, getAppDef, getCatalogApp, getCategory, legacyAppDirSlug, listCatalogApps } from "@mewe/core";
 import { ArrowRight, CalendarDays, Check, Columns3, Sigma, Table2 } from "lucide-react";
 import type { Metadata } from "next";
@@ -11,7 +12,7 @@ export const revalidate = 3600;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const app = await getCatalogApp((await params).slug);
-  return app ? { title: app.name, description: `${app.tagline} ${app.description}` } : {};
+  return app ? { alternates: canonical(`/apps/${app.slug}`), title: app.name, description: `${app.tagline} ${app.description}` } : {};
 }
 
 export default async function AppPage({ params }: { params: Promise<{ slug: string }> }) {

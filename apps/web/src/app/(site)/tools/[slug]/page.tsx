@@ -1,3 +1,4 @@
+import { canonical } from "@/lib/canonical";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -17,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const tool = TOOLS.find((t) => t.slug === slug);
   if (!tool) return {};
-  return { title: tool.pro ? `${tool.name} - Pro tool` : `${tool.name} - free online tool`, description: `${tool.tagline} ${tool.description}` };
+  return { alternates: canonical(`/tools/${slug}`), title: tool.pro ? `${tool.name} - Pro tool` : `${tool.name} - free online tool`, description: `${tool.tagline} ${tool.description}` };
 }
 
 export default async function ToolPage({ params }: Props) {

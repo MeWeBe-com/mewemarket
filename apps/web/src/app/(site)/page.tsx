@@ -5,6 +5,11 @@ import { AppIcon, CategoryIcon, tone } from "@/components/app-icon";
 import { BUTTON_BASE, BUTTON_PRIMARY, BUTTON_SECONDARY } from "@/components/ui";
 import { HeroMock } from "@/components/site/hero-mock";
 
+import type { Metadata } from "next";
+import { canonical } from "@/lib/canonical";
+
+export const metadata: Metadata = { alternates: canonical("/") };
+
 export const revalidate = 3600;
 
 const STEPS = [

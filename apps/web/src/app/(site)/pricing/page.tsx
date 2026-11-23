@@ -1,3 +1,4 @@
+import { canonical } from "@/lib/canonical";
 import { PLANS } from "@mewe/core";
 import { Check, Heart, Plus } from "lucide-react";
 import type { Metadata } from "next";
@@ -5,7 +6,7 @@ import Link from "next/link";
 import { PageHero } from "@/components/site/page-hero";
 import { PricingCards } from "./cards";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = { alternates: canonical("/pricing"),
   title: "Pricing",
   description: "Simple workspace pricing. Free plan forever, Starter $19, Business $49, Scale $129 per month. Save two months with annual billing.",
 };

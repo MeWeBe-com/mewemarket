@@ -1,3 +1,4 @@
+import { canonical } from "@/lib/canonical";
 import { CATEGORIES, getCategory, listCatalogApps } from "@mewe/core";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -10,7 +11,7 @@ export const generateStaticParams = () => CATEGORIES.map((c) => ({ slug: c.slug 
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const c = getCategory((await params).slug);
-  return c ? { title: `${c.name} apps`, description: `${c.blurb} Browse ${c.name.toLowerCase()} apps on MeweMarket.` } : {};
+  return c ? { alternates: canonical(`/apps/category/${c.slug}`), title: `${c.name} apps`, description: `${c.blurb} Browse ${c.name.toLowerCase()} apps on MeweMarket.` } : {};
 }
 
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {

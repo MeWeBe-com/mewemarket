@@ -1,7 +1,8 @@
+import { canonical } from "@/lib/canonical";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = { alternates: canonical("/about"),
   title: "About",
   description: "MeweMarket brings the business apps small companies need into one simple subscription. Part of the MeWeBe Studio Network.",
 };
