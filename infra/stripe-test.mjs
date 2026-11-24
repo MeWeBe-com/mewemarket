@@ -13,7 +13,12 @@ for (const raw of readFileSync(".env", "utf8").split(/\r?\n/)) {
   if (m) env[m[1]] = m[2].trim().replace(/^(["'])(.*)\1$/, "$2");
 }
 const key = env.STRIPE_SECRET_KEY ?? "";
-if (!key.startsWith("sk_test_")) { console.error("Refusing: STRIPE_SECRET_KEY is not a test-mode key."); process.exit(1); }
+if (!/^(sk|rk)_test_/.test(key)) {
+  // Only the kind of key is printed, never the key.
+  const kind = key ? (key.match(/^[a-z]+_(test|live)_/)?.[0] ?? `unrecognised (${key.length} chars)`) : "not set";
+  console.error(`Refusing: STRIPE_SECRET_KEY is not a test-mode key (it is ${kind}).`);
+  process.exit(1);
+}
 
 const req = createRequire(new URL("../apps/web/package.json", import.meta.url));
 const postgres = req("postgres");
