@@ -25,6 +25,10 @@ export async function checkoutAction(slug: string, planId: string, interval: "mo
   }
   // Already paying: plan changes go through the portal so proration is handled by Stripe.
   if (sub?.sub.stripeSubscriptionId && sub.sub.status !== "canceled") return portalAction(slug);
+  // Keep the rest of the free trial: Stripe takes the card now and charges when the trial ends.
+  // Stripe needs trial_end at least 48 hours ahead, so a trial ending sooner bills straight away.
+  const trialEndsAt = sub?.sub.status === "trialing" ? sub.sub.trialEndsAt : null;
+  const trialEnd = trialEndsAt && trialEndsAt.getTime() > Date.now() + 2 * 86_400_000 ? Math.floor(trialEndsAt.getTime() / 1000) : undefined;
   const checkout = await stripe.checkout.sessions.create({
     mode: "subscription",
     customer,
@@ -38,7 +42,8 @@ export async function checkoutAction(slug: string, planId: string, interval: "mo
         product_data: { name: `MeweMarket ${plan.name}` },
       },
     }],
-    subscription_data: { metadata: { workspaceId: workspace.id, planId: plan.id } },
+    subscription_data: { metadata: { workspaceId: workspace.id, planId: plan.id }, ...(trialEnd ? { trial_end: trialEnd } : {}) },
+    payment_method_collection: "always",
     metadata: { workspaceId: workspace.id, planId: plan.id },
     allow_promotion_codes: true,
     success_url: `${appUrl}/${slug}/billing?success=1`,

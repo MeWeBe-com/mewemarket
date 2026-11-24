@@ -5,7 +5,13 @@ import { Alert, Button, Field, Input, TextLink } from "@/components/ui";
 import { authClient } from "@/lib/auth-client";
 
 // `next` (e.g. an invite link) wins over onboarding, so invited people join the team after verifying.
-export function SignUpForm({ app, next }: { app?: string; next?: string }) {
+// `planQuery` ("plan=starter&interval=month") carries a paid plan from /pricing through onboarding to the card form.
+function onboardingUrl(app?: string, planQuery?: string) {
+  const q = [app ? `app=${app}` : "", planQuery ?? ""].filter(Boolean).join("&");
+  return q ? `/onboarding?${q}` : "/onboarding";
+}
+
+export function SignUpForm({ app, next, planQuery }: { app?: string; next?: string; planQuery?: string }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -17,7 +23,7 @@ export function SignUpForm({ app, next }: { app?: string; next?: string }) {
     const f = new FormData(e.currentTarget);
     const email = String(f.get("email"));
     const { error } = await authClient.signUp.email({
-      name: String(f.get("name")), email, password: String(f.get("password")), callbackURL: next ?? (app ? `/onboarding?app=${app}` : "/onboarding"),
+      name: String(f.get("name")), email, password: String(f.get("password")), callbackURL: next ?? onboardingUrl(app, planQuery),
     });
     setPending(false);
     if (error) return setError(error.message ?? "Sign up failed");
