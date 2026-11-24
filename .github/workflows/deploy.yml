@@ -29,6 +29,7 @@ on:
           - deploy             # deploy the selected branch now
           - status             # services, health, disk, recent logs
           - inspect            # read-only: deploy folder, site folders, backup script and cron
+          - capabilities       # read-only: what the server offers for running the hosted apps without Docker
           - backup-install     # install infra/backup-db.sh next to the app folder and run one test dump
           - stripe-test        # test mode only: infra/stripe-test.mjs <arg> (verify <email> | report <slug> | event <slug>)
           - hosted-setup       # infra/hosted-setup.sh (platform accounts of the hosted apps; safe to repeat)
@@ -179,6 +180,42 @@ jobs:
         run: |
           echo "Deploying ${GITHUB_SHA::7} from ${GITHUB_REF_NAME}"
           git push --force "ssh://production${GIT_PATH}" "HEAD:refs/heads/main"
+
+      - name: Capabilities (read-only)
+        if: steps.ready.outputs.ok == 'true' && env.TASK == 'capabilities'
+        run: |
+          ssh production "APP_DIR='$APP_DIR' bash -s" <<'SH'
+          set +e
+          v() { printf '%-22s %s\n' "$1" "$( (eval "$2") 2>&1 | head -1)"; }
+          echo "== Runtimes"
+          v node "node -v"; v "nvm/fnm/volta" "ls -d ~/.nvm ~/.fnm ~/.volta 2>/dev/null | tr '\n' ' ' || echo none"
+          v python3 "python3 --version"; v "python3 venv" "python3 -m venv --help >/dev/null && echo yes || echo no"; v "pip (user)" "python3 -m pip --version"
+          v "uv" "command -v uv || echo no"
+          for p in php php8.4 php8.3 php8.2 php8.1; do command -v $p >/dev/null && v $p "$p -v"; done
+          v composer "composer --version"; v ruby "ruby -v"; v gcc "gcc --version"; v make "make --version"; v git "git --version"
+          echo "== PHP-FPM versions (Hestia)"; ls /etc/php/ 2>/dev/null | tr '\n' ' '; echo
+          echo "== PHP extensions (default php)"; php -m 2>/dev/null | grep -iE '^(bcmath|curl|gd|intl|mbstring|mysqli|pdo_mysql|pdo_pgsql|zip|xml|fileinfo|tokenizer|imagick|sodium|redis)$' | tr '\n' ' '; echo
+          echo "== Databases"
+          v "mysql client" "mysql --version"; v "MariaDB/MySQL server" "systemctl is-active mariadb mysql 2>/dev/null | tr '\n' ' '"
+          set -a; . "$APP_DIR/.env" 2>/dev/null; set +a
+          v "postgres server" "psql --version"
+          python3 - <<'PY'
+          import os, subprocess
+          from urllib.parse import urlsplit, unquote
+          u = urlsplit(os.environ.get("DATABASE_URL", ""))
+          env = dict(os.environ, PGHOST=u.hostname or "", PGPORT=str(u.port or 5432), PGUSER=unquote(u.username or ""), PGPASSWORD=unquote(u.password or ""), PGDATABASE=u.path.lstrip("/"))
+          q = "select rolname, rolcreatedb, rolcreaterole, rolsuper from pg_roles where rolname = current_user; select version();"
+          r = subprocess.run(["psql", "-tA", "-c", q], env=env, capture_output=True, text=True)
+          print("mewemarket db role    ", (r.stdout or r.stderr).strip().replace("\n", " | "))
+          PY
+          v redis "redis-cli ping"
+          echo "== Hestia (as this user)"
+          v "hestia user cli" "ls /usr/local/hestia/bin/v-list-web-domains >/dev/null && /usr/local/hestia/bin/v-list-web-domains $(id -un) plain 2>&1 | awk '{print \$1}' | tr '\n' ' '"
+          v "web templates" "ls /usr/local/hestia/data/templates/web/nginx/ 2>/dev/null | grep -c mewemarket"
+          echo "== Resources"; v "free memory" "free -g | awk '/Mem:/{print \$7\" GB available\"}'"; v "disk free" "df -h ~ | awk 'NR==2{print \$4}'"
+          v "quota" "quota -s 2>/dev/null | tail -1 || echo none"
+          echo "== Ports in use (3000-9000)"; ss -ltnH 2>/dev/null | awk '{print $4}' | sed 's/.*://' | awk '$1>=3000 && $1<=9000' | sort -n | uniq | tr '\n' ' '; echo
+          SH
 
       - name: Inspect (read-only)
         if: steps.ready.outputs.ok == 'true' && env.TASK == 'inspect'
