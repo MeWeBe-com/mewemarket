@@ -125,7 +125,7 @@ jobs:
           echo "Deploy folder checks passed"
           SH
           # Keep the current code and build so a failed deploy can be put back.
-          ssh production "cd '$APP_DIR' && rm -rf .deploy-previous && mkdir .deploy-previous && tar --exclude=./node_modules --exclude=./.deploy-previous --exclude=./uploads -cf .deploy-previous/app.tar ."
+          ssh production "cd '$APP_DIR' && rm -rf .deploy-previous && mkdir .deploy-previous && tar --exclude=./node_modules --exclude=./.deploy-previous --exclude=./uploads --exclude='.env*' --exclude='*/node_modules' --exclude='.next' -cf .deploy-previous/app.tar ."
           # --delete only removes files under folders the repo owns: 'P /*' protects every top-level entry
           # (server-only files such as backup-db.sh) from deletion; nothing outside the app folder is touched.
           rsync -az --delete -e "ssh" --filter='P /*' \
