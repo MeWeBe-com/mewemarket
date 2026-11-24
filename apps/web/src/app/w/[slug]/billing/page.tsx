@@ -2,6 +2,7 @@ import { PLANS, canManageWorkspace, currentPlan, listInstalledApps, listMembers,
 import { Check, CreditCard, Database, LayoutGrid, Sparkles, Users } from "lucide-react";
 import { Alert, BUTTON_BASE, BUTTON_PRIMARY, BUTTON_SECONDARY, Card } from "@/components/ui";
 import { requireWorkspace } from "@/lib/session";
+import { parsePlanIntent } from "@/lib/plan-intent";
 import { billingEnabled } from "@/lib/stripe";
 import { checkoutAction, portalAction } from "./actions";
 
@@ -24,13 +25,16 @@ function Usage({ icon: Icon, label, used, max, color }: { icon: typeof Users; la
   );
 }
 
-export default async function BillingPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ success?: string; error?: string }> }) {
+export default async function BillingPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ success?: string; error?: string; plan?: string; interval?: string }> }) {
   const { slug } = await params;
   const sp = await searchParams;
   const { workspace, role } = await requireWorkspace(slug);
   const [plan, apps, members, records] = await Promise.all([currentPlan(workspace.id), listInstalledApps(workspace.id), listMembers(workspace.id), workspaceRecordCount(workspace.id)]);
   const manage = canManageWorkspace(role);
   const paying = !!plan.sub?.stripeSubscriptionId && plan.status !== "canceled";
+  // Arrived from /pricing -> sign-up -> onboarding with a paid plan: offer that plan's card form first.
+  const intent = !paying && manage && billingEnabled && !sp.success ? parsePlanIntent(sp.plan, sp.interval) : undefined;
+  const trialEnd = plan.status === "trialing" && plan.sub?.trialEndsAt && plan.sub.trialEndsAt.getTime() > Date.now() + 2 * 86_400_000 ? plan.sub.trialEndsAt : null;
   const label = { trialing: "Free trial", active: "Active", past_due: "Payment overdue", canceled: "Cancelled", trial_expired: "Trial ended", none: "Free" }[plan.status];
   const statusColor = plan.status === "active" ? "#10b981" : plan.status === "past_due" || plan.status === "trial_expired" ? "#ef4444" : "#5b5bf6";
 
@@ -40,6 +44,18 @@ export default async function BillingPage({ params, searchParams }: { params: Pr
       <p className="mt-1 text-[var(--muted)]">Your plan, what you're using, and how to upgrade.</p>
       {sp.success && <div className="mt-4"><Alert tone="success">Thanks! Your plan is being updated. It can take a few seconds to show here.</Alert></div>}
       {sp.error && <div className="mt-4"><Alert>{sp.error}</Alert></div>}
+      {intent && (
+        <Card className="mt-6 !border-accent p-6 ring-4 ring-accent/15">
+          <p className="text-lg font-bold">Finish starting your {intent.plan.name} plan</p>
+          <p className="mt-1 text-sm text-[var(--muted)]">
+            {usd(intent.interval === "year" ? intent.plan.priceYearlyCents : intent.plan.priceMonthlyCents)} per {intent.interval}.{" "}
+            {trialEnd ? <>Your card is not charged until your trial ends on <strong className="text-[var(--fg)]">{trialEnd.toLocaleDateString("en-US", { dateStyle: "long" })}</strong>. Cancel before then and you pay nothing.</> : "Billing starts today."}
+          </p>
+          <form action={checkoutAction.bind(null, slug, intent.plan.id, intent.interval)} className="mt-4">
+            <button className={`${BUTTON_BASE} ${BUTTON_PRIMARY}`}><CreditCard className="size-4" />Add card securely with Stripe</button>
+          </form>
+        </Card>
+      )}
 
       <Card className="mt-6 overflow-hidden p-0">
         <div className="relative flex flex-wrap items-center gap-4 bg-gradient-to-br from-[#5b5bf6] via-[#7c3aed] to-[#c026d3] p-6 text-white">

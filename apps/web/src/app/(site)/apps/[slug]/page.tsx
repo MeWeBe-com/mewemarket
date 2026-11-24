@@ -1,5 +1,5 @@
 import { canonical } from "@/lib/canonical";
-import { RENAMED_APPS, getAppDef, getCatalogApp, getCategory, legacyAppDirSlug, listCatalogApps } from "@mewe/core";
+import { PLANS, RENAMED_APPS, getAppDef, getCatalogApp, getCategory, legacyAppDirSlug, listCatalogApps } from "@mewe/core";
 import { ArrowRight, CalendarDays, Check, Columns3, Sigma, Table2 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -10,9 +10,33 @@ import { BUTTON_BASE, BUTTON_PRIMARY } from "@/components/ui";
 
 export const revalidate = 3600;
 
+// Search-led titles for the vertical apps people look for by name (charter growth lane 1).
+// Every claim must match the app's live feature list. "Free" only on catalog apps the Free plan includes
+// (invoices and crm are hosted apps: Free has hostedApps 0, so no "free" there).
+const SEARCH_TITLES: Record<string, string> = {
+  church: "Free Church Management Software: Members, Services & Giving",
+  "driving-school": "Driving School Software: Pupils, Lessons & Test Dates",
+  donations: "Free Donor Management Software for Small Charities",
+  "care-home": "Care Home Records Software: Residents, Care Notes & Incidents",
+  catering: "Catering Management Software: Jobs, Quotes & Staffing",
+  salon: "Free Salon Appointment Software & Client Records",
+  dental: "Dental Practice Software: Patients, Recalls & Treatment Plans",
+  clinic: "Clinic Management Software: Patients, Appointments & Notes",
+  invoices: "Invoicing Software for Small Businesses: Invoices, Estimates & Reports",
+  crm: "CRM for Small Business: Contacts, Deals & Pipeline",
+};
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const app = await getCatalogApp((await params).slug);
-  return app ? { alternates: canonical(`/apps/${app.slug}`), title: app.name, description: `${app.tagline} ${app.description}` } : {};
+  if (!app) return {};
+  const title = SEARCH_TITLES[app.slug];
+  const url = canonical(`/apps/${app.slug}`);
+  return {
+    title: title ? { absolute: `${title} | MeweMarket` } : app.name,
+    description: `${app.tagline} ${app.description}`.slice(0, 300),
+    alternates: url,
+    openGraph: { title: title ?? app.name, url: url.canonical },
+  };
 }
 
 export default async function AppPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -107,7 +131,8 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         "@context": "https://schema.org", "@type": "SoftwareApplication", name: app.name, description: app.description,
         applicationCategory: "BusinessApplication", operatingSystem: "Web",
-        offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+        url: `https://mewemarket.com/apps/${app.slug}`,
+        offers: PLANS.map((p) => ({ "@type": "Offer", name: `${p.name} plan`, price: (p.priceMonthlyCents / 100).toFixed(2), priceCurrency: "USD", url: "https://mewemarket.com/pricing" })),
       }) }} />
     </div>
   );

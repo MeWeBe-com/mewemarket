@@ -7,7 +7,8 @@ import { isUsableWorkspaceSlug } from "@mewe/core/urls";
 
 const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
 
-export function CreateWorkspaceForm({ app }: { app?: string }) {
+// With `planQuery` (a paid plan picked on /pricing) the new workspace opens on its billing page, ready for the card form.
+export function CreateWorkspaceForm({ app, planQuery }: { app?: string; planQuery?: string }) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -31,7 +32,7 @@ export function CreateWorkspaceForm({ app }: { app?: string }) {
       return setError(error?.message ?? "Could not create the workspace");
     }
     await authClient.organization.setActive({ organizationId: data.id });
-    router.push(app ? `/${data.slug}/apps?app=${app}#${app}` : `/${data.slug}/apps`);
+    router.push(planQuery ? `/${data.slug}/billing?${planQuery}` : app ? `/${data.slug}/apps?app=${app}#${app}` : `/${data.slug}/apps`);
     router.refresh();
   }
 
