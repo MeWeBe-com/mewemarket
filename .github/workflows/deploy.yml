@@ -30,10 +30,15 @@ on:
           - status             # services, health, disk, recent logs
           - inspect            # read-only: deploy folder, site folders, backup script and cron
           - backup-install     # install infra/backup-db.sh next to the app folder and run one test dump
+          - stripe-test        # test mode only: infra/stripe-test.mjs <arg> (verify <email> | report <slug> | event <slug>)
           - hosted-setup       # infra/hosted-setup.sh (platform accounts of the hosted apps; safe to repeat)
           - egress-firewall    # infra/egress-firewall.sh --install (needs sudo, see docs)
           - disk-cap-plan      # infra/disk-cap.sh dry run: shows what the 150 GB cap would do
           - disk-cap-apply     # infra/disk-cap.sh --apply (needs sudo; stops Docker for a few minutes)
+      arg:
+        description: Argument for the task (stripe-test), e.g. "report acme"
+        required: false
+        default: ""
 
 concurrency:
   group: production
@@ -209,6 +214,14 @@ jobs:
           ( "$target" >/dev/null & p=$!; for i in $(seq 1 40); do ps -eo args | grep -E '^(pg_dump|/usr/\S*pg_dump)' | grep -E 'postgres(ql)?://|password=' ; sleep 0.05; done; wait $p ) | sort -u | sed 's/:[^:@]*@/:***@/' || true
           echo "(end of check)"
           SH
+
+      - name: Stripe test mode helper
+        if: steps.ready.outputs.ok == 'true' && env.TASK == 'stripe-test'
+        env:
+          ARG: ${{ github.event.inputs.arg }}
+        run: |
+          case "$ARG" in *[!a-zA-Z0-9@._+\ -]*) echo "::error::bad argument"; exit 1;; esac
+          ssh production "cd '$APP_DIR' && node infra/stripe-test.mjs $ARG"
 
       - name: Preflight (read-only)
         if: steps.ready.outputs.ok == 'true' && env.TASK == 'preflight'
