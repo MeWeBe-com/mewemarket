@@ -31,6 +31,7 @@ on:
           - inspect            # read-only: deploy folder, site folders, backup script and cron
           - capabilities       # read-only: what the server offers for running the hosted apps without Docker
           - backup-install     # install infra/backup-db.sh next to the app folder and run one test dump
+          - rotate-db-password # new random Postgres password, written to .env, app reloaded; rolls back on failure
           - stripe-test        # test mode only: infra/stripe-test.mjs <arg> (verify <email> | report <slug> | event <slug>)
           - hosted-setup       # infra/hosted-setup.sh (platform accounts of the hosted apps; safe to repeat)
           - egress-firewall    # infra/egress-firewall.sh --install (needs sudo, see docs)
@@ -250,6 +251,17 @@ jobs:
           echo "== Passwords on command lines during a second run (should be none)"
           ( "$target" >/dev/null & p=$!; for i in $(seq 1 40); do ps -eo args | grep -E '^(pg_dump|/usr/\S*pg_dump)' | grep -E 'postgres(ql)?://|password=' ; sleep 0.05; done; wait $p ) | sort -u | sed 's/:[^:@]*@/:***@/' || true
           echo "(end of check)"
+          SH
+
+      - name: Rotate the database password
+        if: steps.ready.outputs.ok == 'true' && env.TASK == 'rotate-db-password'
+        run: |
+          ssh production "APP_DIR='$APP_DIR' bash -s" <<'SH'
+          set -euo pipefail
+          cd "$APP_DIR"
+          export WEB_PORT=$(grep -rhsoE 'proxy_pass +http://127\.0\.0\.1:[0-9]+' "$HOME"/conf/web/mewemarket.com/ | grep -oE '[0-9]+$' | sort -u | head -1)
+          umask 077
+          python3 -I -u infra/rotate-db-password.py
           SH
 
       - name: Stripe test mode helper
