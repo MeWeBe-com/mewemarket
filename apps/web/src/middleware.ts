@@ -9,8 +9,17 @@ const PROTECTED = ["/dashboard", "/onboarding", "/account", "/invite/", "/admin"
 // plain HTTP, so redirects are built on the public site address.
 const origin = (req: NextRequest) => process.env.APP_URL ?? `https://${req.headers.get("x-forwarded-host") ?? req.headers.get("host")}`;
 
+// www.mewemarket.com is collapsed onto the apex so crawlers index one host. 301 keeps GET/HEAD simple;
+// 308 keeps the method and body for anything else. /api/* (incl. Stripe webhooks) never reaches middleware.
+const CANONICAL_HOST = "mewemarket.com";
+
 export function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
+  const host = (req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "").split(",")[0]!.trim().toLowerCase().replace(/:\d+$/, "");
+  if (host === `www.${CANONICAL_HOST}`) {
+    const permanent = req.method === "GET" || req.method === "HEAD" ? 301 : 308;
+    return NextResponse.redirect(`https://${CANONICAL_HOST}${pathname}${search}`, permanent);
+  }
   // skipTrailingSlashRedirect is on so /insights/ keeps its slash; every other path drops it.
   if (pathname.length > 1 && pathname.endsWith("/") && !pathname.startsWith("/insights/")) {
     return NextResponse.redirect(new URL(pathname.replace(/\/+$/, "") + search, origin(req)), 308);

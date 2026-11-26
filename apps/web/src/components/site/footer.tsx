@@ -1,6 +1,7 @@
 import { CATEGORIES } from "@mewe/core";
 import Link from "next/link";
 import { Logo } from "@/components/ui";
+import { CookieSettingsLink } from "./consent";
 
 const COLS = [
   { title: "Product", links: [["/apps", "All apps"], ["/tools", "Free tools"], ["/pricing", "Pricing"]] },
@@ -34,7 +35,8 @@ export function SiteFooter() {
         ))}
       </div>
       <div className="border-t border-[var(--border)] py-6 text-center text-xs text-[var(--muted)]">
-        © {new Date().getFullYear()} MeweMarket · Part of the <a href="https://mewebe.com" className="hover:text-[var(--fg)]">MeWeBe Studio Network</a>
+        <p>© {new Date().getFullYear()} MeweMarket · Part of the <a href="https://mewebe.com" className="hover:text-[var(--fg)]">MeWeBe Studio Network</a> · <CookieSettingsLink /></p>
+        <p className="mt-2">MeWeBe Limited · Company No. 13864849 · Registered in England &amp; Wales · 167-169 Great Portland Street, Fifth Floor, London W1W 5PF</p>
       </div>
     </footer>
   );
