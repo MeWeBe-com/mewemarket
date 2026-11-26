@@ -1,4 +1,5 @@
-import { canonical } from "@/lib/canonical";
+import { APP_FAQ } from "@/lib/app-faq";
+import { SITE_ORIGIN, canonical } from "@/lib/canonical";
 import { PLANS, RENAMED_APPS, getAppDef, getCatalogApp, getCategory, legacyAppDirSlug, listCatalogApps } from "@mewe/core";
 import { ArrowRight, CalendarDays, Check, Columns3, Sigma, Table2 } from "lucide-react";
 import type { Metadata } from "next";
@@ -30,12 +31,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const app = await getCatalogApp((await params).slug);
   if (!app) return {};
   const title = SEARCH_TITLES[app.slug];
-  const url = canonical(`/apps/${app.slug}`);
   return {
+    alternates: canonical(`/apps/${app.slug}`),
     title: title ? { absolute: `${title} | MeweMarket` } : app.name,
     description: `${app.tagline} ${app.description}`.slice(0, 300),
-    alternates: url,
-    openGraph: { title: title ?? app.name, url: url.canonical },
+    openGraph: { title: title ?? app.name, url: `${SITE_ORIGIN}/apps/${app.slug}` },
   };
 }
 
@@ -53,6 +53,7 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
   const def = getAppDef(app.slug);
 
   const t = tone(app.category);
+  const faq = APP_FAQ[app.slug] ?? [];
   return (
     <div>
       <section className="relative overflow-hidden border-b border-[var(--border)]">
@@ -121,6 +122,19 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
             </div>
           </>
         )}
+        {faq.length > 0 && (
+          <section className="mt-14 max-w-3xl">
+            <h2 className="text-2xl font-bold">Questions about {app.name}</h2>
+            <div className="mt-5 divide-y divide-[var(--border)] border-y border-[var(--border)]">
+              {faq.map((f) => (
+                <details key={f.q} className="group py-4">
+                  <summary className="cursor-pointer list-none font-semibold">{f.q}</summary>
+                  <p className="mt-2 leading-relaxed text-[var(--muted)]">{f.a}</p>
+                </details>
+              ))}
+            </div>
+          </section>
+        )}
         {related.length > 0 && (
           <section className="mt-20">
             <h2 className="text-2xl font-bold">More {category?.name.toLowerCase()} apps</h2>
@@ -131,9 +145,15 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         "@context": "https://schema.org", "@type": "SoftwareApplication", name: app.name, description: app.description,
         applicationCategory: "BusinessApplication", operatingSystem: "Web",
-        url: `https://mewemarket.com/apps/${app.slug}`,
-        offers: PLANS.map((p) => ({ "@type": "Offer", name: `${p.name} plan`, price: (p.priceMonthlyCents / 100).toFixed(2), priceCurrency: "USD", url: "https://mewemarket.com/pricing" })),
+        url: `${SITE_ORIGIN}/apps/${app.slug}`,
+        offers: PLANS.map((p) => ({ "@type": "Offer", name: `${p.name} plan`, price: (p.priceMonthlyCents / 100).toFixed(2), priceCurrency: "USD", url: `${SITE_ORIGIN}/pricing` })),
       }) }} />
+      {faq.length > 0 && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          "@context": "https://schema.org", "@type": "FAQPage",
+          mainEntity: faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
+        }) }} />
+      )}
     </div>
   );
 }
