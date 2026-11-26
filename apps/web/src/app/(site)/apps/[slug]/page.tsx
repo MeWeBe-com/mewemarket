@@ -25,6 +25,12 @@ const SEARCH_TITLES: Record<string, string> = {
   clinic: "Clinic Management Software: Patients, Appointments & Notes",
   invoices: "Invoicing Software for Small Businesses: Invoices, Estimates & Reports",
   crm: "CRM for Small Business: Contacts, Deals & Pipeline",
+  "gym-membership": "Free Gym Membership Software: Members, Classes & Renewals",
+  hotel: "Free Hotel & Guesthouse Software: Rooms, Reservations & Housekeeping",
+  tutoring: "Free Tutoring Software: Students, Lessons & Packages",
+  school: "School Records Software: Students, Attendance & Grades",
+  "music-lessons": "Free Music Teacher Software: Students, Lessons & Exams",
+  volunteers: "Free Volunteer Management Software: Shifts & Hours",
 };
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -54,6 +60,9 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
 
   const t = tone(app.category);
   const faq = APP_FAQ[app.slug] ?? [];
+  // Hosted apps are not on the Free plan (hostedApps: 0), so only paid plans may be offered or called "included".
+  const plansForApp = def?.hosted ? PLANS.filter((p) => p.limits.hostedApps !== 0) : PLANS;
+  const includedLabel = def?.hosted ? `Included from the ${plansForApp[0]?.name ?? "Starter"} plan` : "Included in every plan";
   return (
     <div>
       <section className="relative overflow-hidden border-b border-[var(--border)]">
@@ -70,7 +79,7 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
             <p className="mt-3 text-xl text-[var(--muted)]">{app.tagline}</p>
           </div>
           <aside className="surface p-6 shadow-[var(--shadow-lg)]">
-            <p className="text-sm font-semibold" style={{ color: t.text }}>Included in every plan</p>
+            <p className="text-sm font-semibold" style={{ color: t.text }}>{includedLabel}</p>
             <p className="mt-1 text-sm text-[var(--muted)]">Add it to your workspace in one click, with optional sample data.</p>
             <Link href={`/sign-up?app=${app.slug}`} className={`${BUTTON_BASE} ${BUTTON_PRIMARY} mt-5 h-12 w-full text-base`}>
               Start using {app.name} <ArrowRight className="size-4" />
@@ -146,7 +155,7 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
         "@context": "https://schema.org", "@type": "SoftwareApplication", name: app.name, description: app.description,
         applicationCategory: "BusinessApplication", operatingSystem: "Web",
         url: `${SITE_ORIGIN}/apps/${app.slug}`,
-        offers: PLANS.map((p) => ({ "@type": "Offer", name: `${p.name} plan`, price: (p.priceMonthlyCents / 100).toFixed(2), priceCurrency: "USD", url: `${SITE_ORIGIN}/pricing` })),
+        offers: plansForApp.map((p) => ({ "@type": "Offer", name: `${p.name} plan`, price: (p.priceMonthlyCents / 100).toFixed(2), priceCurrency: "USD", url: `${SITE_ORIGIN}/pricing` })),
       }) }} />
       {faq.length > 0 && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
