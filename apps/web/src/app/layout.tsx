@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
+import { ConsentAndAnalytics } from "@/components/site/consent";
 
 // Fonts ship with the app (@fontsource-variable), so builds never download from Google Fonts,
 // which refuses some build machines (GitHub runners) and broke builds.
@@ -28,6 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-dvh font-sans antialiased">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           {children}
+          <ConsentAndAnalytics />
         </ThemeProvider>
       </body>
     </html>

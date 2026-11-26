@@ -2,8 +2,9 @@
 import Script from "next/script";
 import { useEffect, useState } from "react";
 
-// Google Analytics 4 runs on the public site only, and only after the visitor accepts (UK PECR/GDPR):
-// with no choice or "Reject", gtag.js is never requested and no _ga cookies are set.
+// Google Analytics 4, only after the visitor accepts (UK PECR/GDPR): with no choice or "Reject", gtag.js is
+// never requested and no _ga cookies are set. Mounted in the root layout so sign-up and checkout conversions
+// (sign_up, begin_checkout, purchase) are measured too. Page views come from GA4's own history tracking.
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID ?? "G-5N8J3BD22R";
 const COOKIE = "mewe_consent";
 const OPEN_EVENT = "mewe:cookie-settings";
@@ -29,6 +30,31 @@ function clearGaCookies() {
   }
 }
 
+type Gtag = (...a: unknown[]) => void;
+const gtag = (): Gtag | undefined => (window as unknown as { gtag?: Gtag }).gtag;
+
+/** Sends a GA4 event only if analytics was accepted (gtag exists only then). */
+export function track(name: string, params?: Record<string, unknown>) {
+  if (typeof window === "undefined") return;
+  gtag()?.("event", name, params ?? {});
+}
+
+/** Fires one event when it mounts (once per page per session), e.g. purchase on the billing success page. */
+export function TrackEvent({ name, params }: { name: string; params?: Record<string, unknown> }) {
+  useEffect(() => {
+    const key = `mewe_ev_${name}_${location.pathname}${location.search}`;
+    try { if (sessionStorage.getItem(key)) return; } catch { /* storage blocked */ }
+    const fire = () => {
+      if (!gtag()) return false;
+      track(name, params);
+      try { sessionStorage.setItem(key, "1"); } catch { /* storage blocked */ }
+      return true;
+    };
+    if (!fire()) { const t = setTimeout(fire, 2000); return () => clearTimeout(t); }
+  }, [name, params]);
+  return null;
+}
+
 export function ConsentAndAnalytics() {
   const [choice, setChoice] = useState<Choice>(null);
   const [open, setOpen] = useState(false);
@@ -38,8 +64,15 @@ export function ConsentAndAnalytics() {
     setChoice(c);
     setOpen(c === null);
     const reopen = () => setOpen(true);
+    // Forms marked data-ga-event (e.g. the Stripe checkout buttons) send that event on submit.
+    const submit = (e: Event) => {
+      const el = e.target as HTMLElement | null;
+      const ev = el?.getAttribute?.("data-ga-event");
+      if (ev) track(ev, { plan: el!.getAttribute("data-ga-plan") ?? undefined });
+    };
     window.addEventListener(OPEN_EVENT, reopen);
-    return () => window.removeEventListener(OPEN_EVENT, reopen);
+    document.addEventListener("submit", submit, true);
+    return () => { window.removeEventListener(OPEN_EVENT, reopen); document.removeEventListener("submit", submit, true); };
   }, []);
 
   function decide(c: "granted" | "denied") {

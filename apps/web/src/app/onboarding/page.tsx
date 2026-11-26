@@ -5,6 +5,7 @@ import { Logo } from "@/components/ui";
 import { parsePlanIntent, planQuery } from "@/lib/plan-intent";
 import { requireUser } from "@/lib/session";
 import { CreateWorkspaceForm } from "./form";
+import { TrackEvent } from "@/components/site/consent";
 
 export const metadata: Metadata = { title: "Create your workspace" };
 
@@ -32,6 +33,7 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
           <CreateWorkspaceForm app={app && /^[a-z0-9-]{1,60}$/.test(app) ? app : undefined} planQuery={planQuery(intent) || undefined} />
         </div>
       </div>
+      <TrackEvent name="sign_up" />
       <BrandPanel title="Your whole business, set up in two minutes." points={["Add apps in one click, with sample data", "Bring your team with owner, admin, member or guest roles", "Free plan forever, 14-day Business trial"]} />
     </main>
   );

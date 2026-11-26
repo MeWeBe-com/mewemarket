@@ -5,6 +5,7 @@ import { requireWorkspace } from "@/lib/session";
 import { parsePlanIntent } from "@/lib/plan-intent";
 import { billingEnabled } from "@/lib/stripe";
 import { checkoutAction, portalAction } from "./actions";
+import { TrackEvent } from "@/components/site/consent";
 
 export const metadata = { title: "Plan & billing" };
 
@@ -42,6 +43,7 @@ export default async function BillingPage({ params, searchParams }: { params: Pr
     <>
       <h1 className="text-3xl font-extrabold">Plan & billing</h1>
       <p className="mt-1 text-[var(--muted)]">Your plan, what you're using, and how to upgrade.</p>
+      {sp.success && <TrackEvent name="purchase" />}
       {sp.success && <div className="mt-4"><Alert tone="success">Thanks! Your plan is being updated. It can take a few seconds to show here.</Alert></div>}
       {sp.error && <div className="mt-4"><Alert>{sp.error}</Alert></div>}
       {intent && (
@@ -51,7 +53,7 @@ export default async function BillingPage({ params, searchParams }: { params: Pr
             {usd(intent.interval === "year" ? intent.plan.priceYearlyCents : intent.plan.priceMonthlyCents)} per {intent.interval}.{" "}
             {trialEnd ? <>Your card is not charged until your trial ends on <strong className="text-[var(--fg)]">{trialEnd.toLocaleDateString("en-US", { dateStyle: "long" })}</strong>. Cancel before then and you pay nothing.</> : "Billing starts today."}
           </p>
-          <form action={checkoutAction.bind(null, slug, intent.plan.id, intent.interval)} className="mt-4">
+          <form action={checkoutAction.bind(null, slug, intent.plan.id, intent.interval)} className="mt-4" data-ga-event="begin_checkout" data-ga-plan={intent.plan.id}>
             <button className={`${BUTTON_BASE} ${BUTTON_PRIMARY}`}><CreditCard className="size-4" />Add card securely with Stripe</button>
           </form>
         </Card>
@@ -102,8 +104,8 @@ export default async function BillingPage({ params, searchParams }: { params: Pr
               </ul>
               {manage && billingEnabled && (
                 <div className="mt-6 grid grid-cols-2 gap-2">
-                  <form action={checkoutAction.bind(null, slug, p.id, "month")}><button className={`${BUTTON_BASE} ${BUTTON_PRIMARY} w-full`}>Monthly</button></form>
-                  <form action={checkoutAction.bind(null, slug, p.id, "year")}><button className={`${BUTTON_BASE} ${BUTTON_SECONDARY} w-full`}>Yearly</button></form>
+                  <form action={checkoutAction.bind(null, slug, p.id, "month")} data-ga-event="begin_checkout" data-ga-plan={p.id}><button className={`${BUTTON_BASE} ${BUTTON_PRIMARY} w-full`}>Monthly</button></form>
+                  <form action={checkoutAction.bind(null, slug, p.id, "year")} data-ga-event="begin_checkout" data-ga-plan={p.id}><button className={`${BUTTON_BASE} ${BUTTON_SECONDARY} w-full`}>Yearly</button></form>
                 </div>
               )}
             </Card>
