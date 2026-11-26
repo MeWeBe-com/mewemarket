@@ -55,7 +55,7 @@ export default function PricingPage() {
             {["REST API and webhooks", "Two-factor sign-in", "Nightly backups"].map((f) => (
               <tr key={f} className="border-b border-[var(--border)]">
                 <td className="py-3 text-[var(--muted)]">{f}</td>
-                {PLANS.map((p) => <td key={p.id} className="py-3"><Check className="size-4 text-emerald-500" /></td>)}
+                {PLANS.map((p) => <td key={p.id} className="py-3"><Check aria-hidden className="size-4 text-emerald-500" /><span className="sr-only">Included</span></td>)}
               </tr>
             ))}
           </tbody>
